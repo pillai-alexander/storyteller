@@ -25,3 +25,6 @@ target_link_libraries(sim PRIVATE core)
 
 find_package(GSL REQUIRED)
 target_link_libraries(sim PRIVATE GSL::gsl GSL::gslcblas)
+
+find_package(SQLite3 REQUIRED)
+target_link_libraries(sim PRIVATE SQLite::SQLite3)
