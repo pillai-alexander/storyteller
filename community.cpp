@@ -14,6 +14,7 @@ Community::Community(const Parameters* parameters, const RngHandler* rng_handler
 
     cumulative_infections = std::vector<size_t>(NUM_STRAIN_TYPES, 0);
     
+    people.reserve(par->population_size);
     init_population();
 }
 
@@ -22,11 +23,10 @@ Community::~Community() {}
 void Community::init_population() {
     for (size_t i = 0; i < par->population_size; ++i) {
         people.push_back(std::make_unique<Person>(par, rng));
-        susceptibles.push_back(people.back().get());
-    }
+        Person* p = people.back().get();
 
-    vaccinate_population();
-    init_susceptibilities();
+        susceptibles.push_back(p);
+    }
 }
 
 void Community::transmission(size_t time) {
@@ -48,15 +48,10 @@ void Community::transmission(size_t time) {
 }
 
 void Community::vaccinate_population() {
+    if (par->pr_vaccination == 0) { return; }
     for (auto& p : people) {
         if (rng->draw_from_rng(VACCINATION) < par->pr_vaccination) {
             p->vaccinate();
         }
-    }
-}
-void Community::init_susceptibilities() {
-    for (auto& p : people) {
-        auto suscep = par->sample_susceptibility(p.get());
-        p->set_susceptibility(suscep);
     }
 }
