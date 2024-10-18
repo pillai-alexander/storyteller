@@ -23,11 +23,17 @@ Person::~Person() {}
 double Person::get_susceptibility() const { return susceptibility; }
 void Person::set_susceptibility(double s) { susceptibility = s; }
 
-void Person::infect(StrainType strain, size_t time) {
-    auto sympt = (rng->draw_from_rng(INFECTION) < par->pr_symptoms[strain])
-        ? SYMPTOMATIC : ASYMPTOMATIC;
-    auto seek_care = rng->draw_from_rng(BEHAVIOR) < par->pr_seek_care[vaccination_status];
-    infection_history.emplace_back(strain, time, sympt, seek_care);
+bool Person::infect(StrainType strain, size_t time) {
+    if (rng->draw_from_rng(INFECTION) < susceptibility) {
+        auto sympt = (rng->draw_from_rng(INFECTION) < par->pr_symptoms[strain])
+            ? SYMPTOMATIC : ASYMPTOMATIC;
+        auto seek_care = rng->draw_from_rng(BEHAVIOR) < par->pr_seek_care[vaccination_status];
+        infection_history.emplace_back(strain, time, sympt, seek_care);
+
+        return true;
+    } else {
+        return false;
+    }
 }
 
 bool Person::vaccinate() {
