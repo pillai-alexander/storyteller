@@ -41,13 +41,28 @@ void Parameters::init_parameters() {
     };
 }
 
-
 double Parameters::sample_susceptibility(const Person* p) const {
     if (p->is_vaccinated()) {
-        return 0.5;
+        return gsl_ran_gamma(
+            rng->get_rng(INFECTION),
+            baseline_suscep_distr_shape,
+            1 / baseline_suscep_distr_mean[VACCINATED]
+        );
     } else {
-        return 1.0;
+        return gsl_ran_gamma(
+            rng->get_rng(INFECTION),
+            baseline_suscep_distr_shape,
+            1 / baseline_suscep_distr_mean[UNVACCINATED]
+        );
     }
+}
+
+double Parameters::sample_vaccine_effect() const {
+    return gsl_ran_beta(
+        rng->get_rng(VACCINATION),
+        vax_effect_distr_params[A],
+        vax_effect_distr_params[B]
+    );
 }
 
 StrainType Parameters::sample_strain() const {
