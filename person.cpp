@@ -27,8 +27,7 @@ void Person::set_susceptibility(double s) { susceptibility = s; }
 
 bool Person::infect(StrainType strain, size_t time) {
     if (rng->draw_from_rng(INFECTION) < susceptibility) {
-        auto sympt = (rng->draw_from_rng(INFECTION) < par->pr_symptoms[strain])
-            ? SYMPTOMATIC : ASYMPTOMATIC;
+        auto sympt = (rng->draw_from_rng(INFECTION) < par->pr_symptoms[strain]) ? SYMPTOMATIC : ASYMPTOMATIC;
         auto seek_care = rng->draw_from_rng(BEHAVIOR) < par->pr_seek_care[vaccination_status];
         infection_history.emplace_back(strain, time, sympt, seek_care);
 
