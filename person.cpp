@@ -11,11 +11,13 @@ Infection::Infection(StrainType strain, size_t t, SymptomClass sympt, bool care)
 Infection::~Infection() {}
 
 Person::Person(const Parameters* parameters, const RngHandler* rng_handler)
-    : susceptibility(1.0),
-      infection_history({}),
-      vaccination_status(UNVACCINATED) {
+    : infection_history({}),
+      vaccination_status(UNVACCINATED),
+      vaccine_protection(0) {
     par = parameters;
     rng = rng_handler;
+
+    susceptibility = par->sample_susceptibility(this);
 }
 
 Person::~Person() {}
@@ -39,6 +41,8 @@ bool Person::infect(StrainType strain, size_t time) {
 bool Person::vaccinate() {
     if (vaccination_status == VACCINATED) { return false; }
     vaccination_status = VACCINATED;
+    vaccine_protection = par->sample_vaccine_effect();
+    susceptibility = par->sample_susceptibility(this);
     return true;
 }
 

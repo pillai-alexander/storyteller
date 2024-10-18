@@ -35,6 +35,7 @@ class Person {
     void update_susceptibility();
 
     double susceptibility;
+    double vaccine_protection;
     std::vector<Infection> infection_history;
     VaccinationStatus vaccination_status;
     const Parameters* par;
