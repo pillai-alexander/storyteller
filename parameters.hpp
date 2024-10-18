@@ -44,8 +44,8 @@ class Parameters {
 
     std::vector<double> strain_probs;
 
-    size_t population_size = 100;
-    size_t simulation_duration = 100;
+    size_t population_size;
+    size_t simulation_duration;
   private:
     const RngHandler* rng;
 };

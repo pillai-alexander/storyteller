@@ -15,6 +15,9 @@ namespace constants {
 Parameters::Parameters(const RngHandler* rng_handler) {
     rng = rng_handler;
 
+    population_size = (size_t) 1e3;
+    simulation_duration = 100;
+
     pr_vaccination = 0.5;
     pr_infection = std::vector<double>(NUM_STRAIN_TYPES, 0.01);
     pr_symptoms = std::vector<double>(NUM_STRAIN_TYPES, 0.1);
