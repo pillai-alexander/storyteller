@@ -15,6 +15,12 @@ namespace constants {
 Parameters::Parameters(const RngHandler* rng_handler) {
     rng = rng_handler;
 
+    init_parameters();
+}
+
+Parameters::~Parameters() {}
+
+void Parameters::init_parameters() {
     population_size = (size_t) 1e3;
     simulation_duration = 100;
 
@@ -23,6 +29,11 @@ Parameters::Parameters(const RngHandler* rng_handler) {
     pr_symptoms = std::vector<double>(NUM_STRAIN_TYPES, 0.1);
     pr_seek_care = std::vector<double>(NUM_VACCINATION_STATUSES, 0.25);
 
+    baseline_suscep_distr_shape = 1;
+    baseline_suscep_distr_mean = {1, 0.5};
+
+    vax_effect_distr_params = {1, 1};
+
     strain_probs = {
         pr_infection[INFLUENZA],
         pr_infection[NON_INFLUENZA],
@@ -30,7 +41,6 @@ Parameters::Parameters(const RngHandler* rng_handler) {
     };
 }
 
-Parameters::~Parameters() {}
 
 double Parameters::sample_susceptibility(const Person* p) const {
     if (p->is_vaccinated()) {

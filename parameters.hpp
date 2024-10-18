@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <array>
 
 class Person;
 class RngHandler;
@@ -23,6 +24,18 @@ enum SymptomClass {
     NUM_SYMPTOM_CLASSES
 };
 
+enum BetaDistributionParameter {
+    A,
+    B,
+    NUM_BETA_DISTR_PARAMS
+};
+
+enum GammaDistributionParameter {
+    SHAPE,
+    RATE,
+    NUM_GAMMA_DISTR_PARAMS
+};
+
 namespace constants {
     extern unsigned int ONE;
 }
@@ -33,6 +46,7 @@ class Parameters {
     ~Parameters();
 
     double sample_susceptibility(const Person* p) const;
+    double sample_vaccine_effect() const;
     StrainType sample_strain() const;
 
     void update_time_varying_parameters();
@@ -44,8 +58,14 @@ class Parameters {
 
     std::vector<double> strain_probs;
 
+    double baseline_suscep_distr_shape;
+    std::vector<double> baseline_suscep_distr_mean;
+
+    std::array<double, NUM_BETA_DISTR_PARAMS> vax_effect_distr_params;
+
     size_t population_size;
     size_t simulation_duration;
   private:
+    void init_parameters();
     const RngHandler* rng;
 };
