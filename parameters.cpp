@@ -45,13 +45,13 @@ double Parameters::sample_susceptibility(const Person* p) const {
         return gsl_ran_gamma(
             rng->get_rng(INFECTION),
             baseline_suscep_distr_shape,
-            1 / baseline_suscep_distr_mean[VACCINATED]
+            baseline_suscep_distr_mean[VACCINATED] / baseline_suscep_distr_shape
         );
     } else {
         return gsl_ran_gamma(
             rng->get_rng(INFECTION),
             baseline_suscep_distr_shape,
-            1 / baseline_suscep_distr_mean[UNVACCINATED]
+            baseline_suscep_distr_mean[UNVACCINATED] / baseline_suscep_distr_shape
         );
     }
 }
