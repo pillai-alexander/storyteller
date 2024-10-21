@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "person.hpp"
 #include "simulator.hpp"
 #include "parameters.hpp"
@@ -10,9 +12,16 @@ Infection::Infection(StrainType strain, size_t t, SymptomClass sympt, bool care)
 
 Infection::~Infection() {}
 
+StrainType Infection::get_strain() const { return infection_strain; }
+
+size_t Infection::get_infection_time() const { return infection_time; }
+
+SymptomClass Infection::get_symptoms() const { return symptoms; }
+
+bool Infection::get_sought_care() const { return sought_care; }
+
 Person::Person(const Parameters* parameters, const RngHandler* rng_handler)
-    : infection_history({}),
-      vaccination_status(UNVACCINATED),
+    : vaccination_status(UNVACCINATED),
       vaccine_protection(0) {
     par = parameters;
     rng = rng_handler;
@@ -29,7 +38,7 @@ bool Person::infect(StrainType strain, size_t time) {
     if (rng->draw_from_rng(INFECTION) < susceptibility) {
         auto sympt = (rng->draw_from_rng(INFECTION) < par->pr_symptoms[strain]) ? SYMPTOMATIC : ASYMPTOMATIC;
         auto seek_care = rng->draw_from_rng(BEHAVIOR) < par->pr_seek_care[vaccination_status];
-        infection_history.emplace_back(strain, time, sympt, seek_care);
+        infection_history.push_back(std::make_unique<Infection>(strain, time, sympt, seek_care));
 
         return true;
     } else {
@@ -47,5 +56,10 @@ bool Person::vaccinate() {
 
 bool Person::has_been_infected() const { return infection_history.size() > 0; }
 bool Person::is_vaccinated() const { return vaccination_status == VACCINATED; }
+
+Infection* Person::most_recent_infection() const {
+    auto inf = has_been_infected() ? infection_history.back().get() : nullptr;
+    return inf;
+}
 
 void Person::update_susceptibility() {}
