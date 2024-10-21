@@ -6,6 +6,7 @@
 #include "simulator.hpp"
 #include "community.hpp"
 #include "parameters.hpp"
+#include "person.hpp"
 
 RngHandler::RngHandler() {
     infection_rng   = gsl_rng_alloc(gsl_rng_mt19937);
@@ -58,6 +59,16 @@ void Simulator::tick() {
 }
 
 void Simulator::results() {
-    std::cout << "flu infs: " << community->cumulative_infections[INFLUENZA] << std::endl;
-    std::cout << "nonflu infs: " << community->cumulative_infections[NON_INFLUENZA] << std::endl;
+    std::cerr << "flu infs: " << community->cumulative_infections[INFLUENZA] << std::endl;
+    std::cerr << "nonflu infs: " << community->cumulative_infections[NON_INFLUENZA] << std::endl;
+
+    int n_ppl = 0;
+    std::cout << "person_id,susceptibility,vax_status,inf_time,inf_strain" << '\n';
+    for (auto& p : community->people) {
+        auto suscep = p->get_susceptibility();
+        auto vax_status = p->is_vaccinated();
+        int inf_time = p->has_been_infected() ? p->most_recent_infection()->get_infection_time() : -1;
+        auto inf_strain = p->has_been_infected() ? p->most_recent_infection()->get_strain() : NUM_STRAIN_TYPES;
+        std::cout << ++n_ppl << ',' << suscep << ',' << vax_status << ',' << inf_time << ',' << inf_strain << '\n';
+    }
 }
