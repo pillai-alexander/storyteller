@@ -32,6 +32,7 @@ class Simulator {
     Simulator();
     ~Simulator();
 
+    void init();
     void simulate();
     void tick();
     void results();

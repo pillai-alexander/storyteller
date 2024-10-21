@@ -47,6 +47,10 @@ Simulator::Simulator()
 
 Simulator::~Simulator() {}
 
+void Simulator::init() {
+    community->vaccinate_population();
+}
+
 void Simulator::simulate() {
     for (; sim_time < par->simulation_duration; ++sim_time) {
         tick();
