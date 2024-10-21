@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <iostream>
 
 #include <gsl/gsl_randist.h>
 

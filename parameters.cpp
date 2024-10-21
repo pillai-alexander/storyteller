@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <vector>
-#include <iostream>
 
 #include <gsl/gsl_randist.h>
 
