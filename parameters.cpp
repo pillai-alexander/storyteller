@@ -22,7 +22,7 @@ Parameters::~Parameters() {}
 
 void Parameters::init_parameters() {
     population_size = (size_t) 1e3;
-    simulation_duration = 100;
+    simulation_duration = 200;
 
     pr_vaccination = 0.5;
     pr_infection = std::vector<double>(NUM_STRAIN_TYPES, 0.01);
