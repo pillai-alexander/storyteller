@@ -6,9 +6,11 @@
 class Person;
 class Parameters;
 class RngHandler;
+class Simulator;
 
 class Community {
- public:
+  friend Simulator;  
+  public:
     Community(const Parameters* parameters, const RngHandler* rng_handler);
     ~Community();
 
@@ -16,7 +18,7 @@ class Community {
 
     std::vector<size_t> cumulative_infections;
 
- private:
+  private:
     void init_population();
     void vaccinate_population();
     void init_susceptibilities();
