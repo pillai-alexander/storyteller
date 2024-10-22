@@ -1,4 +1,4 @@
-.pkgs <- c("tidyverse", "tidytable", "cowplot", "here")
+.pkgs <- c("tidyverse", "tidytable", "cowplot", "geomtextpath", "here")
 
 if (interactive()) {
   stopifnot(all(sapply(.pkgs, require, character.only = TRUE)))
@@ -121,9 +121,38 @@ mai_by_strain_vax <- ggplot(ts_mai_by_strain_vax) +
   shared_attrs +
   theme(legend.position = "none")
 
+mean_suscep <- sim_dat %>%
+  mutate(suscep = susceptibility * (1 - vax_protection)) %>%
+  group_by(vax_status) %>%
+  summarize(mean = mean(suscep))
+
+final_tnd_ve_est <- ts_mai_by_strain_vax %>%
+  filter(time == sim_duration - 1) %>%
+  group_by(inf_strain) %>%
+  summarize(
+    vax_odds = cumul[vax_status == 1] / cumul[vax_status == 0]
+  ) %>%
+  ungroup() %>%
+  summarize(
+    tnd_ve = 1 - (vax_odds[inf_strain == 1] / vax_odds[inf_strain == 0])
+  )
+
 init_suscep <-  ggplot(sim_dat) +
-  aes(x = susceptibility, fill = factor(vax_status), group = vax_status) +
+  aes(
+    x = susceptibility * (1 - vax_protection),
+    fill = factor(vax_status)
+  ) +
   geom_density(alpha = 0.5, color = "gray") +
+  geom_textvline(
+    data = mean_suscep,
+    aes(xintercept = mean, color = factor(vax_status), label = signif(mean)),
+    linetype = "dashed"
+  ) +
+  geom_text(
+    x = 6,
+    y = 2,
+    label = paste0("Final TND VE est.: ", signif(final_tnd_ve_est$tnd_ve))
+  ) +
   vax_colors +
   labs(x = "susceptibility", y = "density") +
   shared_attrs
