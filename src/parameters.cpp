@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <vector>
+#include <numeric>
 
 #include <gsl/gsl_randist.h>
 
@@ -24,7 +25,7 @@ void Parameters::init_parameters() {
     simulation_duration = 200;
 
     pr_vaccination = 0.5;
-    pr_infection = std::vector<double>(NUM_STRAIN_TYPES, 0.01);
+    pr_exposure = std::vector<double>(NUM_STRAIN_TYPES, 0.01);
     pr_symptoms = std::vector<double>(NUM_STRAIN_TYPES, 1);
     pr_seek_care = std::vector<double>(NUM_VACCINATION_STATUSES, 1);
 
@@ -33,11 +34,11 @@ void Parameters::init_parameters() {
 
     vax_effect_distr_params = {1, 1};
 
-    strain_probs = {
-        pr_infection[INFLUENZA],
-        pr_infection[NON_INFLUENZA],
-        1 - (pr_infection[INFLUENZA] + pr_infection[NON_INFLUENZA])
-    };
+    strain_probs = std::vector<double>(NUM_STRAIN_TYPES + 1, 0.0);
+    for (size_t s = 0; s < NUM_STRAIN_TYPES; ++s) {
+        strain_probs[s] = pr_exposure[s];
+    }
+    strain_probs[NUM_STRAIN_TYPES] = 1.0 - std::accumulate(pr_exposure.begin(), pr_exposure.end(), 0.0);
 }
 
 double Parameters::sample_susceptibility(const Person* p) const {

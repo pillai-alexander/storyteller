@@ -52,7 +52,7 @@ class Parameters {
     void update_time_varying_parameters();
 
     double pr_vaccination;
-    std::vector<double> pr_infection;
+    std::vector<double> pr_exposure;
     std::vector<double> pr_symptoms;
     std::vector<double> pr_seek_care;
 
