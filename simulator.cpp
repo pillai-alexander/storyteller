@@ -67,12 +67,15 @@ void Simulator::results() {
     std::cerr << "nonflu infs: " << community->cumulative_infections[NON_INFLUENZA] << std::endl;
 
     int n_ppl = 0;
-    std::cout << "person_id,susceptibility,vax_status,inf_time,inf_strain" << '\n';
+    std::cout << "person_id,susceptibility,vax_status,inf_time,inf_strain,inf_symptoms,inf_care" << '\n';
     for (auto& p : community->people) {
         auto suscep = p->get_susceptibility();
         auto vax_status = p->is_vaccinated();
-        int inf_time = p->has_been_infected() ? p->most_recent_infection()->get_infection_time() : -1;
-        auto inf_strain = p->has_been_infected() ? p->most_recent_infection()->get_strain() : NUM_STRAIN_TYPES;
-        std::cout << ++n_ppl << ',' << suscep << ',' << vax_status << ',' << inf_time << ',' << inf_strain << '\n';
+        auto inf = p->has_been_infected() ? p->most_recent_infection() : nullptr;
+        int inf_time = inf ? inf->get_infection_time() : -1;
+        auto inf_strain = inf ? inf->get_strain() : NUM_STRAIN_TYPES;
+        auto inf_sympt = inf ? inf->get_symptoms() : NUM_SYMPTOM_CLASSES;
+        auto inf_care = inf ? inf->get_sought_care() : false;
+        std::cout << ++n_ppl << ',' << suscep << ',' << vax_status << ',' << inf_time << ',' << inf_strain << ',' << inf_sympt << ',' << inf_care << '\n';
     }
 }
