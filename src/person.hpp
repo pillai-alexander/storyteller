@@ -31,6 +31,9 @@ class Person {
     double get_susceptibility() const;
     void set_susceptibility(double s);
 
+    double get_vaccine_protection() const;
+    void set_vaccine_protection(double vp);
+
     bool infect(StrainType strain, size_t time);
     bool vaccinate();
 

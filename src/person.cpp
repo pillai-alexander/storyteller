@@ -34,6 +34,9 @@ Person::~Person() {}
 double Person::get_susceptibility() const { return susceptibility; }
 void Person::set_susceptibility(double s) { susceptibility = s; }
 
+double Person::get_vaccine_protection() const { return vaccine_protection; }
+void Person::set_vaccine_protection(double vp) { vaccine_protection = vp; }
+
 bool Person::infect(StrainType strain, size_t time) {
     auto current_suscep = susceptibility;
     current_suscep *= is_vaccinated() ? 1 - vaccine_protection : 1;
