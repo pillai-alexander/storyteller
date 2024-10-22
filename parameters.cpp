@@ -25,8 +25,8 @@ void Parameters::init_parameters() {
 
     pr_vaccination = 0.5;
     pr_infection = std::vector<double>(NUM_STRAIN_TYPES, 0.01);
-    pr_symptoms = std::vector<double>(NUM_STRAIN_TYPES, 0.1);
-    pr_seek_care = std::vector<double>(NUM_VACCINATION_STATUSES, 0.25);
+    pr_symptoms = std::vector<double>(NUM_STRAIN_TYPES, 1);
+    pr_seek_care = std::vector<double>(NUM_VACCINATION_STATUSES, 1);
 
     baseline_suscep_distr_shape = 1;
     baseline_suscep_distr_mean = {1, 0.5};
