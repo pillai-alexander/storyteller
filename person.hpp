@@ -6,7 +6,7 @@
 #include "parameters.hpp"
 
 class Infection {
-  friend Person;
+  friend class Person;
   public:
     Infection(StrainType strain, size_t time, SymptomClass sympt, bool care);
     ~Infection();
