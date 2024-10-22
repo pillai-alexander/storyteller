@@ -14,60 +14,125 @@ model_dir <- here("exp", "basic_contin_suscep_model")
 fig_path <- here(model_dir, "figs")
 
 sim_data_path <- here(model_dir, "sim.out")
-sim_dat <- fread(sim_data_path)
+sim_dat <- fread(sim_data_path) %>%
+  mutate(mai = ifelse((inf_symptoms == 1) & (inf_care == 1), 1, 0))
 
-flu_vs_nonflu <- sim_dat %>%
-  filter(inf_time != -1) %>%
-  group_by(inf_time, inf_strain) %>%
-  summarize(incidence = n()) %>%
+sim_duration <- 200
+ts <- tidytable(
+  time = numeric(),
+  vax_status = numeric(),
+  inf_strain = numeric(),
+  mai = numeric(),
+  n = numeric()
+)
+
+empty_tmp <- crossing(vax_status = c(0, 1), inf_strain = c(0, 1), mai = c(0, 1))
+
+for (t in seq(0, sim_duration - 1, 1)) {
+  tmp <- sim_dat %>%
+    filter(inf_time == t) %>%
+    count(vax_status, inf_strain, mai) %>%
+    full_join(empty_tmp) %>%
+    replace_na(list(n = 0)) %>%
+    mutate(time = t)
+
+  ts <- bind_rows(ts, tmp)
+}
+
+ts_inf_by_strain <- ts %>%
+  group_by(time, inf_strain) %>%
+  summarize(incid = sum(n)) %>%
   group_by(inf_strain) %>%
-  mutate(cumul_inf = cumsum(incidence)) %>%
-  ungroup() %>%
-  ggplot() +
-    aes(x = inf_time, y = cumul_inf, color = factor(inf_strain)) +
-    geom_step(linewidth = 2) +
-    scale_color_discrete(
-      name = element_blank(),
-      breaks = c(0, 1),
-      labels = c("nonflu", "flu")
-    ) +
-    theme_cowplot(20) +
-    background_grid() +
-    theme(
-      legend.position = c(0.75, 0.1)
-    ) +
-    labs(x = "time", y = "cumul. infections")
+  mutate(cumul = cumsum(incid))
 
-vaxd_vs_unvaxd_flu <- sim_dat %>%
-  filter(inf_time != -1 & inf_strain == 1) %>%
-  group_by(inf_time, vax_status) %>%
-  summarize(incidence = n()) %>%
+ts_flu_inf_by_vax <- ts %>%
+  filter(inf_strain == 1) %>%
+  group_by(time, vax_status) %>%
+  summarize(incid = sum(n)) %>%
   group_by(vax_status) %>%
-  mutate(cumul_inf = cumsum(incidence)) %>%
-  ungroup() %>%
-  ggplot() +
-    aes(x = inf_time, y = cumul_inf, color = factor(vax_status)) +
-    geom_step(linewidth = 2) +
-    scale_color_discrete(
-      name = element_blank(),
-      breaks = c(0, 1),
-      labels = c("unvaxd", "vaxd")
-    ) +
-    theme_cowplot(20) +
-    background_grid() +
-    theme(
-      legend.position = c(0.75, 0.1)
-    ) +
-    labs(x = "time", y = "cumul. infections")
+  mutate(cumul = cumsum(incid))
 
-sim_dat %>%
-  ggplot() +
-    aes(x = susceptibility, fill = factor(vax_status), group = vax_status) +
-    geom_density()
+ts_mai_by_strain_vax <- ts %>%
+  filter(mai == 1) %>%
+  group_by(time, vax_status, inf_strain) %>%
+  summarize(incid = sum(n)) %>%
+  group_by(vax_status, inf_strain) %>%
+  mutate(cumul = cumsum(incid))
+
+shared_attrs <- list(
+  theme_cowplot(),
+  background_grid(),
+  theme(
+    legend.text = element_text(size = 8),
+    legend.position = "inside",
+    legend.position.inside = c(0.75, 0.3)
+  )
+)
+
+vax_colors <- list(
+  scale_color_manual(
+    name = element_blank(),
+    breaks = c(0, 1),
+    labels = c("unvaxd", "vaxd"),
+    values = c("darkorange", "dodgerblue")
+  ),
+  scale_fill_manual(
+    name = element_blank(),
+    breaks = c(0, 1),
+    labels = c("unvaxd", "vaxd"),
+    values = c("darkorange", "dodgerblue")
+  )
+)
+
+strain_linetypes <- list(
+  scale_linetype_manual(
+    name = element_blank(),
+    breaks = c(0, 1),
+    labels = c("nonflu", "flu"),
+    values = c("dotted", "solid")
+  )
+)
+
+inf_by_strain <- ggplot(ts_inf_by_strain) +
+  aes(x = time, y = cumul, linetype = factor(inf_strain)) +
+  geom_line() +
+  strain_linetypes +
+  labs(x = "time", y = "cumul. infections") +
+  shared_attrs
+
+flu_inf_by_vax <- ggplot(ts_flu_inf_by_vax) +
+  aes(x = time, y = cumul, color = factor(vax_status)) +
+  geom_line() +
+  vax_colors +
+  labs(x = "time", y = "cumul. infections") +
+  shared_attrs
+
+mai_by_strain_vax <- ggplot(ts_mai_by_strain_vax) +
+  aes(
+    x = time,
+    y = cumul,
+    color = factor(vax_status),
+    linetype = factor(inf_strain)
+  ) +
+  geom_line() +
+  vax_colors +
+  strain_linetypes +
+  labs(x = "time", y = "cumul. MAIs") +
+  shared_attrs +
+  theme(legend.position = "none")
+
+init_suscep <-  ggplot(sim_dat) +
+  aes(x = susceptibility, fill = factor(vax_status), group = vax_status) +
+  geom_density(alpha = 0.5, color = "gray") +
+  vax_colors +
+  labs(x = "susceptibility", y = "density") +
+  shared_attrs
 
 dash <- plot_grid(
-  flu_vs_nonflu,
-  vaxd_vs_unvaxd_flu
+  inf_by_strain,
+  flu_inf_by_vax,
+  mai_by_strain_vax,
+  init_suscep
 )
 
 dir.create(fig_path)
@@ -76,8 +141,8 @@ ggsave(
   here(fig_path, "sim_dash.png"),
   dash,
   bg = "white",
-  height = 12,
-  width = 12,
-  units = "in",
-  dpi = 100
+  height = 1200,
+  width = 2400,
+  units = "px",
+  dpi = 200
 )
