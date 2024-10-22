@@ -6,10 +6,9 @@
 class Person;
 class Parameters;
 class RngHandler;
-class Simulator;
 
 class Community {
-  friend Simulator;  
+  friend class Simulator;
   public:
     Community(const Parameters* parameters, const RngHandler* rng_handler);
     ~Community();
