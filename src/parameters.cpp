@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <vector>
+#include <array>
 #include <numeric>
 
 #include <gsl/gsl_randist.h>
@@ -29,10 +30,11 @@ void Parameters::init_parameters() {
     pr_symptoms = std::vector<double>(NUM_STRAIN_TYPES, 1);
     pr_seek_care = std::vector<double>(NUM_VACCINATION_STATUSES, 1);
 
-    baseline_suscep_distr_shape = 1;
-    baseline_suscep_distr_mean = {1, 0.5};
+    baseline_suscep_distr_shape = 1.0;
+    baseline_suscep_distr_mean = {1.0, 0.5};
 
-    vax_effect_distr_params = {1, 1};
+    vax_effect_distr_params = std::vector<std::array<double, NUM_BETA_DISTR_PARAMS>>(NUM_STRAIN_TYPES, {0.0, 0.0});
+    vax_effect_distr_params[INFLUENZA] = {0.0, 1.0};
 
     strain_probs = std::vector<double>(NUM_STRAIN_TYPES + 1, 0.0);
     for (size_t s = 0; s < NUM_STRAIN_TYPES; ++s) {
@@ -57,12 +59,17 @@ double Parameters::sample_susceptibility(const Person* p) const {
     }
 }
 
-double Parameters::sample_vaccine_effect() const {
-    return gsl_ran_beta(
-        rng->get_rng(VACCINATION),
-        vax_effect_distr_params[A],
-        vax_effect_distr_params[B]
-    );
+std::vector<double> Parameters::sample_vaccine_effect() const {
+    std::vector<double> vax_effects(NUM_STRAIN_TYPES, 0.0);
+    for (size_t strain = 0; strain < NUM_STRAIN_TYPES; ++strain) {
+        auto strain_specific_vax_params = vax_effect_distr_params[strain];
+        vax_effects[strain] = strain_specific_vax_params[A] == 0
+                                  ? strain_specific_vax_params[B]
+                                  : gsl_ran_beta(rng->get_rng(VACCINATION),
+                                                 strain_specific_vax_params[A],
+                                                 strain_specific_vax_params[B]);
+    }
+    return vax_effects;
 }
 
 StrainType Parameters::sample_strain() const {

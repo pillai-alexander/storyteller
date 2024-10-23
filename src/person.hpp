@@ -31,8 +31,8 @@ class Person {
     double get_susceptibility() const;
     void set_susceptibility(double s);
 
-    double get_vaccine_protection() const;
-    void set_vaccine_protection(double vp);
+    double get_vaccine_protection(StrainType strain) const;
+    void set_vaccine_protection(StrainType strain, double vp);
 
     Infection* infect(StrainType strain, size_t time);
     bool vaccinate();
@@ -46,7 +46,7 @@ class Person {
     void update_susceptibility();
 
     double susceptibility;
-    double vaccine_protection;
+    std::vector<double> vaccine_protection;
     std::vector<std::unique_ptr<Infection>> infection_history;
     VaccinationStatus vaccination_status;
     const Parameters* par;

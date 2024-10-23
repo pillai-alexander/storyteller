@@ -20,11 +20,12 @@ SymptomClass Infection::get_symptoms() const { return symptoms; }
 
 bool Infection::get_sought_care() const { return sought_care; }
 
-Person::Person(const Parameters* parameters, const RngHandler* rng_handler)
-    : vaccination_status(UNVACCINATED),
-      vaccine_protection(0) {
+Person::Person(const Parameters* parameters, const RngHandler* rng_handler) {
     par = parameters;
     rng = rng_handler;
+
+    vaccination_status = UNVACCINATED;
+    vaccine_protection = std::vector<double>(NUM_STRAIN_TYPES, 0.0);
 
     susceptibility = par->sample_susceptibility(this);
 }
@@ -34,12 +35,12 @@ Person::~Person() {}
 double Person::get_susceptibility() const { return susceptibility; }
 void Person::set_susceptibility(double s) { susceptibility = s; }
 
-double Person::get_vaccine_protection() const { return vaccine_protection; }
-void Person::set_vaccine_protection(double vp) { vaccine_protection = vp; }
+double Person::get_vaccine_protection(StrainType strain) const { return vaccine_protection[strain]; }
+void Person::set_vaccine_protection(StrainType strain, double vp) { vaccine_protection[strain] = vp; }
 
 Infection* Person::infect(StrainType strain, size_t time) {
     auto current_suscep = susceptibility;
-    current_suscep *= is_vaccinated() ? 1 - vaccine_protection : 1;
+    current_suscep *= is_vaccinated() ? 1 - vaccine_protection[strain] : 1;
 
     if (rng->draw_from_rng(INFECTION) < current_suscep) {
         auto sympt = (rng->draw_from_rng(INFECTION) < par->pr_symptoms[strain]) ? SYMPTOMATIC : ASYMPTOMATIC;

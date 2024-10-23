@@ -46,7 +46,7 @@ class Parameters {
     ~Parameters();
 
     double sample_susceptibility(const Person* p) const;
-    double sample_vaccine_effect() const;
+    std::vector<double> sample_vaccine_effect() const;
     StrainType sample_strain() const;
 
     void update_time_varying_parameters();
@@ -61,7 +61,8 @@ class Parameters {
     double baseline_suscep_distr_shape;
     std::vector<double> baseline_suscep_distr_mean;
 
-    std::array<double, NUM_BETA_DISTR_PARAMS> vax_effect_distr_params;
+    // std::array<double, NUM_BETA_DISTR_PARAMS> vax_effect_distr_params;
+    std::vector<std::array<double, NUM_BETA_DISTR_PARAMS>> vax_effect_distr_params;
 
     size_t population_size;
     size_t simulation_duration;

@@ -90,7 +90,7 @@ void Simulator::results() {
     std::cout << "person_id,susceptibility,vax_protection,vax_status,inf_time,inf_strain,inf_symptoms,inf_care" << '\n';
     for (auto& p : community->people) {
         auto suscep = p->get_susceptibility();
-        auto vax_prot = p->get_vaccine_protection();
+        auto vax_prot = p->get_vaccine_protection(INFLUENZA);
         auto vax_status = p->is_vaccinated();
         auto inf = p->has_been_infected() ? p->most_recent_infection() : nullptr;
         int inf_time = inf ? inf->get_infection_time() : -1;
