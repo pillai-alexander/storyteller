@@ -177,7 +177,7 @@ init_suscep <- ggplot(sim_dat) +
     fill = "white"
   ) +
   vax_colors +
-  labs(x = "susceptibility", y = "density") +
+  labs(x = "initial flu susceptibility", y = "density") +
   shared_attrs +
   theme(legend.position = "none")
 
