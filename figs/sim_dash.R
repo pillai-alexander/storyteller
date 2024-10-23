@@ -158,21 +158,28 @@ init_suscep <- ggplot(sim_dat) +
     x = tot_suscep,
     fill = factor(vax_status)
   ) +
-  geom_density(alpha = 0.5, color = "gray", adjust = 1e-5) +
-  geom_labelvline(
+  geom_histogram(
+    aes(y = after_stat(ncount)),
+    alpha = 0.25,
+    color = "gray",
+    binwidth = 0.1,
+    position = "identity"
+  ) +
+  geom_textvline(
     data = mean_suscep,
     aes(xintercept = mean, color = factor(vax_status), label = signif(mean)),
     linetype = "dashed"
   ) +
   geom_label(
     x = max(sim_dat$tot_suscep) * 0.75,
-    y = 1,
+    y = 0.5,
     label = ve_info,
     fill = "white"
   ) +
   vax_colors +
   labs(x = "susceptibility", y = "density") +
-  shared_attrs
+  shared_attrs +
+  theme(legend.position = "none")
 
 dash <- plot_grid(
   inf_by_strain,
