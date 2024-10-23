@@ -62,9 +62,6 @@ class Parameters {
 
     std::vector<double> strain_probs;
 
-    double baseline_suscep_distr_shape;
-    std::vector<double> baseline_suscep_distr_mean;
-
     std::vector<std::vector<GammaDistrParamArray>> suscep_distr_params;
     std::vector<BetaDistrParamArray> vax_effect_distr_params;
 

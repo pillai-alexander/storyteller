@@ -30,9 +30,6 @@ void Parameters::init_parameters() {
     pr_symptoms = std::vector<double>(NUM_STRAIN_TYPES, 1);
     pr_seek_care = std::vector<double>(NUM_VACCINATION_STATUSES, 1);
 
-    baseline_suscep_distr_shape = 1.0;
-    baseline_suscep_distr_mean = {1.0, 1.0};
-
     suscep_distr_params = std::vector<std::vector<GammaDistrParamArray>>(NUM_VACCINATION_STATUSES,
                                                                          std::vector<GammaDistrParamArray>(NUM_STRAIN_TYPES,
                                                                                                            {0.0, 1.0}));
