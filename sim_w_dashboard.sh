@@ -4,4 +4,4 @@
 
 Rscript figs/sim_dash.R
 
-rm sim.out
+# rm sim.out
