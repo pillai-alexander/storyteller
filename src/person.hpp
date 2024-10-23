@@ -25,7 +25,7 @@ class Infection {
 
 class Person {
   public:
-    Person(const Parameters* parameters, const RngHandler* rng_handler);
+    Person(size_t id, const Parameters* parameters, const RngHandler* rng_handler);
     ~Person();
 
     double get_susceptibility(StrainType strain) const;
@@ -45,6 +45,7 @@ class Person {
   private:
     void update_susceptibility();
 
+    size_t id;
     std::vector<double> susceptibility;
     std::vector<double> vaccine_protection;
     std::vector<std::unique_ptr<Infection>> infection_history;

@@ -63,7 +63,7 @@ Community::~Community() {}
 
 void Community::init_population() {
     for (size_t i = 0; i < par->population_size; ++i) {
-        people.push_back(std::make_unique<Person>(par, rng));
+        people.push_back(std::make_unique<Person>(i, par, rng));
         Person* p = people.back().get();
 
         susceptibles.push_back(p);

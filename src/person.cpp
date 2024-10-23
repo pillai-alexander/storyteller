@@ -20,7 +20,8 @@ SymptomClass Infection::get_symptoms() const { return symptoms; }
 
 bool Infection::get_sought_care() const { return sought_care; }
 
-Person::Person(const Parameters* parameters, const RngHandler* rng_handler) {
+Person::Person(size_t assigned_id, const Parameters* parameters, const RngHandler* rng_handler) {
+    id = assigned_id;
     par = parameters;
     rng = rng_handler;
 
