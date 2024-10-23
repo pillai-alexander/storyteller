@@ -31,10 +31,10 @@ void Parameters::init_parameters() {
     pr_seek_care = std::vector<double>(NUM_VACCINATION_STATUSES, 1);
 
     baseline_suscep_distr_shape = 1.0;
-    baseline_suscep_distr_mean = {1.0, 0.5};
+    baseline_suscep_distr_mean = {1.0, 1.0};
 
     vax_effect_distr_params = std::vector<std::array<double, NUM_BETA_DISTR_PARAMS>>(NUM_STRAIN_TYPES, {0.0, 0.0});
-    vax_effect_distr_params[INFLUENZA] = {0.0, 1.0};
+    vax_effect_distr_params[INFLUENZA] = {0.0, 0.5};
 
     strain_probs = std::vector<double>(NUM_STRAIN_TYPES + 1, 0.0);
     for (size_t s = 0; s < NUM_STRAIN_TYPES; ++s) {
