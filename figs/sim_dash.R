@@ -15,7 +15,10 @@ fig_path <- here(model_dir, "figs")
 
 sim_data_path <- here(model_dir, "sim.out")
 sim_dat <- fread(sim_data_path) %>%
-  mutate(mai = ifelse((inf_symptoms == 1) & (inf_care == 1), 1, 0))
+  mutate(
+    mai = ifelse((inf_symptoms == 1) & (inf_care == 1), 1, 0),
+    tot_suscep = susceptibility * (1 - vax_protection)
+  )
 
 sim_duration <- 200
 ts <- tidytable(
@@ -126,6 +129,13 @@ mean_suscep <- sim_dat %>%
   group_by(vax_status) %>%
   summarize(mean = mean(suscep))
 
+true_ve <- sim_dat %>%
+  filter(vax_status == 1) %>%
+  summarize(true_ve = 1 - mean(vax_protection))
+
+mean_suscep_ve_est <- mean_suscep %>%
+  summarize(ve_est = 1 - (mean[vax_status == 1] / mean[vax_status == 0]))
+
 final_tnd_ve_est <- ts_mai_by_strain_vax %>%
   filter(time == sim_duration - 1) %>%
   group_by(inf_strain) %>%
@@ -137,9 +147,15 @@ final_tnd_ve_est <- ts_mai_by_strain_vax %>%
     tnd_ve = 1 - (vax_odds[inf_strain == 1] / vax_odds[inf_strain == 0])
   )
 
+ve_info <- paste0(
+  "True VE est.: ", signif(true_ve$true_ve, digits = 3), "\n",
+  "Mean suscep. VE est.: ", signif(mean_suscep_ve_est$ve_est, digits = 3), "\n",
+  "Final TND VE est.: ", signif(final_tnd_ve_est$tnd_ve, digits = 3)
+)
+
 init_suscep <-  ggplot(sim_dat) +
   aes(
-    x = susceptibility * (1 - vax_protection),
+    x = tot_suscep,
     fill = factor(vax_status)
   ) +
   geom_density(alpha = 0.5, color = "gray") +
@@ -148,10 +164,11 @@ init_suscep <-  ggplot(sim_dat) +
     aes(xintercept = mean, color = factor(vax_status), label = signif(mean)),
     linetype = "dashed"
   ) +
-  geom_text(
-    x = 6,
-    y = 2,
-    label = paste0("Final TND VE est.: ", signif(final_tnd_ve_est$tnd_ve))
+  geom_label(
+    x = max(sim_dat$tot_suscep) * 0.75,
+    y = 1,
+    label = ve_info,
+    fill = "white"
   ) +
   vax_colors +
   labs(x = "susceptibility", y = "density") +
