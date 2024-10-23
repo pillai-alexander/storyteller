@@ -8,10 +8,14 @@
 #include "parameters.hpp"
 #include "person.hpp"
 
-RngHandler::RngHandler() {
+RngHandler::RngHandler(unsigned long int seed) {
     infection_rng   = gsl_rng_alloc(gsl_rng_mt19937);
     vaccination_rng = gsl_rng_alloc(gsl_rng_mt19937);
     behavior_rng    = gsl_rng_alloc(gsl_rng_mt19937);
+
+    gsl_rng_set(infection_rng, seed);
+    gsl_rng_set(vaccination_rng, seed);
+    gsl_rng_set(behavior_rng, seed);
 }
 
 RngHandler::~RngHandler() {
@@ -38,9 +42,10 @@ gsl_rng* RngHandler::get_rng(RngType type) const {
     }
 }
 
-Simulator::Simulator()
-    : sim_time(0),
-      rng_handler(std::make_unique<RngHandler>()) {
+Simulator::Simulator() {
+    sim_time = 0;
+    rng_seed = 0;
+    rng_handler = std::make_unique<RngHandler>(rng_seed);
     par = std::make_unique<Parameters>(rng_handler.get());
     community = std::make_unique<Community>(par.get(), rng_handler.get());
 }
@@ -72,7 +77,8 @@ void Simulator::results() {
     auto total_nonflu_mai = ledger->total_mai(NON_INFLUENZA);
     auto vax_coverage = (double) ledger->total_vaccinations() / par->population_size;
 
-    std::cerr << "flu infs:         " << total_flu_infs << '\n'
+    std::cerr << "rng seed:         " << rng_seed << '\n'
+              << "flu infs:         " << total_flu_infs << '\n'
               << "flu cases (%):    " << total_flu_cases << " (" << (total_flu_cases/total_flu_infs)*100 << "%)" << '\n'
               << "flu mais (%):     " << total_flu_mai << " (" << (total_flu_mai/total_flu_infs)*100 << "%)" << '\n'
               << "nonflu infs:      " << total_nonflu_infs << '\n'

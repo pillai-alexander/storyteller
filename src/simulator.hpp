@@ -15,7 +15,7 @@ enum RngType {
 
 class RngHandler {
   public:
-    RngHandler();
+    RngHandler(unsigned long int seed);
     ~RngHandler();
 
     double draw_from_rng(RngType type = INFECTION) const;
@@ -39,6 +39,7 @@ class Simulator {
 
   private:
     size_t sim_time;
+    unsigned long int rng_seed;
     std::unique_ptr<Parameters> par;
     std::unique_ptr<Community> community;
     std::unique_ptr<RngHandler> rng_handler;
