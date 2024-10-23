@@ -28,8 +28,8 @@ class Person {
     Person(const Parameters* parameters, const RngHandler* rng_handler);
     ~Person();
 
-    double get_susceptibility() const;
-    void set_susceptibility(double s);
+    double get_susceptibility(StrainType strain) const;
+    void set_susceptibility(StrainType strain, double s);
 
     double get_vaccine_protection(StrainType strain) const;
     void set_vaccine_protection(StrainType strain, double vp);
@@ -45,7 +45,7 @@ class Person {
   private:
     void update_susceptibility();
 
-    double susceptibility;
+    std::vector<double> susceptibility;
     std::vector<double> vaccine_protection;
     std::vector<std::unique_ptr<Infection>> infection_history;
     VaccinationStatus vaccination_status;

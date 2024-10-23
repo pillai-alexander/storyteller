@@ -30,11 +30,15 @@ enum BetaDistributionParameter {
     NUM_BETA_DISTR_PARAMS
 };
 
+typedef std::array<double, NUM_BETA_DISTR_PARAMS> BetaDistrParamArray;
+
 enum GammaDistributionParameter {
     SHAPE,
     SCALE,
     NUM_GAMMA_DISTR_PARAMS
 };
+
+typedef std::array<double, NUM_GAMMA_DISTR_PARAMS> GammaDistrParamArray;
 
 namespace constants {
     extern unsigned int ONE;
@@ -45,7 +49,7 @@ class Parameters {
     Parameters(const RngHandler* rng_handler);
     ~Parameters();
 
-    double sample_susceptibility(const Person* p) const;
+    std::vector<double> sample_susceptibility(const Person* p) const;
     std::vector<double> sample_vaccine_effect() const;
     StrainType sample_strain() const;
 
@@ -61,8 +65,8 @@ class Parameters {
     double baseline_suscep_distr_shape;
     std::vector<double> baseline_suscep_distr_mean;
 
-    // std::array<double, NUM_BETA_DISTR_PARAMS> vax_effect_distr_params;
-    std::vector<std::array<double, NUM_BETA_DISTR_PARAMS>> vax_effect_distr_params;
+    std::vector<std::vector<GammaDistrParamArray>> suscep_distr_params;
+    std::vector<BetaDistrParamArray> vax_effect_distr_params;
 
     size_t population_size;
     size_t simulation_duration;

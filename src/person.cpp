@@ -32,14 +32,14 @@ Person::Person(const Parameters* parameters, const RngHandler* rng_handler) {
 
 Person::~Person() {}
 
-double Person::get_susceptibility() const { return susceptibility; }
-void Person::set_susceptibility(double s) { susceptibility = s; }
+double Person::get_susceptibility(StrainType strain) const { return susceptibility[strain]; }
+void Person::set_susceptibility(StrainType strain, double s) { susceptibility[strain] = s; }
 
 double Person::get_vaccine_protection(StrainType strain) const { return vaccine_protection[strain]; }
 void Person::set_vaccine_protection(StrainType strain, double vp) { vaccine_protection[strain] = vp; }
 
 Infection* Person::infect(StrainType strain, size_t time) {
-    auto current_suscep = susceptibility;
+    auto current_suscep = susceptibility[strain];
     current_suscep *= is_vaccinated() ? 1 - vaccine_protection[strain] : 1;
 
     if (rng->draw_from_rng(INFECTION) < current_suscep) {
