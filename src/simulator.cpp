@@ -48,7 +48,7 @@ Simulator::Simulator()
 Simulator::~Simulator() {}
 
 void Simulator::init() {
-    community->vaccinate_population();
+    community->vaccinate_population(sim_time);
 }
 
 void Simulator::simulate() {
@@ -63,8 +63,22 @@ void Simulator::tick() {
 }
 
 void Simulator::results() {
-    std::cerr << "flu infs: " << community->cumulative_infections[INFLUENZA] << std::endl;
-    std::cerr << "nonflu infs: " << community->cumulative_infections[NON_INFLUENZA] << std::endl;
+    auto ledger = community->ledger.get();
+    auto total_flu_infs = ledger->total_infections(INFLUENZA);
+    auto total_flu_cases = ledger->total_sympt_infections(INFLUENZA);
+    auto total_flu_mai = ledger->total_mai(INFLUENZA);
+    auto total_nonflu_infs = ledger->total_infections(NON_INFLUENZA);
+    auto total_nonflu_cases = ledger->total_sympt_infections(NON_INFLUENZA);
+    auto total_nonflu_mai = ledger->total_mai(NON_INFLUENZA);
+    auto vax_coverage = (double) ledger->total_vaccinations() / par->population_size;
+
+    std::cerr << "flu infs:         " << total_flu_infs << '\n'
+              << "flu cases (%):    " << total_flu_cases << " (" << (total_flu_cases/total_flu_infs)*100 << "%)" << '\n'
+              << "flu mais (%):     " << total_flu_mai << " (" << (total_flu_mai/total_flu_infs)*100 << "%)" << '\n'
+              << "nonflu infs:      " << total_nonflu_infs << '\n'
+              << "nonflu cases (%): " << total_nonflu_cases << " (" << (total_nonflu_cases/total_nonflu_infs)*100 << "%)" << '\n'
+              << "nonflu mais (%):  " << total_nonflu_mai << " (" << (total_nonflu_mai/total_nonflu_infs)*100 << "%)" << '\n'
+              << "vax coverage:     " << vax_coverage*100 << "%" << '\n';
 
     int n_ppl = 0;
     std::cout << "person_id,susceptibility,vax_protection,vax_status,inf_time,inf_strain,inf_symptoms,inf_care" << '\n';

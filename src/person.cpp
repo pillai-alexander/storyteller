@@ -37,7 +37,7 @@ void Person::set_susceptibility(double s) { susceptibility = s; }
 double Person::get_vaccine_protection() const { return vaccine_protection; }
 void Person::set_vaccine_protection(double vp) { vaccine_protection = vp; }
 
-bool Person::infect(StrainType strain, size_t time) {
+Infection* Person::infect(StrainType strain, size_t time) {
     auto current_suscep = susceptibility;
     current_suscep *= is_vaccinated() ? 1 - vaccine_protection : 1;
 
@@ -46,9 +46,9 @@ bool Person::infect(StrainType strain, size_t time) {
         auto seek_care = rng->draw_from_rng(BEHAVIOR) < par->pr_seek_care[vaccination_status];
         infection_history.push_back(std::make_unique<Infection>(strain, time, sympt, seek_care));
 
-        return true;
+        return infection_history.back().get();
     } else {
-        return false;
+        return nullptr;
     }
 }
 

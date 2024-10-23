@@ -34,7 +34,7 @@ class Person {
     double get_vaccine_protection() const;
     void set_vaccine_protection(double vp);
 
-    bool infect(StrainType strain, size_t time);
+    Infection* infect(StrainType strain, size_t time);
     bool vaccinate();
 
     bool has_been_infected() const;
