@@ -77,14 +77,14 @@ void Simulator::results() {
     auto total_nonflu_mai = ledger->total_mai(NON_INFLUENZA);
     auto vax_coverage = (double) ledger->total_vaccinations() / par->population_size;
 
-    std::cerr << "rng seed:         " << rng_seed << '\n'
-              << "flu infs:         " << total_flu_infs << '\n'
-              << "flu cases (%):    " << total_flu_cases << " (" << (total_flu_cases/total_flu_infs)*100 << "%)" << '\n'
-              << "flu mais (%):     " << total_flu_mai << " (" << (total_flu_mai/total_flu_infs)*100 << "%)" << '\n'
-              << "nonflu infs:      " << total_nonflu_infs << '\n'
-              << "nonflu cases (%): " << total_nonflu_cases << " (" << (total_nonflu_cases/total_nonflu_infs)*100 << "%)" << '\n'
-              << "nonflu mais (%):  " << total_nonflu_mai << " (" << (total_nonflu_mai/total_nonflu_infs)*100 << "%)" << '\n'
-              << "vax coverage:     " << vax_coverage*100 << "%" << '\n';
+    std::cerr << "rng seed:           " << rng_seed << '\n'
+              << "flu infs (cAR%):    " << total_flu_infs << " (" << ((double) total_flu_infs/par->population_size)*100 << "%)" << '\n'
+              << "flu cases (%):      " << total_flu_cases << " (" << ((double) total_flu_cases/total_flu_infs)*100 << "%)" << '\n'
+              << "flu mais (%):       " << total_flu_mai << " (" << ((double) total_flu_mai/total_flu_infs)*100 << "%)" << '\n'
+              << "nonflu infs (cAR%): " << total_nonflu_infs << " (" << ((double) total_nonflu_infs/par->population_size)*100 << "%)" << '\n'
+              << "nonflu cases (%):   " << total_nonflu_cases << " (" << ((double) total_nonflu_cases/total_nonflu_infs)*100 << "%)" << '\n'
+              << "nonflu mais (%):    " << total_nonflu_mai << " (" << ((double) total_nonflu_mai/total_nonflu_infs)*100 << "%)" << '\n'
+              << "vax coverage:       " << vax_coverage*100 << "%" << '\n';
 
     int n_ppl = 0;
     std::cout << "person_id,susceptibility,vax_protection,vax_status,inf_time,inf_strain,inf_symptoms,inf_care" << '\n';
