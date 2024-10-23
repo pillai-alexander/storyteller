@@ -176,6 +176,7 @@ init_suscep <- ggplot(sim_dat) +
     label = ve_info,
     fill = "white"
   ) +
+  xlim(0, NA) +
   vax_colors +
   labs(x = "initial flu susceptibility", y = "density") +
   shared_attrs +
