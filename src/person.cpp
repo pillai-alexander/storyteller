@@ -1,4 +1,5 @@
 #include <memory>
+#include <iostream>
 
 #include "person.hpp"
 #include "simulator.hpp"
@@ -68,6 +69,13 @@ bool Person::is_vaccinated() const { return vaccination_status == VACCINATED; }
 Infection* Person::most_recent_infection() const {
     auto inf = has_been_infected() ? infection_history.back().get() : nullptr;
     return inf;
+}
+
+std::ostream& operator<<(std::ostream& o, const Person& p) {
+    return o << "Person ID: " << p.id << '\n'
+      << "\tsusceptibility (flu, nonflu): " << p.susceptibility[INFLUENZA] << ' ' << p.susceptibility[NON_INFLUENZA] << '\n'
+      << "\tvaccination status: " << p.vaccination_status << '\n'
+      << "\tvax protection (flu, nonflu): " << p.vaccine_protection[INFLUENZA] << ' ' << p.vaccine_protection[NON_INFLUENZA] << '\n';
 }
 
 void Person::update_susceptibility() {}

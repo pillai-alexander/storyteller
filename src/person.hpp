@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include <iostream>
 
 #include "parameters.hpp"
 
@@ -41,6 +42,8 @@ class Person {
     bool is_vaccinated() const;
 
     Infection* most_recent_infection() const;
+
+    friend std::ostream& operator<<(std::ostream& o , const Person& p);
 
   private:
     void update_susceptibility();
