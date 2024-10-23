@@ -46,7 +46,9 @@ Infection* Person::infect(StrainType strain, size_t time) {
 
     if (rng->draw_from_rng(INFECTION) < current_suscep) {
         auto sympt = (rng->draw_from_rng(INFECTION) < par->pr_symptoms[strain]) ? SYMPTOMATIC : ASYMPTOMATIC;
-        auto seek_care = rng->draw_from_rng(BEHAVIOR) < par->pr_seek_care[vaccination_status];
+        auto seek_care = sympt == SYMPTOMATIC
+                             ? rng->draw_from_rng(BEHAVIOR) < par->pr_seek_care[vaccination_status]
+                             : false;
         infection_history.push_back(std::make_unique<Infection>(strain, time, sympt, seek_care));
 
         return infection_history.back().get();
