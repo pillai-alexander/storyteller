@@ -32,7 +32,7 @@ enum BetaDistributionParameter {
 
 enum GammaDistributionParameter {
     SHAPE,
-    RATE,
+    SCALE,
     NUM_GAMMA_DISTR_PARAMS
 };
 
