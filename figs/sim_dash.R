@@ -104,7 +104,7 @@ flu_inf_by_vax <- ggplot(ts_flu_inf_by_vax) +
   aes(x = time, y = cumul, color = factor(vax_status)) +
   geom_line() +
   vax_colors +
-  labs(x = "time", y = "cumul. infections") +
+  labs(x = "time", y = "cumul. flu infections") +
   shared_attrs
 
 mai_by_strain_vax <- ggplot(ts_mai_by_strain_vax) +
