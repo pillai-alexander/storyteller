@@ -153,13 +153,13 @@ ve_info <- paste0(
   "Final TND VE est.: ", signif(final_tnd_ve_est$tnd_ve, digits = 3)
 )
 
-init_suscep <-  ggplot(sim_dat) +
+init_suscep <- ggplot(sim_dat) +
   aes(
     x = tot_suscep,
     fill = factor(vax_status)
   ) +
-  geom_density(alpha = 0.5, color = "gray") +
-  geom_textvline(
+  geom_density(alpha = 0.5, color = "gray", adjust = 1e-5) +
+  geom_labelvline(
     data = mean_suscep,
     aes(xintercept = mean, color = factor(vax_status), label = signif(mean)),
     linetype = "dashed"
