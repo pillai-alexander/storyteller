@@ -16,8 +16,8 @@ fig_path <- here(model_dir, "figs")
 sim_data_path <- here(model_dir, "sim.out")
 sim_dat <- fread(sim_data_path) %>%
   mutate(
-    mai = ifelse((inf_symptoms == 1) & (inf_care == 1), 1, 0),
-    tot_suscep = susceptibility * (1 - vax_protection)
+    mai = ifelse((inf_sympts == 1) & (inf_care == 1), 1, 0),
+    tot_suscep = baseline_suscep * (1 - vax_effect)
   )
 
 sim_duration <- 200
@@ -125,13 +125,14 @@ mai_by_strain_vax <- ggplot(ts_mai_by_strain_vax) +
   theme(legend.position = "none")
 
 mean_suscep <- sim_dat %>%
-  mutate(suscep = susceptibility * (1 - vax_protection)) %>%
+  filter(inf_strain == 1) %>%
+  mutate(suscep = baseline_suscep * (1 - vax_effect)) %>%
   group_by(vax_status) %>%
   summarize(mean = mean(suscep))
 
 true_ve <- sim_dat %>%
-  filter(vax_status == 1) %>%
-  summarize(true_ve = 1 - mean(vax_protection))
+  filter(vax_status == 1 & inf_strain == 1) %>%
+  summarize(true_ve = 1 - mean(vax_effect))
 
 mean_suscep_ve_est <- mean_suscep %>%
   summarize(ve_est = 1 - (mean[vax_status == 1] / mean[vax_status == 0]))
@@ -153,7 +154,7 @@ ve_info <- paste0(
   "Final TND VE est.: ", signif(final_tnd_ve_est$tnd_ve, digits = 3)
 )
 
-init_suscep <- ggplot(sim_dat) +
+init_suscep <- ggplot(sim_dat %>% filter(inf_strain == 1)) +
   aes(
     x = tot_suscep,
     fill = factor(vax_status)
