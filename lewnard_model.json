@@ -1,0 +1,79 @@
+{
+    "experiment_name" : "lewnard_model",
+
+    "parameters" : [
+        {
+            "name" : "replicate_id",
+            "type" : "INT",
+            "par1" : 0,
+            "par2" : 100
+        },
+        {
+            "name" : "vaxd_suscep_distr_shape",
+            "type" : "REAL",
+            "par1" : 0,
+            "par2" : 0
+        },
+        {
+            "name" : "unvaxd_suscep_distr_shape",
+            "type" : "REAL",
+            "par1" : 0,
+            "par2" : 0
+        },
+        {
+            "name" : "vaxd_suscep_mean",
+            "type" : "REAL",
+            "par1" : 1,
+            "par2" : 1
+        },
+        {
+            "name" : "unvaxd_suscep_mean",
+            "type" : "REAL",
+            "par1" : 1,
+            "par2" : 1
+        },
+        {
+            "name" : "vax_effect_distr_a",
+            "type" : "REAL",
+            "par1" : 0,
+            "par2" : 0
+        },
+        {
+            "name" : "vax_effect_distr_b",
+            "type" : "REAL",
+            "par1" : 0.0,
+            "par2" : 1.0
+        },
+        {
+            "name" : "pr_symptoms_given_flu",
+            "type" : "REAL",
+            "par1" : 1.0,
+            "par2" : 1.0
+        },
+        {
+            "name" : "pr_symptoms_given_nonflu",
+            "type" : "COPY",
+            "par1" : "pr_symptoms_given_flu"
+        },
+        {
+            "name" : "pr_careseeking_given_vaxd",
+            "type" : "REAL",
+            "par1" : 1.0,
+            "par2" : 1.0
+        },
+        {
+            "name" : "pr_careseeking_given_unvaxd",
+            "type" : "COPY",
+            "par1" : "pr_careseeking_given_vaxd"
+        },
+        {
+            "name" : "pr_flu_exposure",
+            "type" : "REAL",
+            "par1" : 0.001,
+            "par2" : 0.01,
+            "par3" : 0.001
+        }
+    ],
+
+    "metrics" : []
+}
