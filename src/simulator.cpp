@@ -45,7 +45,8 @@ gsl_rng* RngHandler::get_rng(RngType type) const {
     }
 }
 
-LineList::LineList() {
+LineList::LineList(const Parameters* parameters) {
+    par = parameters;
     header = "inf_id,inf_time,inf_strain,inf_sympts,inf_care,p_id,vax_status,baseline_suscep,vax_effect";
 }
 
@@ -57,6 +58,8 @@ void LineList::log_infection(const Infection* i) {
 
 void LineList::generate_linelist_csv(std::string filepath) {
     extract_infection_information();
+
+    if (filepath.empty()) filepath = par->linelist_file_path;
     std::ofstream file(filepath);
     file << header << '\n';
     for (size_t i = 0; i < infections.size(); ++i) {
@@ -144,14 +147,12 @@ LineList Simulator::results() {
               << "nonflu mais (inf%):  " << total_nonflu_mai << " (" << ((double) total_nonflu_mai/total_nonflu_infs)*100 << "%)" << '\n'
               << "vax coverage (%):    " << vax_coverage*100 << "%" << '\n';
 
-    LineList ll;
+    LineList ll(par.get());
     for (auto& p : community->people) {
         for (auto& i : p->get_infection_history()) {
             ll.log_infection(i.get());
         }
     }
-
-    ll.generate_linelist_csv(par->linelist_file_path);
 
     return std::move(ll);
 }

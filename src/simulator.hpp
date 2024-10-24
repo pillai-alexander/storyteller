@@ -33,10 +33,10 @@ class RngHandler {
 
 class LineList {
   public:
-    LineList();
+    LineList(const Parameters* parameters);
     ~LineList();
 
-    void generate_linelist_csv(std::string filepath);
+    void generate_linelist_csv(std::string filepath = "");
     void log_infection(const Infection* i);
 
   private:
@@ -53,6 +53,8 @@ class LineList {
     std::vector<double> vax_effect;
 
     std::string header;
+
+    const Parameters* par;
 };
 
 class Simulator {
