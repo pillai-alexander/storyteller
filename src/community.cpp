@@ -25,6 +25,17 @@ std::vector<std::vector<size_t>> Ledger::get_sympt_inf_incidence() const { retur
 std::vector<std::vector<size_t>> Ledger::get_mai_incidence() const { return mai_incidence; }
 std::vector<size_t> Ledger::get_vax_incidence() const { return vax_incidence; }
 
+void Ledger::log_infection(const Infection* i) {
+    auto time   = i->get_infection_time();
+    auto strain = i->get_strain();
+    auto sympts = i->get_symptoms();
+    auto mai    = i->get_sought_care();
+
+    inf_incidence[strain][time]++;
+    if (sympts == SYMPTOMATIC) sympt_inf_incidence[strain][time]++;
+    if (mai) mai_incidence[strain][time]++;
+}
+
 size_t Ledger::total_infections(StrainType strain) const {
     return std::accumulate(inf_incidence[strain].begin(),
                                  inf_incidence[strain].end(),
@@ -71,31 +82,14 @@ void Community::init_population() {
 }
 
 void Community::transmission(size_t time) {
-    // std::vector<Person*> tomorrow_susceptibles;
-    // tomorrow_susceptibles.reserve(susceptibles.size());
     for (auto& p : people) {
         // determine if exposure with occurs
         auto strain = par->sample_strain();
-        if (strain == NUM_STRAIN_TYPES) {
-            // tomorrow_susceptibles.push_back(p);
-            continue;
-        }
+        if (strain == NUM_STRAIN_TYPES) continue;
         // determine if infection occurs
         auto infection_occurs = p->attempt_infection(strain, time);
-        if (infection_occurs) {
-            auto strain = infection_occurs->get_strain();
-            auto sympts = infection_occurs->get_symptoms();
-            auto mai    = infection_occurs->get_sought_care();
-
-            ledger->inf_incidence[strain][time]++;
-            if (sympts == SYMPTOMATIC) ledger->sympt_inf_incidence[strain][time]++;
-            if (mai) ledger->mai_incidence[strain][time]++;
-
-            // if(strain == NON_INFLUENZA) tomorrow_susceptibles.push_back(p);
-        }
+        if (infection_occurs) ledger->log_infection(infection_occurs);
     }
-    // tomorrow_susceptibles.shrink_to_fit();
-    // susceptibles = tomorrow_susceptibles;
 }
 
 void Community::vaccinate_population(size_t time) {

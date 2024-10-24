@@ -6,7 +6,7 @@
 #include "parameters.hpp"
 
 class Person;
-// class Parameters;
+class Infection;
 class RngHandler;
 
 class Ledger {
@@ -19,6 +19,8 @@ class Ledger {
     std::vector<std::vector<size_t>> get_sympt_inf_incidence() const;
     std::vector<std::vector<size_t>> get_mai_incidence() const;
     std::vector<size_t> get_vax_incidence() const;
+
+    void log_infection(const Infection* i);
 
     size_t total_infections(StrainType strain) const;
     size_t total_sympt_infections(StrainType strain) const;
