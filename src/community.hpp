@@ -16,30 +16,26 @@ class Ledger {
     Ledger(const Parameters* parameters);
     ~Ledger();
 
-    vector2d<size_t> get_inf_incidence() const;
-    vector2d<size_t> get_sympt_inf_incidence() const;
-    vector2d<size_t> get_mai_incidence() const;
+    vector3d<size_t> get_inf_incidence() const;
+    vector3d<size_t> get_sympt_inf_incidence() const;
+    vector3d<size_t> get_mai_incidence() const;
     std::vector<size_t> get_vax_incidence() const;
 
     void log_infection(const Infection* i);
 
-    size_t total_infections(StrainType strain) const;
-    size_t total_sympt_infections(StrainType strain) const;
-    size_t total_mai(StrainType strain) const;
+    size_t total_infections(VaccinationStatus vaxd, StrainType strain) const;
+    size_t total_sympt_infections(VaccinationStatus vaxd, StrainType strain) const;
+    size_t total_mai(VaccinationStatus vaxd, StrainType strain) const;
     size_t total_vaccinations() const;
 
   private:
-  // EPIDEMIC DATA
-    // infection incidence [strain][time]
-    vector2d<size_t> inf_incidence;
-    // symptomatic infection incidence [strain][time]
-    vector2d<size_t> sympt_inf_incidence;
-    // mai incidence [strain][time]
-    vector2d<size_t> mai_incidence;
+    // EPIDEMIC DATA
+    vector3d<size_t> inf_incidence;       // [vax status][strain][time]
+    vector3d<size_t> sympt_inf_incidence; // [vax status][strain][time]
+    vector3d<size_t> mai_incidence;       // [vax status][strain][time]
 
     // POPULATION DATA
-    // num vaccinated [time]
-    std::vector<size_t> vax_incidence;
+    std::vector<size_t> vax_incidence; // [time]
 
     const Parameters* par;
 };

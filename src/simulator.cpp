@@ -130,21 +130,21 @@ void Simulator::tick() {
 
 LineList Simulator::results() {
     auto ledger = community->ledger.get();
-    auto total_flu_infs = ledger->total_infections(INFLUENZA);
-    auto total_flu_cases = ledger->total_sympt_infections(INFLUENZA);
-    auto total_flu_mai = ledger->total_mai(INFLUENZA);
-    auto total_nonflu_infs = ledger->total_infections(NON_INFLUENZA);
-    auto total_nonflu_cases = ledger->total_sympt_infections(NON_INFLUENZA);
-    auto total_nonflu_mai = ledger->total_mai(NON_INFLUENZA);
+    auto total_vaxd_flu_infs = ledger->total_infections(VACCINATED, INFLUENZA);
+    auto total_vaxd_flu_cases = ledger->total_sympt_infections(VACCINATED, INFLUENZA);
+    auto total_vaxd_flu_mai = ledger->total_mai(VACCINATED, INFLUENZA);
+    auto total_vaxd_nonflu_infs = ledger->total_infections(VACCINATED, NON_INFLUENZA);
+    auto total_vaxd_nonflu_cases = ledger->total_sympt_infections(VACCINATED, NON_INFLUENZA);
+    auto total_vaxd_nonflu_mai = ledger->total_mai(VACCINATED, NON_INFLUENZA);
     auto vax_coverage = (double) ledger->total_vaccinations() / par->population_size;
 
     std::cerr << "rng seed:            " << rng_seed << '\n'
-              << "flu infs (cAR%):     " << total_flu_infs << " (" << ((double) total_flu_infs/par->population_size)*100 << "%)" << '\n'
-              << "flu cases (inf%):    " << total_flu_cases << " (" << ((double) total_flu_cases/total_flu_infs)*100 << "%)" << '\n'
-              << "flu mais (inf%):     " << total_flu_mai << " (" << ((double) total_flu_mai/total_flu_infs)*100 << "%)" << '\n'
-              << "nonflu infs (cAR%):  " << total_nonflu_infs << " (" << ((double) total_nonflu_infs/par->population_size)*100 << "%)" << '\n'
-              << "nonflu cases (inf%): " << total_nonflu_cases << " (" << ((double) total_nonflu_cases/total_nonflu_infs)*100 << "%)" << '\n'
-              << "nonflu mais (inf%):  " << total_nonflu_mai << " (" << ((double) total_nonflu_mai/total_nonflu_infs)*100 << "%)" << '\n'
+              << "flu infs (cAR%):     " << total_vaxd_flu_infs << " (" << ((double) total_vaxd_flu_infs/par->population_size)*100 << "%)" << '\n'
+              << "flu cases (inf%):    " << total_vaxd_flu_cases << " (" << ((double) total_vaxd_flu_cases/total_vaxd_flu_infs)*100 << "%)" << '\n'
+              << "flu mais (inf%):     " << total_vaxd_flu_mai << " (" << ((double) total_vaxd_flu_mai/total_vaxd_flu_infs)*100 << "%)" << '\n'
+              << "nonflu infs (cAR%):  " << total_vaxd_nonflu_infs << " (" << ((double) total_vaxd_nonflu_infs/par->population_size)*100 << "%)" << '\n'
+              << "nonflu cases (inf%): " << total_vaxd_nonflu_cases << " (" << ((double) total_vaxd_nonflu_cases/total_vaxd_nonflu_infs)*100 << "%)" << '\n'
+              << "nonflu mais (inf%):  " << total_vaxd_nonflu_mai << " (" << ((double) total_vaxd_nonflu_mai/total_vaxd_nonflu_infs)*100 << "%)" << '\n'
               << "vax coverage (%):    " << vax_coverage*100 << "%" << '\n';
 
     LineList ll(par.get());
