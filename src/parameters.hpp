@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <array>
+#include <string>
 
 class Person;
 class RngHandler;
@@ -67,7 +68,11 @@ class Parameters {
 
     size_t population_size;
     size_t simulation_duration;
+
+    std::string linelist_file_path;
+
   private:
     void init_parameters();
+
     const RngHandler* rng;
 };

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./build/sim > sim.out
+./build/sim
 
 Rscript figs/sim_dash.R
 

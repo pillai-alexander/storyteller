@@ -1,10 +1,14 @@
 #pragma once
 
 #include <memory>
+#include <string>
+
 #include <gsl/gsl_rng.h>
 
-class Parameters;
+#include "parameters.hpp"
+
 class Community;
+class Infection;
 
 enum RngType {
     INFECTION,
@@ -27,6 +31,30 @@ class RngHandler {
     gsl_rng* behavior_rng;
 };
 
+class LineList {
+  public:
+    LineList();
+    ~LineList();
+
+    void generate_linelist_csv(std::string filepath);
+    void log_infection(const Infection* i);
+
+  private:
+    void extract_infection_information();
+
+    std::vector<const Infection*> infections;
+    std::vector<size_t> inf_time;
+    std::vector<StrainType> inf_strain;
+    std::vector<SymptomClass> inf_symptoms;
+    std::vector<bool> inf_care;
+    std::vector<size_t> person_id;
+    std::vector<VaccinationStatus> vax_status;
+    std::vector<double> baseline_suscep;
+    std::vector<double> vax_effect;
+
+    std::string header;
+};
+
 class Simulator {
   public:
     Simulator();
@@ -35,7 +63,7 @@ class Simulator {
     void init();
     void simulate();
     void tick();
-    void results();
+    LineList results();
 
   private:
     size_t sim_time;

@@ -2,6 +2,7 @@
 #include <vector>
 #include <array>
 #include <numeric>
+#include <string>
 
 #include <gsl/gsl_randist.h>
 
@@ -42,6 +43,8 @@ void Parameters::init_parameters() {
         strain_probs[s] = pr_exposure[s];
     }
     strain_probs[NUM_STRAIN_TYPES] = 1.0 - std::accumulate(pr_exposure.begin(), pr_exposure.end(), 0.0);
+
+    linelist_file_path = "sim.out";
 }
 
 std::vector<double> Parameters::sample_susceptibility(const Person* p) const {

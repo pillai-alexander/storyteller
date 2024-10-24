@@ -2,8 +2,7 @@
 
 #include "simulator.hpp"
 
-int main()
-{
+int main() {
     // init simulation parameterization (read from sqlite db?)
     // construct community
     Simulator sim;
@@ -11,6 +10,6 @@ int main()
     // simulate
     sim.simulate();
     // return desired metrics
-    sim.results();
+    LineList ll = sim.results();
     return 0;
 }
