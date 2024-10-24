@@ -1,5 +1,6 @@
 #include <memory>
 #include <iostream>
+#include <algorithm>
 
 #include "person.hpp"
 #include "simulator.hpp"
@@ -40,21 +41,25 @@ void Person::set_susceptibility(StrainType strain, double s) { susceptibility[st
 double Person::get_vaccine_protection(StrainType strain) const { return vaccine_protection[strain]; }
 void Person::set_vaccine_protection(StrainType strain, double vp) { vaccine_protection[strain] = vp; }
 
-Infection* Person::infect(StrainType strain, size_t time) {
-    auto current_suscep = susceptibility[strain];
-    current_suscep *= is_vaccinated() ? 1 - vaccine_protection[strain] : 1;
 
-    if (rng->draw_from_rng(INFECTION) < current_suscep) {
-        auto sympt = (rng->draw_from_rng(INFECTION) < par->pr_symptoms[strain]) ? SYMPTOMATIC : ASYMPTOMATIC;
-        auto seek_care = sympt == SYMPTOMATIC
-                             ? rng->draw_from_rng(BEHAVIOR) < par->pr_seek_care[vaccination_status]
-                             : false;
-        infection_history.push_back(std::make_unique<Infection>(strain, time, sympt, seek_care));
+Infection* Person::attempt_infection(StrainType strain, size_t time) {
+    Infection* inf = nullptr;
+    if (is_susceptible_to(strain)) {
+        auto current_suscep = susceptibility[strain];
+        current_suscep *= is_vaccinated() ? 1 - vaccine_protection[strain] : 1;
 
-        return infection_history.back().get();
-    } else {
-        return nullptr;
+        if (rng->draw_from_rng(INFECTION) < current_suscep) {
+            auto sympt = (rng->draw_from_rng(INFECTION) < par->pr_symptoms[strain]) ? SYMPTOMATIC : ASYMPTOMATIC;
+            auto seek_care = sympt == SYMPTOMATIC
+                                ? rng->draw_from_rng(BEHAVIOR) < par->pr_seek_care[vaccination_status]
+                                : false;
+            infection_history.push_back(std::make_unique<Infection>(this, strain, time, sympt, seek_care));
+
+            inf = infection_history.back().get();
+        }
     }
+
+    return inf;
 }
 
 bool Person::vaccinate() {
@@ -66,7 +71,28 @@ bool Person::vaccinate() {
 }
 
 bool Person::has_been_infected() const { return infection_history.size() > 0; }
+
+bool Person::has_been_infected_with(StrainType strain) const {
+    return std::any_of(
+        infection_history.begin(),
+        infection_history.end(),
+        [strain](const std::unique_ptr<Infection>& i) { return i->get_strain() == strain; }
+    );
+}
+
 bool Person::is_vaccinated() const { return vaccination_status == VACCINATED; }
+
+bool Person::is_susceptible_to(StrainType strain) const {
+    switch (strain) {
+        case INFLUENZA: {
+            return not has_been_infected_with(INFLUENZA);
+        }
+        case NON_INFLUENZA:
+            [[fallthrough]];
+        default:
+            return true;
+    }
+}
 
 Infection* Person::most_recent_infection() const {
     auto inf = has_been_infected() ? infection_history.back().get() : nullptr;

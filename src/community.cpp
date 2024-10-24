@@ -71,16 +71,17 @@ void Community::init_population() {
 }
 
 void Community::transmission(size_t time) {
-    std::vector<Person*> tomorrow_susceptibles;
-    for (auto p : susceptibles) {
+    // std::vector<Person*> tomorrow_susceptibles;
+    // tomorrow_susceptibles.reserve(susceptibles.size());
+    for (auto& p : people) {
         // determine if exposure with occurs
         auto strain = par->sample_strain();
         if (strain == NUM_STRAIN_TYPES) {
-            tomorrow_susceptibles.push_back(p); 
+            // tomorrow_susceptibles.push_back(p);
             continue;
         }
         // determine if infection occurs
-        auto infection_occurs = p->infect(strain, time);
+        auto infection_occurs = p->attempt_infection(strain, time);
         if (infection_occurs) {
             auto strain = infection_occurs->get_strain();
             auto sympts = infection_occurs->get_symptoms();
@@ -89,9 +90,12 @@ void Community::transmission(size_t time) {
             ledger->inf_incidence[strain][time]++;
             if (sympts == SYMPTOMATIC) ledger->sympt_inf_incidence[strain][time]++;
             if (mai) ledger->mai_incidence[strain][time]++;
+
+            // if(strain == NON_INFLUENZA) tomorrow_susceptibles.push_back(p);
         }
     }
-    susceptibles = tomorrow_susceptibles;
+    // tomorrow_susceptibles.shrink_to_fit();
+    // susceptibles = tomorrow_susceptibles;
 }
 
 void Community::vaccinate_population(size_t time) {
