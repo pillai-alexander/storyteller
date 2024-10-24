@@ -6,6 +6,7 @@ set(HEADER_LIST
     parameters.hpp
     person.hpp
     utility.hpp
+    ledger.hpp
 )
 
 add_library(core
@@ -14,5 +15,6 @@ add_library(core
     parameters.cpp
     person.cpp
     utility.cpp
+    ledger.cpp
     ${HEADER_LIST}
 )

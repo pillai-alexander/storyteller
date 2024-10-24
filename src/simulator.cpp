@@ -10,6 +10,7 @@
 #include "community.hpp"
 #include "parameters.hpp"
 #include "person.hpp"
+#include "ledger.hpp"
 
 RngHandler::RngHandler(unsigned long int seed) {
     infection_rng   = gsl_rng_alloc(gsl_rng_mt19937);
