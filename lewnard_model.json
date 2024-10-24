@@ -1,13 +1,8 @@
 {
     "experiment_name" : "lewnard_model",
+    "n_realizations"  : 100,
 
-    "parameters" : [
-        {
-            "name" : "replicate_id",
-            "type" : "INT",
-            "par1" : 0,
-            "par2" : 100
-        },
+    "model_parameters" : [
         {
             "name" : "vaxd_suscep_distr_shape",
             "type" : "REAL",
@@ -72,6 +67,12 @@
             "par1" : 0.001,
             "par2" : 0.01,
             "par3" : 0.001
+        },
+        {
+            "name" : "pr_nonflu_exposure",
+            "type" : "REAL",
+            "par1" : 0.001,
+            "par2" : 0.001
         }
     ],
 
