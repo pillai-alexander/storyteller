@@ -9,15 +9,17 @@
 class Infection {
   friend class Person;
   public:
-    Infection(StrainType strain, size_t time, SymptomClass sympt, bool care);
+    Infection(Person* p, StrainType strain, size_t time, SymptomClass sympt, bool care);
     ~Infection();
 
+    Person* get_infectee() const;
     StrainType get_strain() const;
     size_t get_infection_time() const;
     SymptomClass get_symptoms() const;
     bool get_sought_care() const;
 
   private:
+    Person* infectee;
     StrainType infection_strain;
     size_t infection_time;
     SymptomClass symptoms;
@@ -29,11 +31,15 @@ class Person {
     Person(size_t id, const Parameters* parameters, const RngHandler* rng_handler);
     ~Person();
 
+    size_t get_id() const;
+
     double get_susceptibility(StrainType strain) const;
     void set_susceptibility(StrainType strain, double s);
 
     double get_vaccine_protection(StrainType strain) const;
     void set_vaccine_protection(StrainType strain, double vp);
+
+    const std::vector<std::unique_ptr<Infection>>& get_infection_history() const;
 
     Infection* attempt_infection(StrainType strain, size_t time);
     bool vaccinate();

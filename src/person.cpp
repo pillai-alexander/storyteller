@@ -6,20 +6,19 @@
 #include "simulator.hpp"
 #include "parameters.hpp"
 
-Infection::Infection(StrainType strain, size_t t, SymptomClass sympt, bool care)
-    : infection_strain(strain),
+Infection::Infection(Person* p, StrainType strain, size_t t, SymptomClass sympt, bool care)
+    : infectee(p),
+      infection_strain(strain),
       infection_time(t),
       symptoms(sympt),
       sought_care(care) {}
 
 Infection::~Infection() {}
 
+Person* Infection::get_infectee() const { return infectee; }
 StrainType Infection::get_strain() const { return infection_strain; }
-
 size_t Infection::get_infection_time() const { return infection_time; }
-
 SymptomClass Infection::get_symptoms() const { return symptoms; }
-
 bool Infection::get_sought_care() const { return sought_care; }
 
 Person::Person(size_t assigned_id, const Parameters* parameters, const RngHandler* rng_handler) {
@@ -35,12 +34,15 @@ Person::Person(size_t assigned_id, const Parameters* parameters, const RngHandle
 
 Person::~Person() {}
 
+size_t Person::get_id() const { return id; }
+
 double Person::get_susceptibility(StrainType strain) const { return susceptibility[strain]; }
 void Person::set_susceptibility(StrainType strain, double s) { susceptibility[strain] = s; }
 
 double Person::get_vaccine_protection(StrainType strain) const { return vaccine_protection[strain]; }
 void Person::set_vaccine_protection(StrainType strain, double vp) { vaccine_protection[strain] = vp; }
 
+const std::vector<std::unique_ptr<Infection>>& Person::get_infection_history() const { return infection_history; }
 
 Infection* Person::attempt_infection(StrainType strain, size_t time) {
     Infection* inf = nullptr;
