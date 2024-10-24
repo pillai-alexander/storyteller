@@ -66,6 +66,7 @@ class Parameters {
     size_t simulation_duration;
 
     std::string linelist_file_path;
+    std::string simvis_file_path;
 
   private:
     void init_parameters();

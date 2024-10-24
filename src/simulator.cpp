@@ -73,6 +73,17 @@ void Simulator::tick() {
 
 void Simulator::results() {
     auto ledger = community->ledger.get();
+
+    // { // generate linelist csv (sim.linelist)
+    //     ledger->generate_linelist_csv();
+    // }
+
+    { // generate simvis csv (sim.vis)
+        ledger->calculate_cumulatives();
+        ledger->calculate_tnd_ve_est();
+        ledger->generate_simvis_csv();
+    }
+
     auto total_vaxd_flu_infs = ledger->total_infections(VACCINATED, INFLUENZA);
     auto total_vaxd_flu_cases = ledger->total_sympt_infections(VACCINATED, INFLUENZA);
     auto total_vaxd_flu_mai = ledger->total_mai(VACCINATED, INFLUENZA);
@@ -80,6 +91,7 @@ void Simulator::results() {
     auto total_vaxd_nonflu_cases = ledger->total_sympt_infections(VACCINATED, NON_INFLUENZA);
     auto total_vaxd_nonflu_mai = ledger->total_mai(VACCINATED, NON_INFLUENZA);
     auto vax_coverage = (double) ledger->total_vaccinations() / par->population_size;
+    auto final_tnd_ve = ledger->get_tnd_ve_est(par->simulation_duration - 1);
 
     std::cerr << "rng seed:            " << rng_seed << '\n'
               << "flu infs (cAR%):     " << total_vaxd_flu_infs << " (" << ((double) total_vaxd_flu_infs/par->population_size)*100 << "%)" << '\n'
@@ -88,7 +100,5 @@ void Simulator::results() {
               << "nonflu infs (cAR%):  " << total_vaxd_nonflu_infs << " (" << ((double) total_vaxd_nonflu_infs/par->population_size)*100 << "%)" << '\n'
               << "nonflu cases (inf%): " << total_vaxd_nonflu_cases << " (" << ((double) total_vaxd_nonflu_cases/total_vaxd_nonflu_infs)*100 << "%)" << '\n'
               << "nonflu mais (inf%):  " << total_vaxd_nonflu_mai << " (" << ((double) total_vaxd_nonflu_mai/total_vaxd_nonflu_infs)*100 << "%)" << '\n'
-              << "vax coverage (%):    " << vax_coverage*100 << "%" << '\n';
-
-    community->ledger->generate_linelist_csv();
+              << "final tnd ve (vax%): " << final_tnd_ve << " ("<< vax_coverage*100 << "%)" << '\n';
 }
