@@ -41,10 +41,6 @@ enum GammaDistributionParameter {
 
 typedef std::array<double, NUM_GAMMA_DISTR_PARAMS> GammaDistrParamArray;
 
-namespace constants {
-    extern unsigned int ONE;
-}
-
 class Parameters {
   public:
     Parameters(const RngHandler* rng_handler);

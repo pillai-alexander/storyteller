@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "parameters.hpp"
+#include "utility.hpp"
 
 class Person;
 class Infection;
@@ -15,9 +16,9 @@ class Ledger {
     Ledger(const Parameters* parameters);
     ~Ledger();
 
-    std::vector<std::vector<size_t>> get_inf_incidence() const;
-    std::vector<std::vector<size_t>> get_sympt_inf_incidence() const;
-    std::vector<std::vector<size_t>> get_mai_incidence() const;
+    vector2d<size_t> get_inf_incidence() const;
+    vector2d<size_t> get_sympt_inf_incidence() const;
+    vector2d<size_t> get_mai_incidence() const;
     std::vector<size_t> get_vax_incidence() const;
 
     void log_infection(const Infection* i);
@@ -30,11 +31,11 @@ class Ledger {
   private:
   // EPIDEMIC DATA
     // infection incidence [strain][time]
-    std::vector<std::vector<size_t>> inf_incidence;
+    vector2d<size_t> inf_incidence;
     // symptomatic infection incidence [strain][time]
-    std::vector<std::vector<size_t>> sympt_inf_incidence;
+    vector2d<size_t> sympt_inf_incidence;
     // mai incidence [strain][time]
-    std::vector<std::vector<size_t>> mai_incidence;
+    vector2d<size_t> mai_incidence;
 
     // POPULATION DATA
     // num vaccinated [time]

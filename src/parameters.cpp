@@ -9,10 +9,7 @@
 #include "parameters.hpp"
 #include "person.hpp"
 #include "simulator.hpp"
-
-namespace constants {
-    unsigned int ONE = 1;
-}
+#include "utility.hpp"
 
 Parameters::Parameters(const RngHandler* rng_handler) {
     rng = rng_handler;

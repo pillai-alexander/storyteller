@@ -8,21 +8,22 @@
 #include "parameters.hpp"
 #include "person.hpp"
 #include "simulator.hpp"
+#include "utility.hpp"
 
 Ledger::Ledger(const Parameters* parameters) {
     par = parameters;
-    inf_incidence       = std::vector<std::vector<size_t>>(NUM_STRAIN_TYPES, std::vector<size_t>(par->simulation_duration, 0));
-    sympt_inf_incidence = std::vector<std::vector<size_t>>(NUM_STRAIN_TYPES, std::vector<size_t>(par->simulation_duration, 0));
-    mai_incidence       = std::vector<std::vector<size_t>>(NUM_STRAIN_TYPES, std::vector<size_t>(par->simulation_duration, 0));
+    inf_incidence       = vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(par->simulation_duration, 0));
+    sympt_inf_incidence = vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(par->simulation_duration, 0));
+    mai_incidence       = vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(par->simulation_duration, 0));
 
     vax_incidence = std::vector<size_t>(par->simulation_duration, 0);
 }
 
 Ledger::~Ledger() {}
 
-std::vector<std::vector<size_t>> Ledger::get_inf_incidence() const { return inf_incidence; }
-std::vector<std::vector<size_t>> Ledger::get_sympt_inf_incidence() const { return sympt_inf_incidence; }
-std::vector<std::vector<size_t>> Ledger::get_mai_incidence() const { return mai_incidence; }
+vector2d<size_t> Ledger::get_inf_incidence() const { return inf_incidence; }
+vector2d<size_t> Ledger::get_sympt_inf_incidence() const { return sympt_inf_incidence; }
+vector2d<size_t> Ledger::get_mai_incidence() const { return mai_incidence; }
 std::vector<size_t> Ledger::get_vax_incidence() const { return vax_incidence; }
 
 void Ledger::log_infection(const Infection* i) {

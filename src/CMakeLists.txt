@@ -5,6 +5,7 @@ set(HEADER_LIST
     community.hpp
     parameters.hpp
     person.hpp
+    utility.hpp
 )
 
 add_library(core
@@ -12,5 +13,6 @@ add_library(core
     community.cpp
     parameters.cpp
     person.cpp
+    utility.cpp
     ${HEADER_LIST}
 )
