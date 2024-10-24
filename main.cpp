@@ -10,7 +10,6 @@ int main() {
     // simulate
     sim.simulate();
     // return desired metrics
-    LineList ll = sim.results();
-    ll.generate_linelist_csv();
+    sim.results();
     return 0;
 }

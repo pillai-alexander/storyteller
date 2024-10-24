@@ -46,64 +46,6 @@ gsl_rng* RngHandler::get_rng(RngType type) const {
     }
 }
 
-LineList::LineList(const Parameters* parameters) {
-    par = parameters;
-    header = "inf_id,inf_time,inf_strain,inf_sympts,inf_care,p_id,vax_status,baseline_suscep,vax_effect";
-}
-
-LineList::~LineList() {}
-
-void LineList::log_infection(const Infection* i) {
-    infections.push_back(i);
-}
-
-void LineList::generate_linelist_csv(std::string filepath) {
-    extract_infection_information();
-
-    if (filepath.empty()) filepath = par->linelist_file_path;
-    std::ofstream file(filepath);
-    file << header << '\n';
-    for (size_t i = 0; i < infections.size(); ++i) {
-        file << i << ','
-             << inf_time[i] << ','
-             << inf_strain[i] << ','
-             << inf_symptoms[i] << ','
-             << inf_care[i] << ','
-             << person_id[i] << ','
-             << vax_status[i] << ','
-             << baseline_suscep[i] << ','
-             << vax_effect[i] << '\n';
-    }
-    file.close();
-}
-
-void LineList::extract_infection_information() {
-    auto n_infs = infections.size();
-    inf_time = std::vector<size_t>(n_infs);
-    inf_strain = std::vector<StrainType>(n_infs);
-    inf_symptoms = std::vector<SymptomClass>(n_infs);
-    inf_care = std::vector<bool>(n_infs);
-    person_id = std::vector<size_t>(n_infs);
-    vax_status = std::vector<VaccinationStatus>(n_infs);
-    baseline_suscep = std::vector<double>(n_infs);
-    vax_effect = std::vector<double>(n_infs);
-
-    for (size_t i = 0; i < n_infs; ++i) {
-        auto infection = infections[i];
-        auto strain = infection->get_strain();
-        auto infectee = infection->get_infectee();
-
-        inf_time[i] = infection->get_infection_time();
-        inf_strain[i] = strain;
-        inf_symptoms[i] = infection->get_symptoms();
-        inf_care[i] = infection->get_sought_care();
-        person_id[i] = infectee->get_id();
-        vax_status[i] = (VaccinationStatus) infectee->is_vaccinated();
-        baseline_suscep[i] = infectee->get_susceptibility(strain);
-        vax_effect[i] = infectee->get_vaccine_protection(strain);
-    }
-}
-
 Simulator::Simulator() {
     sim_time = 0;
     rng_seed = 0;
@@ -129,7 +71,7 @@ void Simulator::tick() {
     community->transmission(sim_time);
 }
 
-LineList Simulator::results() {
+void Simulator::results() {
     auto ledger = community->ledger.get();
     auto total_vaxd_flu_infs = ledger->total_infections(VACCINATED, INFLUENZA);
     auto total_vaxd_flu_cases = ledger->total_sympt_infections(VACCINATED, INFLUENZA);
@@ -148,12 +90,5 @@ LineList Simulator::results() {
               << "nonflu mais (inf%):  " << total_vaxd_nonflu_mai << " (" << ((double) total_vaxd_nonflu_mai/total_vaxd_nonflu_infs)*100 << "%)" << '\n'
               << "vax coverage (%):    " << vax_coverage*100 << "%" << '\n';
 
-    LineList ll(par.get());
-    for (auto& p : community->people) {
-        for (auto& i : p->get_infection_history()) {
-            ll.log_infection(i.get());
-        }
-    }
-
-    return std::move(ll);
+    community->ledger->generate_linelist_csv();
 }

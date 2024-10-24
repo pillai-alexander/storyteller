@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 
 #include "utility.hpp"
 #include "parameters.hpp"
@@ -25,14 +26,19 @@ class Ledger {
     size_t total_mai(VaccinationStatus vaxd, StrainType strain) const;
     size_t total_vaccinations() const;
 
+    void generate_linelist_csv(std::string filepath = "");
+
   private:
     // EPIDEMIC DATA
+    std::vector<const Infection*> infections;
     vector3d<size_t> inf_incidence;       // [vax status][strain][time]
     vector3d<size_t> sympt_inf_incidence; // [vax status][strain][time]
     vector3d<size_t> mai_incidence;       // [vax status][strain][time]
 
     // POPULATION DATA
     std::vector<size_t> vax_incidence; // [time]
+
+    std::string linelist_header;
 
     const Parameters* par;
 };
