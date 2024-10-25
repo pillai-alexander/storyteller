@@ -22,6 +22,8 @@ Parameters::Parameters(const RngHandler* rng_handler, std::map<std::string, doub
 
     init_parameters();
 
+    simulation_duration = cfg_params["sim_duration"];
+
     suscep_distr_params[VACCINATED][INFLUENZA][SHAPE]     = cfg_params["vaxd_suscep_distr_shape"];
     suscep_distr_params[VACCINATED][NON_INFLUENZA][SHAPE] = cfg_params["vaxd_suscep_distr_shape"];
     suscep_distr_params[VACCINATED][INFLUENZA][SCALE]     = util::gamma_scale_from_mean(cfg_params["vaxd_suscep_distr_shape"], cfg_params["vaxd_suscep_mean"]);

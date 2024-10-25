@@ -1,6 +1,7 @@
 {
     "experiment_name" : "lewnard_model",
     "n_realizations"  : 100,
+    "sim_duration"    : 200,
 
     "model_parameters" : [
         {
