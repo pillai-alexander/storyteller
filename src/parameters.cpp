@@ -23,6 +23,7 @@ Parameters::Parameters(const RngHandler* rng_handler, std::map<std::string, doub
     init_parameters();
 
     simulation_duration = cfg_params["sim_duration"];
+    database_path       = cfg_params["db_path"];
 
     suscep_distr_params[VACCINATED][INFLUENZA][SHAPE]     = cfg_params["vaxd_suscep_distr_shape"];
     suscep_distr_params[VACCINATED][NON_INFLUENZA][SHAPE] = cfg_params["vaxd_suscep_distr_shape"];
@@ -72,7 +73,8 @@ void Parameters::init_parameters() {
     strain_probs[NUM_STRAIN_TYPES] = 1.0 - std::accumulate(pr_exposure.begin(), pr_exposure.end(), 0.0);
 
     linelist_file_path = "simlinelist.out";
-    simvis_file_path = "simvis.out";
+    simvis_file_path   = "simvis.out";
+    database_path      = "";
 }
 
 std::vector<double> Parameters::sample_susceptibility(const Person* p) const {

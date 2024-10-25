@@ -4,6 +4,7 @@
 #include <utility>
 #include <string>
 #include <map>
+#include <sstream>
 
 #include <gsl/gsl_rng.h>
 #include <SQLiteCpp/SQLiteCpp.h>
@@ -82,15 +83,17 @@ Simulator::Simulator(std::string config, size_t serial) : sim_time(0) {
         }
     }
 
-    model_params["sim_duration"] = cfg["sim_duration"];
-
     rng_handler = std::make_unique<RngHandler>(model_params["seed"]);
     par = std::make_unique<Parameters>(rng_handler.get(), model_params);
+    par->simulation_duration = cfg["sim_duration"];
+    par->database_path       = db_path;
+
     community = std::make_unique<Community>(par.get(), rng_handler.get());
-    
 }
 
 Simulator::~Simulator() {}
+
+void Simulator::set_flags(std::map<std::string, bool> flags) { sim_flags = flags; }
 
 void Simulator::init() {
     community->vaccinate_population(sim_time);
@@ -109,16 +112,16 @@ void Simulator::tick() {
 
 void Simulator::results() {
     auto ledger = community->ledger.get();
+    ledger->calculate_cumulatives();
+    ledger->calculate_tnd_ve_est();
 
     // { // generate linelist csv (sim.linelist)
     //     ledger->generate_linelist_csv();
     // }
 
-    { // generate simvis csv (sim.vis)
-        ledger->calculate_cumulatives();
-        ledger->calculate_tnd_ve_est();
-        ledger->generate_simvis_csv();
-    }
+    if (sim_flags["simvis"]) ledger->generate_simvis_csv();
+
+    if (sim_flags["particle"]) write_metrics_to_database();
 
     auto total_vaxd_flu_infs = ledger->total_infections(VACCINATED, INFLUENZA);
     auto total_vaxd_flu_cases = ledger->total_sympt_infections(VACCINATED, INFLUENZA);
@@ -137,4 +140,7 @@ void Simulator::results() {
               << "nonflu cases (inf%): " << total_vaxd_nonflu_cases << " (" << ((double) total_vaxd_nonflu_cases/total_vaxd_nonflu_infs)*100 << "%)" << '\n'
               << "nonflu mais (inf%):  " << total_vaxd_nonflu_mai << " (" << ((double) total_vaxd_nonflu_mai/total_vaxd_nonflu_infs)*100 << "%)" << '\n'
               << "final tnd ve (vax%): " << final_tnd_ve << " ("<< vax_coverage*100 << "%)" << '\n';
+}
+
+void Simulator::write_metrics_to_database() {
 }

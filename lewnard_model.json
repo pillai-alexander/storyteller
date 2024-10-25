@@ -2,6 +2,7 @@
     "experiment_name" : "lewnard_model",
     "n_realizations"  : 100,
     "sim_duration"    : 200,
+    "metric_freq"     : "DAILY",
 
     "model_parameters" : [
         {
@@ -82,5 +83,16 @@
         }
     ],
 
-    "metrics" : []
+    "metrics" : [
+        {"fullname" : "time",               "datatype" : "INT"},
+        {"fullname" : "c_vax_flu_inf",      "datatype" : "REAL"},
+        {"fullname" : "c_vax_nonflu_inf",   "datatype" : "REAL"},
+        {"fullname" : "c_unvax_flu_inf",    "datatype" : "REAL"},
+        {"fullname" : "c_unvax_nonflu_inf", "datatype" : "REAL"},
+        {"fullname" : "c_vax_flu_mai",      "datatype" : "REAL"},
+        {"fullname" : "c_vax_nonflu_mai",   "datatype" : "REAL"},
+        {"fullname" : "c_unvax_flu_mai",    "datatype" : "REAL"},
+        {"fullname" : "c_unvax_nonflu_mai", "datatype" : "REAL"},
+        {"fullname" : "tnd_ve_est",         "datatype" : "REAL"}
+    ]
 }

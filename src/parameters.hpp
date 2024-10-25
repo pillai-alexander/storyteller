@@ -69,6 +69,7 @@ class Parameters {
 
     std::string linelist_file_path;
     std::string simvis_file_path;
+    std::string database_path;
 
   private:
     void init_parameters();
