@@ -28,18 +28,18 @@
             "par1"     : 1.0
         },
         {
-            "fullname" : "vax_effect_distr_a",
+            "fullname" : "flu_vax_effect_distr_a",
             "datatype" : "REAL",
             "flag"     : "CONST",
             "par1"     : 0.0
         },
         {
-            "fullname" : "vax_effect_distr_b",
+            "fullname" : "flu_vax_effect_distr_b",
             "datatype" : "REAL",
             "flag"     : "STEP",
             "par1"     : 0.0,
             "par2"     : 1.0,
-            "par3"     : 0.5
+            "par3"     : 0.1
         },
         {
             "fullname" : "pr_symptoms_given_flu",

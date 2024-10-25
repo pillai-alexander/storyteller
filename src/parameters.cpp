@@ -17,6 +17,34 @@ Parameters::Parameters(const RngHandler* rng_handler) {
     init_parameters();
 }
 
+Parameters::Parameters(const RngHandler* rng_handler, std::map<std::string, double> cfg_params) {
+    rng = rng_handler;
+
+    init_parameters();
+
+    suscep_distr_params[VACCINATED][INFLUENZA][SHAPE]     = cfg_params["vaxd_suscep_distr_shape"];
+    suscep_distr_params[VACCINATED][NON_INFLUENZA][SHAPE] = cfg_params["vaxd_suscep_distr_shape"];
+    suscep_distr_params[VACCINATED][INFLUENZA][SCALE]     = util::gamma_scale_from_mean(cfg_params["vaxd_suscep_distr_shape"], cfg_params["vaxd_suscep_mean"]);
+    suscep_distr_params[VACCINATED][NON_INFLUENZA][SCALE] = util::gamma_scale_from_mean(cfg_params["vaxd_suscep_distr_shape"], cfg_params["vaxd_suscep_mean"]);
+
+    suscep_distr_params[UNVACCINATED][INFLUENZA][SHAPE]     = cfg_params["unvaxd_suscep_distr_shape"];
+    suscep_distr_params[UNVACCINATED][NON_INFLUENZA][SHAPE] = cfg_params["unvaxd_suscep_distr_shape"];
+    suscep_distr_params[UNVACCINATED][INFLUENZA][SCALE]     = util::gamma_scale_from_mean(cfg_params["unvaxd_suscep_distr_shape"], cfg_params["unvaxd_suscep_mean"]);
+    suscep_distr_params[UNVACCINATED][NON_INFLUENZA][SCALE] = util::gamma_scale_from_mean(cfg_params["unvaxd_suscep_distr_shape"], cfg_params["unvaxd_suscep_mean"]);
+
+    vax_effect_distr_params[INFLUENZA][A] = cfg_params["flu_vax_effect_distr_a"];
+    vax_effect_distr_params[INFLUENZA][B] = cfg_params["flu_vax_effect_distr_b"];
+
+    pr_symptoms[INFLUENZA]     = cfg_params["pr_symptoms_given_flu"];
+    pr_symptoms[NON_INFLUENZA] = cfg_params["pr_symptoms_given_nonflu"];
+
+    pr_seek_care[VACCINATED]   = cfg_params["pr_careseeking_given_vaxd"];
+    pr_seek_care[UNVACCINATED] = cfg_params["pr_careseeking_given_unvaxd"];
+
+    pr_exposure[INFLUENZA]     = cfg_params["pr_flu_exposure"];
+    pr_exposure[NON_INFLUENZA] = cfg_params["pr_nonflu_exposure"];
+}
+
 Parameters::~Parameters() {}
 
 void Parameters::init_parameters() {

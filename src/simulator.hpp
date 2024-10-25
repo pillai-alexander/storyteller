@@ -34,6 +34,7 @@ class RngHandler {
 class Simulator {
   public:
     Simulator();
+    Simulator(std::string cfg, size_t serial);
     ~Simulator();
 
     void init();

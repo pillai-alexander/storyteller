@@ -18,3 +18,9 @@ add_library(core
     ledger.cpp
     ${HEADER_LIST}
 )
+
+add_subdirectory(${CMAKE_SOURCE_DIR}/lib/SQLiteCpp sqlitecpp_build)
+target_link_libraries(core PRIVATE SQLiteCpp)
+
+add_subdirectory(${CMAKE_SOURCE_DIR}/lib/json json_build)
+target_link_libraries(core PRIVATE nlohmann_json::nlohmann_json)

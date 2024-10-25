@@ -14,9 +14,3 @@ target_link_libraries(sim PRIVATE core)
 
 find_package(GSL REQUIRED)
 target_link_libraries(sim PRIVATE GSL::gsl GSL::gslcblas)
-
-# add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/SQLiteCpp)
-# target_link_libraries(sim PRIVATE SQLiteCpp)
-
-# add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/json)
-# target_link_libraries(sim PRIVATE nlohmann_json::nlohmann_json)

@@ -3,14 +3,19 @@
 #include <fstream>
 #include <utility>
 #include <string>
+#include <map>
 
 #include <gsl/gsl_rng.h>
+#include <SQLiteCpp/SQLiteCpp.h>
+#include <nlohmann/json.hpp>
 
 #include "simulator.hpp"
 #include "community.hpp"
 #include "parameters.hpp"
 #include "person.hpp"
 #include "ledger.hpp"
+
+using json = nlohmann::json;
 
 RngHandler::RngHandler(unsigned long int seed) {
     infection_rng   = gsl_rng_alloc(gsl_rng_mt19937);
@@ -46,12 +51,41 @@ gsl_rng* RngHandler::get_rng(RngType type) const {
     }
 }
 
-Simulator::Simulator() {
-    sim_time = 0;
+Simulator::Simulator() : sim_time(0) {
     rng_seed = 0;
     rng_handler = std::make_unique<RngHandler>(rng_seed);
     par = std::make_unique<Parameters>(rng_handler.get());
     community = std::make_unique<Community>(par.get(), rng_handler.get());
+}
+
+Simulator::Simulator(std::string config, size_t serial) : sim_time(0) {
+    std::map<std::string, double> model_params;
+
+    std::ifstream cfg_file(config);
+    auto cfg = json::parse(cfg_file);
+    for (auto& [key, el] : cfg["model_parameters"].items()) {
+        model_params[el["fullname"]] = 0.0;
+    }
+    cfg_file.close();
+
+    std::string db_path = cfg["experiment_name"];
+    db_path += std::string(".sqlite");
+    SQLite::Database db(db_path);
+    SQLite::Statement query(db, "SELECT * FROM par WHERE serial = ?");
+    query.bind(1, (unsigned int) serial);
+    {
+        while (query.executeStep()) {
+            model_params["seed"] = query.getColumn("seed");
+            for (auto& [param, val] : model_params) {
+                model_params[param] = query.getColumn(param.c_str());
+            }
+        }
+    }
+
+    rng_handler = std::make_unique<RngHandler>(model_params["seed"]);
+    par = std::make_unique<Parameters>(rng_handler.get(), model_params);
+    community = std::make_unique<Community>(par.get(), rng_handler.get());
+    
 }
 
 Simulator::~Simulator() {}

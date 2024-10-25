@@ -3,6 +3,7 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <map>
 
 class Person;
 class RngHandler;
@@ -44,6 +45,7 @@ typedef std::array<double, NUM_GAMMA_DISTR_PARAMS> GammaDistrParamArray;
 class Parameters {
   public:
     Parameters(const RngHandler* rng_handler);
+    Parameters(const RngHandler* rng_handler, std::map<std::string, double> cfg_params);
     ~Parameters();
 
     std::vector<double> sample_susceptibility(const Person* p) const;
