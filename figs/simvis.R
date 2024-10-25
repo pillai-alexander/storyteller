@@ -13,7 +13,7 @@ if (interactive()) {
 model_dir <- here("exp", "basic_contin_suscep_model")
 fig_path <- here(model_dir, "figs")
 
-sim_data_path <- here(model_dir, "sim.vis")
+sim_data_path <- here(model_dir, "simvis.out")
 sim_dat <- fread(sim_data_path) %>%
   mutate(
     total_flu_infs = vaxd_flu_infs + unvaxd_flu_infs,
