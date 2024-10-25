@@ -68,8 +68,6 @@ Simulator::Simulator(std::string config, size_t serial) : sim_time(0) {
     }
     cfg_file.close();
 
-    model_params["sim_duration"] = cfg["sim_duration"];
-
     std::string db_path = cfg["experiment_name"];
     db_path += std::string(".sqlite");
     SQLite::Database db(db_path);
@@ -83,6 +81,8 @@ Simulator::Simulator(std::string config, size_t serial) : sim_time(0) {
             }
         }
     }
+
+    model_params["sim_duration"] = cfg["sim_duration"];
 
     rng_handler = std::make_unique<RngHandler>(model_params["seed"]);
     par = std::make_unique<Parameters>(rng_handler.get(), model_params);
