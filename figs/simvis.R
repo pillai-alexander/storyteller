@@ -96,7 +96,7 @@ dash <- plot_grid(
   tnd_ve
 )
 
-dir.create(fig_path)
+dir.create(fig_path, showWarnings = FALSE)
 
 ggsave(
   here(fig_path, "simvis.png"),
