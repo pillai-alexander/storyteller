@@ -71,4 +71,16 @@ db_path <- here(model_dir, db_filename)
 
 con <- dbConnect(RSQLite::SQLite(), db_path)
 dbWriteTable(con, "par", as.data.frame(par_rows), overwrite = TRUE)
+
+met_sql <- raw_config$metrics %>%
+  mutate(sql = paste0(fullname, " ", datatype))
+
+met_table_sch <- "CREATE TABLE IF NOT EXISTS met ("
+for (i in seq_len(nrow(met_sql))) {
+  cap <- ifelse(i == nrow(met_sql), ");", ",")
+  met_table_sch <- paste0(met_table_sch, met_sql$sql[i], cap)
+}
+
+res <- dbSendQuery(con, met_table_sch)
+dbClearResult(res)
 dbDisconnect(con)
