@@ -1,0 +1,27 @@
+# my ignores
+*.pdf
+*.png
+*.csv
+build
+*.out
+*.log
+*.delme
+*.sqlite
+*.vis
+
+# vscode ignores
+.vscode
+
+# cmake ignores
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txtq
+compile_commands.json
+CTestTestfile.cmake
+_deps
+CMakeUserPresets.json
