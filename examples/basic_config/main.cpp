@@ -6,7 +6,7 @@
 
 #include "argh.hpp"
 
-#include "simulator.hpp"
+#include <storyteller/simulator.hpp>
 
 // process config file
     // --process -f config.json

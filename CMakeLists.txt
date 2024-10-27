@@ -1,16 +1,14 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(basic_contin_suscep_model
+project(
+    Storyteller
     VERSION 0.1
-    LANGUAGES CXX)
+    LANGUAGES CXX
+)
+
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    message("-- Building examples")
+    add_subdirectory(examples)
+endif()
 
 add_subdirectory(src)
-
-add_executable(sim main.cpp)
-
-target_include_directories(sim PRIVATE src)
-
-target_link_libraries(sim PRIVATE core)
-
-find_package(GSL REQUIRED)
-target_link_libraries(sim PRIVATE GSL::gsl GSL::gslcblas)
