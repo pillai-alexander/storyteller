@@ -2,8 +2,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "ledger.hpp"
-#include "person.hpp"
+#include <storyteller/ledger.hpp>
+#include <storyteller/person.hpp>
 
 Ledger::Ledger(const Parameters* parameters) {
     par = parameters;

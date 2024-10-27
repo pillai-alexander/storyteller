@@ -3,12 +3,12 @@
 
 #include <gsl/gsl_randist.h>
 
-#include "community.hpp"
-#include "parameters.hpp"
-#include "person.hpp"
-#include "simulator.hpp"
-#include "utility.hpp"
-#include "ledger.hpp"
+#include <storyteller/community.hpp>
+#include <storyteller/parameters.hpp>
+#include <storyteller/person.hpp>
+#include <storyteller/simulator.hpp>
+#include <storyteller/utility.hpp>
+#include <storyteller/ledger.hpp>
 
 Community::Community(const Parameters* parameters, const RngHandler* rng_handler) {
     par = parameters;

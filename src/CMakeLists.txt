@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-set(HEADER_LIST
-    simulator.hpp
-    community.hpp
-    parameters.hpp
-    person.hpp
-    utility.hpp
-    ledger.hpp
-)
+file(GLOB HEADER_LIST CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/include/simulator/*.hpp")
 
 add_library(core
     simulator.cpp
@@ -18,6 +11,11 @@ add_library(core
     ledger.cpp
     ${HEADER_LIST}
 )
+
+target_include_directories(core PUBLIC ${CMAKE_SOURCE_DIR}/include)
+
+find_package(GSL REQUIRED)
+target_link_libraries(core PRIVATE GSL::gsl GSL::gslcblas)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/lib/SQLiteCpp sqlitecpp_build)
 target_link_libraries(core PRIVATE SQLiteCpp)

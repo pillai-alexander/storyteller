@@ -10,11 +10,11 @@
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <nlohmann/json.hpp>
 
-#include "simulator.hpp"
-#include "community.hpp"
-#include "parameters.hpp"
-#include "person.hpp"
-#include "ledger.hpp"
+#include <storyteller/simulator.hpp>
+#include <storyteller/community.hpp>
+#include <storyteller/parameters.hpp>
+#include <storyteller/person.hpp>
+#include <storyteller/ledger.hpp>
 
 using json = nlohmann::json;
 

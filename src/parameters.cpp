@@ -6,10 +6,10 @@
 
 #include <gsl/gsl_randist.h>
 
-#include "parameters.hpp"
-#include "person.hpp"
-#include "simulator.hpp"
-#include "utility.hpp"
+#include <storyteller/parameters.hpp>
+#include <storyteller/person.hpp>
+#include <storyteller/simulator.hpp>
+#include <storyteller/utility.hpp>
 
 Parameters::Parameters(const RngHandler* rng_handler) {
     rng = rng_handler;

@@ -2,9 +2,9 @@
 #include <iostream>
 #include <algorithm>
 
-#include "person.hpp"
-#include "simulator.hpp"
-#include "parameters.hpp"
+#include <storyteller/person.hpp>
+#include <storyteller/simulator.hpp>
+#include <storyteller/parameters.hpp>
 
 Infection::Infection(Person* p, StrainType strain, size_t t, SymptomClass sympt, bool care)
     : infectee(p),
