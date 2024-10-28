@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-file(GLOB HEADER_LIST CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/include/simulator/*.hpp")
+file(GLOB HEADER_LIST CONFIGURE_DEPENDS "${Storyteller_SOURCE_DIR}/include/simulator/*.hpp")
 
 add_library(
     storyteller
@@ -13,7 +13,7 @@ add_library(
     ${HEADER_LIST}
 )
 
-target_include_directories(storyteller PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(storyteller PUBLIC ${Storyteller_SOURCE_DIR}/include)
 
 find_package(GSL REQUIRED)
 target_link_libraries(storyteller PRIVATE GSL::gsl GSL::gslcblas)
