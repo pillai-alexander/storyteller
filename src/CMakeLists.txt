@@ -21,3 +21,10 @@ target_link_libraries(storyteller PRIVATE GSL::gsl GSL::gslcblas)
 target_link_libraries(storyteller PRIVATE SQLiteCpp)
 
 target_link_libraries(storyteller PRIVATE nlohmann_json::nlohmann_json)
+
+# IDEs should put the headers in a nice place
+source_group(
+  TREE "${Storyteller_SOURCE_DIR}/include"
+  PREFIX "Header Files"
+  FILES ${HEADER_LIST}
+)
