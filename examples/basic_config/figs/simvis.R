@@ -10,7 +10,7 @@ if (interactive()) {
 
 #' setup required paths
 #' assumes here() is properly at project root level
-model_dir <- here("exp", "basic_contin_suscep_model")
+model_dir <- here("examples", "basic_config")
 fig_path <- here(model_dir, "figs")
 
 sim_data_path <- here(model_dir, "simvis.out")
