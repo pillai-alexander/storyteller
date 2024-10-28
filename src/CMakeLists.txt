@@ -1,15 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 
-set(HEADER_LIST
-    simulator.hpp
-    community.hpp
-    parameters.hpp
-    person.hpp
-    utility.hpp
-    ledger.hpp
-)
+file(GLOB HEADER_LIST CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/include/simulator/*.hpp")
 
-add_library(core
+add_library(
+    storyteller
     simulator.cpp
     community.cpp
     parameters.cpp
@@ -19,8 +13,11 @@ add_library(core
     ${HEADER_LIST}
 )
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/lib/SQLiteCpp sqlitecpp_build)
-target_link_libraries(core PRIVATE SQLiteCpp)
+target_include_directories(storyteller PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/lib/json json_build)
-target_link_libraries(core PRIVATE nlohmann_json::nlohmann_json)
+find_package(GSL REQUIRED)
+target_link_libraries(storyteller PRIVATE GSL::gsl GSL::gslcblas)
+
+target_link_libraries(storyteller PRIVATE SQLiteCpp)
+
+target_link_libraries(storyteller PRIVATE nlohmann_json::nlohmann_json)
