@@ -28,13 +28,17 @@ Ledger::~Ledger() {}
 vector3d<size_t> Ledger::get_inf_incidence() const { return inf_incidence; }
 vector3d<size_t> Ledger::get_sympt_inf_incidence() const { return sympt_inf_incidence; }
 vector3d<size_t> Ledger::get_mai_incidence() const { return mai_incidence; }
-std::vector<size_t> Ledger::get_vax_incidence() const { return vax_incidence; }
 
 vector3d<size_t> Ledger::get_cumul_infs() const { return cumul_infs;}
 vector3d<size_t> Ledger::get_cumul_sympt_infs() const { return cumul_sympt_infs;}
 vector3d<size_t> Ledger::get_cumul_mais() const { return cumul_mais;}
 
+std::vector<size_t> Ledger::get_vax_incidence() const { return vax_incidence; }
 std::vector<double> Ledger::get_tnd_ve_est() const { return tnd_ve_estimate; }
+
+size_t Ledger::get_cumul_infs(VaccinationStatus vaxd, StrainType strain, size_t time) const { return cumul_infs[vaxd][strain][time]; }
+size_t Ledger::get_cumul_sympt_infs(VaccinationStatus vaxd, StrainType strain, size_t time) const { return cumul_sympt_infs[vaxd][strain][time]; }
+size_t Ledger::get_cumul_mais(VaccinationStatus vaxd, StrainType strain, size_t time) const { return cumul_mais[vaxd][strain][time]; }
 double Ledger::get_tnd_ve_est(size_t time) const { return tnd_ve_estimate[time]; }
 
 void Ledger::log_infection(const Infection* i) {

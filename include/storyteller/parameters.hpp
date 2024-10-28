@@ -70,6 +70,9 @@ class Parameters {
     std::string linelist_file_path;
     std::string simvis_file_path;
     std::string database_path;
+    size_t simulation_serial;
+
+    std::vector<std::string> return_metrics;
 
   private:
     void init_parameters();

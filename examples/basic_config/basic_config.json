@@ -41,7 +41,7 @@
             "flag"     : "STEP",
             "par1"     : 0.0,
             "par2"     : 1.0,
-            "par3"     : 0.1
+            "par3"     : 0.5
         },
         {
             "fullname" : "pr_symptoms_given_flu",

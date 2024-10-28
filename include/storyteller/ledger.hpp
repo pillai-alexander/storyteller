@@ -17,13 +17,17 @@ class Ledger {
     vector3d<size_t> get_inf_incidence() const;
     vector3d<size_t> get_sympt_inf_incidence() const;
     vector3d<size_t> get_mai_incidence() const;
-    std::vector<size_t> get_vax_incidence() const;
 
     vector3d<size_t> get_cumul_infs() const;
     vector3d<size_t> get_cumul_sympt_infs() const;
     vector3d<size_t> get_cumul_mais() const;
 
+    std::vector<size_t> get_vax_incidence() const;
     std::vector<double> get_tnd_ve_est() const;
+
+    size_t get_cumul_infs(VaccinationStatus vaxd, StrainType strain, size_t time) const;
+    size_t get_cumul_sympt_infs(VaccinationStatus vaxd, StrainType strain, size_t time) const;
+    size_t get_cumul_mais(VaccinationStatus vaxd, StrainType strain, size_t time) const;
     double get_tnd_ve_est(size_t time) const;
 
     void log_infection(const Infection* i);

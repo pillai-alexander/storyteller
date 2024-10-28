@@ -14,7 +14,7 @@ if (interactive()) {
 
 #' setup required paths
 #' assumes here() is properly at project root level
-model_dir <- here("exp", "basic_contin_suscep_model")
+model_dir <- here("examples", "basic_config")
 
 raw_config <- read_json(
   here(model_dir, .args[1]),
@@ -75,7 +75,7 @@ dbWriteTable(con, "par", as.data.frame(par_rows), overwrite = TRUE)
 met_sql <- raw_config$metrics %>%
   mutate(sql = paste0(fullname, " ", datatype))
 
-met_table_sch <- "CREATE TABLE IF NOT EXISTS met ("
+met_table_sch <- "CREATE TABLE IF NOT EXISTS met (serial INT,"
 for (i in seq_len(nrow(met_sql))) {
   cap <- ifelse(i == nrow(met_sql), ");", ",")
   met_table_sch <- paste0(met_table_sch, met_sql$sql[i], cap)

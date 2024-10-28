@@ -16,6 +16,9 @@
 // simulate particle from database
     // --simulate -f config.json --particle -s 0
     // --simulate --file config.json --particle --serial 0
+// simulate multiple particles from database starting with specified serial
+    // --simulate -f config.json --particle -s 0 -b 2
+    // --simulate --file config.json --particle --serial 0 --batch 2
 
 int main(int argc, char* argv[]) {
     argh::parser cmdl;
@@ -31,13 +34,17 @@ int main(int argc, char* argv[]) {
     int serial = -1;
     if (sim_flags["particle"] and not (cmdl({"-s", "--serial"}) >> serial)) {
         std::cerr << "ERROR: pass serial id file after --particle using -s or --serial.";
-            exit(-1);
+        exit(-1);
     }
+
+    unsigned int batch = 1;
+    cmdl({"-b", "--batch"}, 1) >> batch;
+    std::cerr << "num in batch: " << batch << '\n';
 
     std::string config_file("");
     if ((sim_flags["process"] or sim_flags["particle"]) and not (cmdl({"-f", "--file"}) >> config_file)) {
         std::cerr << "ERROR: pass config file after using -f or --file.";
-            exit(-1);
+        exit(-1);
     }
 
     std::unique_ptr<Simulator> sim = nullptr;
@@ -64,7 +71,7 @@ int main(int argc, char* argv[]) {
             sim = std::make_unique<Simulator>();
             ready_to_simulate = true;
         } else if (sim_flags["particle"] and (serial >= 0) and not config_file.empty()) {
-            sim = std::make_unique<Simulator>(config_file, serial);
+            // sim = std::make_unique<Simulator>(config_file, serial);
             ready_to_simulate = true;
         } else {
             std::cerr << "ERROR: incorrect arguments.";
@@ -72,13 +79,21 @@ int main(int argc, char* argv[]) {
         }
 
         if (ready_to_simulate) {
-            sim->set_flags(sim_flags);
-            // construct community
-            sim->init();
-            // simulate
-            sim->simulate();
-            // return desired metrics
-            sim->results();
+            for (unsigned int rep = 1; rep <= batch; ++rep) {
+                std::cerr << "runing sim " << rep << " of " << batch << " serial: " << serial << '\n';
+                if (not sim and (sim_flags["particle"] and (serial >= 0) and not config_file.empty())) {
+                    sim = std::make_unique<Simulator>(config_file, serial);
+                }
+                sim->set_flags(sim_flags);
+                // construct community
+                sim->init();
+                // simulate
+                sim->simulate();
+                // return desired metrics
+                sim->results();
+                ++serial;
+                sim = nullptr;
+            }
         }
 
         if (sim_flags["simvis"]) {

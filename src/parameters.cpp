@@ -17,11 +17,8 @@ Parameters::Parameters(const RngHandler* rng_handler) {
     init_parameters();
 }
 
-Parameters::Parameters(const RngHandler* rng_handler, std::map<std::string, double> cfg_params) {
-    rng = rng_handler;
-
-    init_parameters();
-
+Parameters::Parameters(const RngHandler* rng_handler, std::map<std::string, double> cfg_params) 
+    : Parameters(rng_handler) {
     simulation_duration = cfg_params["sim_duration"];
     database_path       = cfg_params["db_path"];
 
@@ -71,6 +68,8 @@ void Parameters::init_parameters() {
         strain_probs[s] = pr_exposure[s];
     }
     strain_probs[NUM_STRAIN_TYPES] = 1.0 - std::accumulate(pr_exposure.begin(), pr_exposure.end(), 0.0);
+
+    return_metrics = std::vector<std::string>(0);
 
     linelist_file_path = "simlinelist.out";
     simvis_file_path   = "simvis.out";
