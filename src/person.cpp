@@ -5,6 +5,7 @@
 #include <storyteller/person.hpp>
 #include <storyteller/simulator.hpp>
 #include <storyteller/parameters.hpp>
+#include <storyteller/utility.hpp>
 
 Infection::Infection(Person* p, StrainType strain, size_t t, SymptomClass sympt, bool care)
     : infectee(p),
