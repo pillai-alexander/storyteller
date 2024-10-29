@@ -3,13 +3,19 @@
 #include <iostream>
 #include <sstream>
 #include <memory>
+#include <fstream>
 
 #include <argh.h>
+#include <nlohmann/json.hpp>
 
 #include <storyteller/storyteller.hpp>
 #include <storyteller/simulator.hpp>
+#include <storyteller/parameters.hpp>
+#include <storyteller/utility.hpp>
 
-Storyteller::Storyteller(int argc, char* argv[]) 
+using json = nlohmann::json;
+
+Storyteller::Storyteller(int argc, char* argv[])
     : simulation_serial(-1),
       batch_size(1),
       config_file(""),
@@ -53,6 +59,8 @@ Storyteller::Storyteller(int argc, char* argv[])
             exit(-1);
         }
     }
+
+    process_config();
 }
 
 Storyteller::~Storyteller() {}
@@ -66,7 +74,7 @@ void Storyteller::set_flag(std::string key, bool val) { simulation_flags[key] = 
 
 int Storyteller::run() {
     switch (operation_to_perform) {
-        case PROCESS_CONFIG: return process_config();
+        case PROCESS_CONFIG: return construct_database();
         case EXAMPLE_SIM: return default_simulation();
         case BATCH_SIM: return batch_simulation();
         default: {
@@ -77,7 +85,7 @@ int Storyteller::run() {
 }
 
 int Storyteller::default_simulation() {
-    simulator = std::make_unique<Simulator>();
+    simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
     simulator->set_flags(simulation_flags);
     simulator->init();
     simulator->simulate();
@@ -89,21 +97,60 @@ int Storyteller::default_simulation() {
 
 int Storyteller::batch_simulation() {
     for (size_t i = 1; i <= batch_size; ++i) {
-        simulator = std::make_unique<Simulator>(config_file, simulation_serial);
+        simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
         simulator->set_flags(simulation_flags);
         simulator->init();
         simulator->simulate();
         simulator->results();
 
-        ++simulation_serial;
-        simulator.reset(nullptr);
+        if (batch_size > 1) {
+            ++simulation_serial;
+            reset();
+            process_config();
+        }
     }
 
     if (simulation_flags["simvis"]) draw_simvis();
     return 0;
 }
 
-int Storyteller::process_config() {
+void Storyteller::process_config() {
+    if (simulation_flags["simulate"] and not config_file.empty()) {
+        std::ifstream cfg_file(config_file);
+        auto cfg = json::parse(cfg_file);
+        cfg_file.close();
+
+        std::string db_path = cfg["experiment_name"];
+        db_path += std::string(".sqlite");
+
+        std::map<std::string, double> model_params;
+        for (auto& [key, el] : cfg["model_parameters"].items()) {
+            model_params[el["fullname"]] = 0.0;
+        }
+
+        std::vector<std::string> model_mets;
+        for (auto& [key, el] : cfg["metrics"].items()) {
+            model_mets.push_back(el["fullname"]);
+        }
+        db_handler = std::make_unique<DatabaseHandler>(this, db_path);
+        db_handler->read_parameters(simulation_serial, model_params);
+
+        rng_handler = std::make_unique<RngHandler>(model_params["seed"]);
+
+        parameters = std::make_unique<Parameters>(rng_handler.get(), model_params);
+        parameters->simulation_duration = cfg["sim_duration"];
+        parameters->database_path       = db_path;
+        parameters->return_metrics      = model_mets;
+        parameters->simulation_serial   = simulation_serial;
+    } else {
+        db_handler = nullptr;
+        rng_handler = std::make_unique<RngHandler>(0);
+        parameters = std::make_unique<Parameters>(rng_handler.get());
+
+    }
+}
+
+int Storyteller::construct_database() {
     if (not config_file.empty()) {
         std::stringstream cmd;
         cmd << "Rscript process_config.R " << config_file;
@@ -120,4 +167,11 @@ int Storyteller::draw_simvis() {
     cmd << "Rscript figs/simvis.R";
     std::cerr << "Calling `" << cmd.str() << "`\n";
     return system(cmd.str().c_str());
+}
+
+void Storyteller::reset() {
+    simulator.reset(nullptr);
+    db_handler.reset(nullptr);
+    rng_handler.reset(nullptr);
+    parameters.reset(nullptr);
 }

@@ -10,11 +10,13 @@
 
 class Community;
 class Infection;
+class Ledger;
+class DatabaseHandler;
+class RngHandler;
 
 class Simulator {
   public:
-    Simulator();
-    Simulator(std::string cfg, size_t serial);
+    Simulator(const Parameters* parameters, const DatabaseHandler* dbh, const RngHandler* rngh);
     ~Simulator();
 
     void set_flags(std::map<std::string, bool> flags);
@@ -24,14 +26,12 @@ class Simulator {
     void tick();
     void results();
 
-    void write_metrics_to_database();
-
   private:
     size_t sim_time;
-    unsigned long int rng_seed;
     std::map<std::string, bool> sim_flags;
 
-    std::unique_ptr<Parameters> par;
     std::unique_ptr<Community> community;
-    std::unique_ptr<RngHandler> rng_handler;
+    const RngHandler* rng_handler;
+    const Parameters* par;
+    const DatabaseHandler* db_handler;
 };

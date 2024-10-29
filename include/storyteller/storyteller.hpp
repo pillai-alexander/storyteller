@@ -7,6 +7,9 @@
 #include <argh.h>
 
 class Simulator;
+class DatabaseHandler;
+class RngHandler;
+class Parameters;
 
 enum OperationType {
     PROCESS_CONFIG,
@@ -31,13 +34,19 @@ class Storyteller {
   private:
     bool sensible_inputs() const;
 
-    int process_config();
+    void process_config();
+    int construct_database();
     int default_simulation();
     int batch_simulation();
 
     int draw_simvis();
 
+    void reset();
+
     std::unique_ptr<Simulator> simulator;
+    std::unique_ptr<DatabaseHandler> db_handler;
+    std::unique_ptr<RngHandler> rng_handler;
+    std::unique_ptr<Parameters> parameters;
     OperationType operation_to_perform;
 
     argh::parser cmdl_args;
