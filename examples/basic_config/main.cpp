@@ -4,7 +4,7 @@
 #include <string>
 #include <memory>
 
-#include "argh.hpp"
+#include <argh.h>
 #include <sol/sol.hpp>
 
 #include <storyteller/simulator.hpp>

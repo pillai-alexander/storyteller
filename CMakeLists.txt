@@ -40,7 +40,13 @@ FetchContent_Declare(
   GIT_TAG eba86625b707e3c8c99bbfc4624e51f42dc9e561 #v3.3.0
 )
 
-FetchContent_MakeAvailable(nlohmann_json SQLiteCpp sol2)
+FetchContent_Declare(
+  argh
+  GIT_REPOSITORY https://github.com/adishavit/argh.git
+  GIT_TAG d17062c870b5919f6d1eae7fe12879869a893b32 #v1.3.2
+)
+
+FetchContent_MakeAvailable(nlohmann_json SQLiteCpp sol2 argh)
 
 add_subdirectory(src)
 

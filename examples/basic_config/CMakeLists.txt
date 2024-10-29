@@ -10,6 +10,9 @@ target_include_directories(basic_config PRIVATE ${LUA_INCLUDE_DIR})
 target_link_libraries(basic_config PRIVATE sol2::sol2)
 target_include_directories(basic_config PRIVATE sol2::sol2)
 
+target_link_libraries(basic_config PRIVATE argh)
+target_include_directories(basic_config PRIVATE argh)
+
 set_target_properties(basic_config
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
