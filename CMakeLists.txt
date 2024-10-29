@@ -6,10 +6,20 @@ project(
     LANGUAGES CXX
 )
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    message("-- Building examples")
-    add_subdirectory(examples)
-endif()
+include(ExternalProject)
+
+ExternalProject_Add(
+    lua
+    URL "https://www.lua.org/ftp/lua-5.4.7.tar.gz"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND make all
+    BUILD_IN_SOURCE true
+    INSTALL_COMMAND make local
+)
+
+ExternalProject_Get_Property(lua BINARY_DIR)
+set(LUA_INCLUDE_DIR ${BINARY_DIR}/src)
+set(LUA_LIB ${BINARY_DIR}/src/liblua.a)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -24,6 +34,17 @@ FetchContent_Declare(
     GIT_TAG 08aa70a45ea52abcd8ee6b5d1ab1542140b3c7f5 #v3.3.2
 )
 
-FetchContent_MakeAvailable(nlohmann_json SQLiteCpp)
+FetchContent_Declare(
+  sol2
+  GIT_REPOSITORY https://github.com/ThePhD/sol2.git
+  GIT_TAG eba86625b707e3c8c99bbfc4624e51f42dc9e561 #v3.3.0
+)
+
+FetchContent_MakeAvailable(nlohmann_json SQLiteCpp sol2)
 
 add_subdirectory(src)
+
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    message("-- Building examples")
+    add_subdirectory(examples)
+endif()

@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "argh.hpp"
+#include <sol/sol.hpp>
 
 #include <storyteller/simulator.hpp>
 
