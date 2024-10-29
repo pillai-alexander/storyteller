@@ -15,42 +15,7 @@
 #include <storyteller/parameters.hpp>
 #include <storyteller/person.hpp>
 #include <storyteller/ledger.hpp>
-
-using json = nlohmann::json;
-
-RngHandler::RngHandler(unsigned long int seed) {
-    infection_rng   = gsl_rng_alloc(gsl_rng_mt19937);
-    vaccination_rng = gsl_rng_alloc(gsl_rng_mt19937);
-    behavior_rng    = gsl_rng_alloc(gsl_rng_mt19937);
-
-    gsl_rng_set(infection_rng, seed);
-    gsl_rng_set(vaccination_rng, seed);
-    gsl_rng_set(behavior_rng, seed);
-}
-
-RngHandler::~RngHandler() {
-    gsl_rng_free(infection_rng);
-    gsl_rng_free(vaccination_rng);
-    gsl_rng_free(behavior_rng);
-}
-
-double RngHandler::draw_from_rng(RngType type) const {
-    switch (type) {
-        case INFECTION:   { return gsl_rng_uniform(infection_rng); }
-        case VACCINATION: { return gsl_rng_uniform(vaccination_rng); }
-        case BEHAVIOR:    { return gsl_rng_uniform(behavior_rng); }
-        default:          { return gsl_rng_uniform(infection_rng); }
-    }
-}
-
-gsl_rng* RngHandler::get_rng(RngType type) const {
-    switch (type) {
-        case INFECTION:   { return infection_rng; }
-        case VACCINATION: { return vaccination_rng; }
-        case BEHAVIOR:    { return behavior_rng; }
-        default:          { return infection_rng; }
-    }
-}
+#include <storyteller/utility.hpp>
 
 Simulator::Simulator() : sim_time(0) {
     rng_seed = 0;

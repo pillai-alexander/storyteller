@@ -11,27 +11,6 @@
 class Community;
 class Infection;
 
-enum RngType {
-    INFECTION,
-    VACCINATION,
-    BEHAVIOR,
-    NUM_RNG_TYPES
-};
-
-class RngHandler {
-  public:
-    RngHandler(unsigned long int seed);
-    ~RngHandler();
-
-    double draw_from_rng(RngType type = INFECTION) const;
-    gsl_rng* get_rng(RngType type = INFECTION) const;
-
-  private:
-    gsl_rng* infection_rng;
-    gsl_rng* vaccination_rng;
-    gsl_rng* behavior_rng;
-};
-
 class Simulator {
   public:
     Simulator();
