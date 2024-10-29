@@ -4,6 +4,7 @@ file(GLOB HEADER_LIST CONFIGURE_DEPENDS "${Storyteller_SOURCE_DIR}/include/simul
 
 add_library(
     storyteller
+    storyteller.cpp
     simulator.cpp
     community.cpp
     parameters.cpp
@@ -21,6 +22,9 @@ target_link_libraries(storyteller PRIVATE GSL::gsl GSL::gslcblas)
 target_link_libraries(storyteller PRIVATE SQLiteCpp)
 
 target_link_libraries(storyteller PRIVATE nlohmann_json::nlohmann_json)
+
+target_link_libraries(storyteller PRIVATE argh)
+target_include_directories(storyteller PRIVATE argh)
 
 # IDEs should put the headers in a nice place
 source_group(

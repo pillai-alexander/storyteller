@@ -1,5 +1,5 @@
 {
-    "experiment_name" : "lewnard_model",
+    "experiment_name" : "basic_config",
     "n_realizations"  : 100,
     "sim_duration"    : 200,
     "metric_freq"     : "DAILY",
