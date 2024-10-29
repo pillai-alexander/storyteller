@@ -11,14 +11,12 @@
 #include <storyteller/simulator.hpp>
 #include <storyteller/utility.hpp>
 
-Parameters::Parameters(const RngHandler* rng_handler) {
-    rng = rng_handler;
-
+Parameters::Parameters(const RngHandler* rngh) {
+    rng = rngh;
     init_parameters();
 }
 
-Parameters::Parameters(const RngHandler* rng_handler, std::map<std::string, double> cfg_params) 
-    : Parameters(rng_handler) {
+Parameters::Parameters(const RngHandler* rngh, std::map<std::string, double> cfg_params) : Parameters(rngh) {
     simulation_duration = cfg_params["sim_duration"];
     database_path       = cfg_params["db_path"];
 
