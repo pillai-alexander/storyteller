@@ -20,6 +20,7 @@ template<typename T> using vector3d = std::vector<std::vector<std::vector<T>>>;
 
 namespace util {
     extern double gamma_scale_from_mean(double shape, double mean);
+    extern vector2d<double> vec_combinations(vector2d<double> vecs);
 }
 
 enum RngType {

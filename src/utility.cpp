@@ -1,6 +1,7 @@
 #include <chrono>
 #include <thread>
 #include <iostream>
+#include <vector>
 
 #include <SQLiteCpp/SQLiteCpp.h>
 
@@ -20,6 +21,33 @@ namespace constants {
 namespace util {
     double gamma_scale_from_mean(double shape, double mean) {
         return (shape == constants::ZERO) ? mean : mean / shape;
+    }
+
+    // iterative odometer-like combinations of multiple vectors
+    // https://stackoverflow.com/questions/1700079/howto-create-combinations-of-several-vectors-without-hardcoding-loops-in-c
+    // https://stackoverflow.com/questions/5279051/how-can-i-create-the-cartesian-product-of-a-vector-of-vectors
+    vector2d<double> vec_combinations(vector2d<double> vecs) {
+        size_t n_vectors = vecs.size();
+        std::vector<std::vector<double>::const_iterator> its(n_vectors);
+        for (size_t i = 0; i < n_vectors; ++i) {
+            its[i] = vecs[i].cbegin();
+        }
+
+        std::vector<std::vector<double>> out;
+        while (its[0] != vecs[0].cend()) {
+            std::vector<double> row;
+            for (const auto& it : its) {
+                row.push_back(*it);
+            }
+            out.push_back(row);
+
+            ++its[n_vectors - 1];
+            for (size_t i = n_vectors - 1; (i > 0) and (its[i] == vecs[i].cend()); --i) {
+                its[i] = vecs[i].cbegin();
+                ++its[i - 1];
+            }
+        }
+        return out;
     }
 }
 
