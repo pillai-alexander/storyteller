@@ -140,7 +140,7 @@ void DatabaseHandler::write_metrics(const Ledger* ledger, const Parameters* par)
         } catch (std::exception& e) {
             std::cerr << "Write attempt " << i << " failed:" << '\n';
             std::cerr << "\tSQLite exception: " << e.what() << '\n';
-            exit(-2);
+exit(-2);
             std::this_thread::sleep_for(std::chrono::milliseconds(ms_delay_between_attempts));
         }
     }
