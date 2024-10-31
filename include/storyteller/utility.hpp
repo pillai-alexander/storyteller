@@ -68,5 +68,5 @@ class DatabaseHandler {
     size_t n_transaction_attempts;
     size_t ms_delay_between_attempts;
 
-    const Storyteller* owner;
+    // const Storyteller* owner;
 };

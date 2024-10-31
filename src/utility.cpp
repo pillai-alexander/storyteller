@@ -62,7 +62,7 @@ unsigned long int RngHandler::get_seed() const { return rng_seed; }
 DatabaseHandler::DatabaseHandler(const Storyteller* storyteller, std::string db_path) 
     : n_transaction_attempts(10),
       ms_delay_between_attempts(1000) {
-    owner = storyteller;
+    // owner = storyteller;
     database_path = db_path;
 }
 
