@@ -19,7 +19,7 @@ namespace constants {
 
 namespace util {
     double gamma_scale_from_mean(double shape, double mean) {
-        return mean / shape;
+        return (shape == constants::ZERO) ? mean : mean / shape;
     }
 }
 
