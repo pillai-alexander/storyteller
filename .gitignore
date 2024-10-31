@@ -34,3 +34,7 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
+
+# doxygen ignores
+docs/html
+docs/latex

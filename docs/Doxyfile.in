@@ -1,0 +1,4 @@
+OUTPUT_DIRECTORY       = @Storyteller_SOURCE_DIR@/docs
+INPUT                  = @Storyteller_SOURCE_DIR@/src @Storyteller_SOURCE_DIR@/include/storyteller
+
+GENERATE_LATEX = NO
