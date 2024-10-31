@@ -11,6 +11,7 @@ class Ledger;
 class Parameters;
 
 namespace constants {
+    extern unsigned int ZERO;
     extern unsigned int ONE;
 }
 

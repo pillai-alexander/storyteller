@@ -13,6 +13,7 @@ using std::chrono::duration;
 using std::chrono::milliseconds;
 
 namespace constants {
+    unsigned int ZERO = 0;
     unsigned int ONE = 1;
 }
 
