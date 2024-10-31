@@ -1,15 +1,21 @@
 #include <chrono>
 #include <thread>
 #include <iostream>
+#include <sstream>
 #include <vector>
+#include <map>
+#include <string>
+#include <algorithm>
 
 #include <SQLiteCpp/SQLiteCpp.h>
+#include <nlohmann/json.hpp>
 
 #include <storyteller/utility.hpp>
 #include <storyteller/simulator.hpp>
 #include <storyteller/ledger.hpp>
 #include <storyteller/storyteller.hpp>
 
+using json = nlohmann::json;
 using std::chrono::duration;
 using std::chrono::milliseconds;
 
@@ -50,6 +56,26 @@ namespace util {
         return out;
     }
 }
+
+enum TableName {
+    PAR,
+    MET,
+    // JOB,
+    NUM_TABLE_NAMES
+};
+
+enum ConfigParFlag {
+    CONST,
+    COPY,
+    STEP,
+    NUM_CONFIG_PAR_FLAGS
+};
+
+std::map<std::string, ConfigParFlag> cfg_par_flag_lookup = {
+    {"CONST", CONST},
+    {"COPY", COPY},
+    {"STEP", STEP}
+};
 
 RngHandler::RngHandler(unsigned long int seed) : rng_seed(seed) {
     infection_rng   = gsl_rng_alloc(gsl_rng_mt19937);
@@ -171,5 +197,144 @@ void DatabaseHandler::write_metrics(const Ledger* ledger, const Parameters* par)
 exit(-2);
             std::this_thread::sleep_for(std::chrono::milliseconds(ms_delay_between_attempts));
         }
+    }
+}
+
+bool DatabaseHandler::database_exists() {
+    try {
+        SQLite::Database db(database_path, SQLite::OPEN_READONLY);
+        return db.tableExists("par") and db.tableExists("met");
+    } catch (std::exception& e) {
+        return false;
+    }
+}
+
+bool DatabaseHandler::table_exists(std::string table) {
+    SQLite::Database db(database_path, SQLite::OPEN_READONLY);
+    return db.tableExists(table);
+}
+
+int DatabaseHandler::init_database(json cfg) {
+    auto cfg_pars         = cfg["model_parameters"];
+    auto cfg_mets         = cfg["metrics"];
+    size_t n_realizations = cfg["n_realizations"];
+
+    std::vector<std::string> sql;
+
+    std::ostringstream met_table_sql("CREATE TABLE met (serial INT", std::ios_base::ate);
+    for (auto& [k, el] : cfg_mets.items()) {
+        met_table_sql << ", " << el["fullname"].get<std::string>() << " " << el["datatype"].get<std::string>();
+    }
+    met_table_sql << ");";
+    sql.push_back(met_table_sql.str());
+
+    std::vector<std::string> col_name;
+    vector2d<double> step_pars;
+
+    std::vector<std::vector<std::string>> pars_by_flag(NUM_CONFIG_PAR_FLAGS);
+    std::map<std::string, std::string> par_types;
+    std::map<std::string, std::vector<double>> par_vals;
+    std::map<std::string, std::string> copy_who;
+
+    for (auto& [k, el] : cfg_pars.items()) {
+        std::string name = el["fullname"].get<std::string>();
+        par_types[name] = el["datatype"].get<std::string>();
+
+        auto flag = cfg_par_flag_lookup[el["flag"].get<std::string>()];
+        pars_by_flag[flag].push_back(name);
+        switch (flag) {
+            case CONST: {
+                par_vals[name] = std::vector<double>{el["par1"].get<double>()};
+                break;
+            }
+            case STEP: {
+                par_vals[name] = std::vector<double>();
+
+                auto start = el["par1"].get<double>();
+                auto end = el["par2"].get<double>();
+                auto step = el["par3"].get<double>();
+                auto n_vals = (end - start) / step;
+
+                if (n_vals != (int) n_vals) {
+                    std::cerr << "ERROR: " << name << " has invalid step size.\n";
+                    exit(-1);
+                }
+
+                for (double v = start; v <= end; v += step) {
+                    par_vals[name].push_back(v);
+                }
+                col_name.push_back(name);
+                step_pars.push_back(par_vals[name]);
+                break;
+            }
+            case COPY: {
+                par_vals[name] = std::vector<double>();
+                copy_who[name] = el["par1"].get<std::string>();
+            }
+            default: { break; }
+        }
+    }
+
+    vector2d<double> rows = util::vec_combinations(step_pars);
+
+    for (auto& k : pars_by_flag[CONST]) {
+        col_name.push_back(k);
+        for (auto& row : rows) {
+            row.push_back(par_vals[k].front());
+        }
+    }
+
+    for (auto& k : pars_by_flag[COPY]) {
+        auto copy_from_idx = std::find(col_name.cbegin(), col_name.cend(), copy_who[k]) - col_name.cbegin();
+        col_name.push_back(k);
+        for (auto& row : rows) {
+            row.push_back(row[copy_from_idx]);
+        }
+    }
+
+    std::ostringstream par_table_sql("CREATE TABLE par (serial INT, seed INT", std::ios_base::ate);
+    for (auto& [k, t] : par_types) {
+        par_table_sql << ", " << k << " " << t;
+    }
+    par_table_sql << ");";
+    sql.push_back(par_table_sql.str());
+
+    std::ostringstream par_insert_leader("INSERT INTO par (serial, seed", std::ios_base::ate);
+    for (auto& c : col_name) {
+        par_insert_leader << "," << c;
+    }
+    par_insert_leader << ") VALUES (";
+
+    std::ostringstream par_insert_sql(par_insert_leader.str(), std::ios_base::ate);
+    size_t serial = 0, seed = 0;
+    for (size_t r = 0; r < n_realizations; ++r) {
+        for (auto& row : rows) {
+            par_insert_sql << serial << ", " << seed;
+            for (auto& val : row) {
+                par_insert_sql << ", "<< val;
+            }
+            par_insert_sql << ");";
+            sql.push_back(par_insert_sql.str());
+            par_insert_sql.str(par_insert_leader.str());
+            ++serial;
+        }
+        ++seed;
+    }
+
+    try {
+        SQLite::Database db(database_path, SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE);
+        SQLite::Transaction transaction(db);
+        for (size_t i = 0; i < sql.size(); ++i) {
+            SQLite::Statement query(db, sql[i]);
+            query.exec();
+            query.reset();
+        }
+        transaction.commit();
+        std::cerr << "Database init succeeded." << '\n';
+        return 0;
+    } catch (std::exception& e) {
+        std::cerr << "Database init failed:" << '\n';
+        std::cerr << "\tSQLite exception: " << e.what() << '\n';
+        return -1;
     }
 }

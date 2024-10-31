@@ -59,8 +59,6 @@ Storyteller::Storyteller(int argc, char* argv[])
             exit(-1);
         }
     }
-
-    process_config();
 }
 
 Storyteller::~Storyteller() {}
@@ -85,6 +83,7 @@ int Storyteller::run() {
 }
 
 int Storyteller::default_simulation() {
+    init();
     simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
     simulator->set_flags(simulation_flags);
     simulator->init();
@@ -96,6 +95,7 @@ int Storyteller::default_simulation() {
 }
 
 int Storyteller::batch_simulation() {
+    init();
     for (size_t i = 1; i <= batch_size; ++i) {
         simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
         simulator->set_flags(simulation_flags);
@@ -106,7 +106,7 @@ int Storyteller::batch_simulation() {
         if (batch_size > 1) {
             ++simulation_serial;
             reset();
-            process_config();
+            init();
         }
     }
 
@@ -114,7 +114,7 @@ int Storyteller::batch_simulation() {
     return 0;
 }
 
-void Storyteller::process_config() {
+void Storyteller::init() {
     if (simulation_flags["simulate"] and not config_file.empty()) {
         std::ifstream cfg_file(config_file);
         auto cfg = json::parse(cfg_file);
@@ -152,10 +152,7 @@ void Storyteller::process_config() {
 
 int Storyteller::construct_database() {
     if (not config_file.empty()) {
-        std::stringstream cmd;
-        cmd << "Rscript process_config.R " << config_file;
-        std::cerr << "Calling `" << cmd.str() << "`\n";
-        return system(cmd.str().c_str());
+        return process_config();
     } else {
         std::cerr << "ERROR: pass config file after --process.";
         return -1;
@@ -174,4 +171,29 @@ void Storyteller::reset() {
     db_handler.reset(nullptr);
     rng_handler.reset(nullptr);
     parameters.reset(nullptr);
+}
+
+int Storyteller::process_config() {
+    if (simulation_flags["process"] and not config_file.empty()) {
+        std::ifstream cfg_file(config_file);
+        auto cfg = json::parse(cfg_file);
+        cfg_file.close();
+
+        std::string db_path = (cfg.contains("database_path"))
+                                  ? std::string(cfg["database_path"])
+                                  : std::string(cfg["experiment_name"]) + ".sqlite";
+
+        db_handler = std::make_unique<DatabaseHandler>(this, db_path);
+        if (db_handler->database_exists()) {
+            std::cerr << "ERROR: database " << db_path << " already exists\n";
+            return -1;
+        } else {
+            std::cerr << db_path << " does not exist. Initializing...\n";
+            return db_handler->init_database(cfg);
+        }
+    } else {
+        std::cerr << "ERROR: improper args for config processing\n"
+                  << "\t cmd: exec --process -f config.json";
+        return -1;
+    }
 }

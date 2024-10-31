@@ -5,6 +5,9 @@
 #include <map>
 
 #include <gsl/gsl_rng.h>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 class Storyteller;
 class Ledger;
@@ -52,12 +55,12 @@ class DatabaseHandler {
     DatabaseHandler(const Storyteller* storyteller, std::string db_path);
     ~DatabaseHandler();
 
-    void init_database();
+    int init_database(json cfg);
     void create_table();
     void clear_table();
 
     bool database_exists();
-    bool table_exists();
+    bool table_exists(std::string table);
 
     void read_parameters(unsigned int serial, std::map<std::string, double>& pars);
     void write_metrics(const Ledger* ledger, const Parameters* par) const;

@@ -34,7 +34,8 @@ class Storyteller {
   private:
     bool sensible_inputs() const;
 
-    void process_config();
+    void init();
+    int process_config();
     int construct_database();
     int default_simulation();
     int batch_simulation();
