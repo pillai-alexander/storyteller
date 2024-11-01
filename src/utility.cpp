@@ -24,8 +24,7 @@
 #include <storyteller/storyteller.hpp>
 
 using json = nlohmann::json;
-using std::chrono::duration;
-using std::chrono::milliseconds;
+using namespace std::chrono;
 
 namespace constants {
     unsigned int ZERO = 0;
@@ -68,7 +67,7 @@ namespace util {
 enum TableName {
     PAR,
     MET,
-    // JOB,
+    JOB,
     NUM_TABLE_NAMES
 };
 
@@ -130,18 +129,43 @@ DatabaseHandler::DatabaseHandler(const Storyteller* storyteller, std::string db_
 
 DatabaseHandler::~DatabaseHandler() {}
 
+void DatabaseHandler::start_job(unsigned int serial) {
+    size_t start = duration_cast<seconds>(high_resolution_clock::now().time_since_epoch()).count();
+    std::ostringstream job_insert_sql("UPDATE job SET status='R', start_time=", std::ios_base::ate);
+    job_insert_sql << start << ", attempts=";
+    unsigned int attempts = 1;
+
+    try {
+        SQLite::Database db(database_path, SQLite::OPEN_READWRITE);
+        SQLite::Statement query(db, "SELECT * FROM job WHERE serial = ?");
+        query.bind(1, serial);
+        while (query.executeStep()) {
+            attempts += (unsigned int) query.getColumn("attempts");
+        }
+
+        job_insert_sql << attempts << " WHERE serial=" << serial << ";";
+
+        SQLite::Transaction transaction(db);
+        db.exec(job_insert_sql.str());
+        transaction.commit();
+        std::cerr << "Start job " << serial << " succeeded." << '\n';
+    } catch (std::exception& e) {
+        std::cerr << "Start job " << serial << " failed:" << '\n';
+        std::cerr << "\tSQLite exception: " << e.what() << '\n';
+    }
+}
+
 void DatabaseHandler::read_parameters(unsigned int serial, std::map<std::string, double>& pars) {
     for (size_t i = 0; i < n_transaction_attempts; ++i) {
+        start_job(serial);
         try {
-            {
-                SQLite::Database db(database_path);
-                SQLite::Statement query(db, "SELECT * FROM par WHERE serial = ?");
-                query.bind(1, (unsigned int) serial);
-                while (query.executeStep()) {
-                    pars["seed"] = query.getColumn("seed");
-                    for (auto& [param, val] : pars) {
-                        pars[param] = query.getColumn(param.c_str());
-                    }
+            SQLite::Database db(database_path);
+            SQLite::Statement query(db, "SELECT * FROM par WHERE serial = ?");
+            query.bind(1, serial);
+            while (query.executeStep()) {
+                pars["seed"] = query.getColumn("seed");
+                for (auto& [param, val] : pars) {
+                    pars[param] = query.getColumn(param.c_str());
                 }
             }
             std::cerr << "Read attempt " << i << " succeeded." << '\n';
@@ -149,7 +173,7 @@ void DatabaseHandler::read_parameters(unsigned int serial, std::map<std::string,
         } catch (std::exception& e) {
             std::cerr << "Read attempt " << i << " failed:" << '\n';
             std::cerr << "\tSQLite exception: " << e.what() << '\n';
-            std::this_thread::sleep_for(std::chrono::milliseconds(ms_delay_between_attempts));
+            std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
         }
     }
 }
@@ -202,8 +226,7 @@ void DatabaseHandler::write_metrics(const Ledger* ledger, const Parameters* par)
         } catch (std::exception& e) {
             std::cerr << "Write attempt " << i << " failed:" << '\n';
             std::cerr << "\tSQLite exception: " << e.what() << '\n';
-exit(-2);
-            std::this_thread::sleep_for(std::chrono::milliseconds(ms_delay_between_attempts));
+            std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
         }
     }
 }
@@ -226,15 +249,6 @@ int DatabaseHandler::init_database(json cfg) {
     auto cfg_pars         = cfg["model_parameters"];
     auto cfg_mets         = cfg["metrics"];
     size_t n_realizations = cfg["n_realizations"];
-
-    std::vector<std::string> sql;
-
-    std::ostringstream met_table_sql("CREATE TABLE met (serial INT", std::ios_base::ate);
-    for (auto& [k, el] : cfg_mets.items()) {
-        met_table_sql << ", " << el["fullname"].get<std::string>() << " " << el["datatype"].get<std::string>();
-    }
-    met_table_sql << ");";
-    sql.push_back(met_table_sql.str());
 
     std::vector<std::string> col_name;
     vector2d<double> step_pars;
@@ -300,12 +314,28 @@ int DatabaseHandler::init_database(json cfg) {
         }
     }
 
+    std::vector<std::string> sql;
+
+    std::ostringstream met_table_sql("CREATE TABLE met (serial INT", std::ios_base::ate);
+    for (auto& [k, el] : cfg_mets.items()) {
+        met_table_sql << ", " << el["fullname"].get<std::string>() << " " << el["datatype"].get<std::string>();
+    }
+    met_table_sql << ");";
+    sql.push_back(met_table_sql.str());
+
     std::ostringstream par_table_sql("CREATE TABLE par (serial INT, seed INT", std::ios_base::ate);
     for (auto& [k, t] : par_types) {
         par_table_sql << ", " << k << " " << t;
     }
     par_table_sql << ");";
     sql.push_back(par_table_sql.str());
+
+    std::string job_table_sql("CREATE TABLE job (serial INT, status TEXT, start_time INT, duration REAL, attempts INT, completions INT)");
+    sql.push_back(job_table_sql);
+
+    std::string job_insert_leader("INSERT INTO job VALUES (");
+    std::string job_insert_trailer(", 'Q', -1, -1, 0, 0);");
+    std::ostringstream job_insert_sql(job_insert_leader, std::ios_base::ate);
 
     std::ostringstream par_insert_leader("INSERT INTO par (serial, seed", std::ios_base::ate);
     for (auto& c : col_name) {
@@ -317,12 +347,17 @@ int DatabaseHandler::init_database(json cfg) {
     size_t serial = 0, seed = 0;
     for (size_t r = 0; r < n_realizations; ++r) {
         for (auto& row : rows) {
+            job_insert_sql << serial << job_insert_trailer;
             par_insert_sql << serial << ", " << seed;
             for (auto& val : row) {
                 par_insert_sql << ", "<< val;
             }
             par_insert_sql << ");";
+
+            sql.push_back(job_insert_sql.str());
             sql.push_back(par_insert_sql.str());
+
+            job_insert_sql.str(job_insert_leader);
             par_insert_sql.str(par_insert_leader.str());
             ++serial;
         }

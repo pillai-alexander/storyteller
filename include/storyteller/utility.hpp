@@ -121,6 +121,7 @@ class DatabaseHandler {
 
     void read_parameters(unsigned int serial, std::map<std::string, double>& pars);
     void write_metrics(const Ledger* ledger, const Parameters* par) const;
+    void start_job(unsigned int serial);
 
   private:
     std::vector<std::string> prepare_insert_sql(const Ledger* ledger, const Parameters* par) const;
