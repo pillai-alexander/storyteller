@@ -1,3 +1,11 @@
+/**
+ * @file simulator.cpp
+ * @author Alexander N. Pillai
+ * @brief Contains the Simulator class that is responsible for performing a single
+ *        simulation (either the default example or a parameterized particle).
+ *
+ * @copyright TBD
+ */
 #include <memory>
 #include <iostream>
 #include <fstream>
@@ -27,10 +35,15 @@ Simulator::~Simulator() {}
 void Simulator::set_flags(std::map<std::string, bool> flags) { sim_flags = flags; }
 
 void Simulator::init() {
+    // vaccinate population before transmission starts
     community->vaccinate_population(sim_time);
 }
 
+/**
+ * @details Main function of the simulation that houses the core simulation loop.
+ */
 void Simulator::simulate() {
+    // core simulation loop
     for (; sim_time < par->simulation_duration; ++sim_time) {
         tick();
     }
@@ -41,8 +54,11 @@ void Simulator::tick() {
 }
 
 void Simulator::results() {
+    // retrive the ledger from the community
+    /// @todo the ledger should be owned by the simulator but the community can access it
     auto ledger = community->ledger.get();
 
+    // retrieve desired metrics
     auto total_vaxd_flu_infs = ledger->total_infections(VACCINATED, INFLUENZA);
     auto total_vaxd_flu_cases = ledger->total_sympt_infections(VACCINATED, INFLUENZA);
     auto total_vaxd_flu_mai = ledger->total_mai(VACCINATED, INFLUENZA);
@@ -52,6 +68,7 @@ void Simulator::results() {
     auto vax_coverage = (double) ledger->total_vaccinations() / par->population_size;
     auto final_tnd_ve = ledger->get_tnd_ve_est(par->simulation_duration - 1);
 
+    // print basic simulation results to the terminal
     std::cerr << "rng seed:            " << rng_handler->get_seed() << '\n'
               << "flu infs (cAR%):     " << total_vaxd_flu_infs << " (" << ((double) total_vaxd_flu_infs/par->population_size)*100 << "%)" << '\n'
               << "flu cases (inf%):    " << total_vaxd_flu_cases << " (" << ((double) total_vaxd_flu_cases/total_vaxd_flu_infs)*100 << "%)" << '\n'
@@ -61,6 +78,7 @@ void Simulator::results() {
               << "nonflu mais (inf%):  " << total_vaxd_nonflu_mai << " (" << ((double) total_vaxd_nonflu_mai/total_vaxd_nonflu_infs)*100 << "%)" << '\n'
               << "final tnd ve (vax%): " << final_tnd_ve << " ("<< vax_coverage*100 << "%)" << '\n';
 
+    // perform necessary simulation data processing
     ledger->calculate_cumulatives();
     ledger->calculate_tnd_ve_est();
 
@@ -68,7 +86,9 @@ void Simulator::results() {
     //     ledger->generate_linelist_csv();
     // }
 
+    // generate the simulation dashboard if requested by the user
     if (sim_flags["simvis"]) ledger->generate_simvis_csv();
 
+    // write desired metrics to the experiment database
     if (sim_flags["particle"]) db_handler->write_metrics(ledger, par);
 }
