@@ -1,3 +1,11 @@
+/**
+ * @file ledger.cpp
+ * @author Alexander N. Pillai
+ * @brief Contains the Ledger class that stores simulation data during the core
+ *        simulation loop and pre-processes the data after the simulation ends.
+ *
+ * @copyright TBD
+ */
 #include <numeric>
 #include <iostream>
 #include <fstream>

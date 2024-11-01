@@ -1,3 +1,11 @@
+/**
+ * @file utility.cpp
+ * @author Alexander N. Pillai
+ * @brief Contains the global utility variables and methods and the RngHandler
+ *        and DatabaseHandler classes.
+ *
+ * @copyright TBD
+ */
 #include <chrono>
 #include <thread>
 #include <iostream>

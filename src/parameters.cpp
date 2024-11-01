@@ -1,3 +1,11 @@
+/**
+ * @file parameters.cpp
+ * @author Alexander N. Pillai
+ * @brief Contains the Parameters class that stores all necessary simulaiton
+ *        parameters and contains helper functions that use the parameter values.
+ *
+ * @copyright TBD
+ */
 #include <algorithm>
 #include <vector>
 #include <array>

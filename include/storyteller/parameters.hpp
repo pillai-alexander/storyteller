@@ -1,3 +1,11 @@
+/**
+ * @file parameters.hpp
+ * @author Alexander N. Pillai
+ * @brief Contains the Parameters class that stores all necessary simulaiton
+ *        parameters and contains helper functions that use the parameter values.
+ *
+ * @copyright TBD
+ */
 #pragma once
 
 #include <vector>
@@ -42,6 +50,13 @@ enum GammaDistributionParameter {
 
 typedef std::array<double, NUM_GAMMA_DISTR_PARAMS> GammaDistrParamArray;
 
+/**
+ * @brief Stores all necessary parameters to perform a single simulation.
+ *
+ * A Parameters object can either be default constructed and use pre-defined
+ * parameter values or can be initialized using parameter values read by the
+ * Storyteller from the experiment database.
+ */
 class Parameters {
   public:
     Parameters(const RngHandler* rngh);
