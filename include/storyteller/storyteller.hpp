@@ -6,7 +6,6 @@
  *        simulations)
  *
  * @copyright TBD
- *
  */
 #pragma once
 
@@ -24,7 +23,6 @@ class Parameters;
 /**
  * @brief Defines the types of operations that the Storyteller is capable of
  *        performing.
- *
  */
 enum OperationType {
     PROCESS_CONFIG,
@@ -37,11 +35,10 @@ enum OperationType {
  * @brief Primary object that interfaces with the user, processes user input,
  *        and performs desired operations.
  *
- * A storyteller object is created by the user's main file and handles all user
+ * A Storyteller object is created by the user's main file and handles all user
  * input (including command-line argumets and configuration files). The object
  * then processes the user input to determine what operation is desired (currently
  * either database construction or simulation) and performs that operation.
- *
  */
 class Storyteller {
   public:
@@ -98,6 +95,7 @@ class Storyteller {
      * @return int Return code of the operation (0 if sucessful)
      */
     int run();
+
   private:
     /**
      * @todo: process user input to determine if it matches expectations
@@ -109,7 +107,6 @@ class Storyteller {
 
     /**
      * @brief Initialize Storteller for running a simulation.
-     *
      */
     void init();
 
@@ -153,7 +150,6 @@ class Storyteller {
 
     /**
      * @brief Resets the Storteller before a new simulation.
-     *
      */
     void reset();
 
@@ -161,10 +157,12 @@ class Storyteller {
     std::unique_ptr<DatabaseHandler> db_handler;    ///< Handles all database operations
     std::unique_ptr<RngHandler> rng_handler;        ///< Handles all pseudo-random number generation
     std::unique_ptr<Parameters> parameters;         ///< Stores all necessary simulation parameters
+
     OperationType operation_to_perform;
 
     argh::parser cmdl_args;                         ///< Stores parsed command-line arguments
     std::map<std::string, bool> simulation_flags;   ///< Stores program flags
+
     int simulation_serial;
     size_t batch_size;
     std::string config_file;

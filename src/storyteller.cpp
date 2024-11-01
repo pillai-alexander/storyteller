@@ -1,3 +1,12 @@
+/**
+ * @file storyteller.cpp
+ * @author Alexander N. Pillai
+ * @brief Contains the Storyteller class that is responsible for taking in user
+ *        input and performing the desired operations (eg, database initialization,
+ *        simulations)
+ *
+ * @copyright TBD
+ */
 #include <map>
 #include <string>
 #include <iostream>
