@@ -18,13 +18,13 @@ TBD -->
 * How/where to download your program
 * Any modifications needed to be made to files/folders -->
 
-### Executing program
+<!-- ### Executing program
 
 * How to run the program
 * Step-by-step bullets
 ```
 code blocks for commands
-```
+``` -->
 
 <!-- ## Help
 
@@ -35,13 +35,11 @@ command to run if program contains helper info
 
 ## Authors
 
-Alexander N. Pillai
-[@pillai-alexander](https://github.com/pillai-alexander)
+Alexander N. Pillai ([@pillai-alexander](https://github.com/pillai-alexander))
 
 ## Version History
 
-* 0.1
-    * Initial Release
+###### [0.1](https://github.com/pillai-alexander/storyteller/releases/tag/v0.1): Last commit before major changes that are not directly backward-compatible.
 
 ## License
 
