@@ -21,6 +21,7 @@
 #include <storyteller/simulator.hpp>
 #include <storyteller/parameters.hpp>
 #include <storyteller/utility.hpp>
+#include <storyteller/database_handler.hpp>
 
 using json = nlohmann::json;
 
