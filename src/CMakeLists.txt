@@ -6,11 +6,12 @@ add_library(
     storyteller
     storyteller.cpp
     simulator.cpp
-    community.cpp
+    database_handler.cpp
     parameters.cpp
-    person.cpp
     utility.cpp
     ledger.cpp
+    community.cpp
+    person.cpp
     ${HEADER_LIST}
 )
 

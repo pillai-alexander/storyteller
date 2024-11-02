@@ -8,18 +8,9 @@
  */
 #pragma once
 
-#include <string>
 #include <vector>
-#include <map>
 
 #include <gsl/gsl_rng.h>
-#include <nlohmann/json.hpp>
-
-using json = nlohmann::json;
-
-class Storyteller;
-class Ledger;
-class Parameters;
 
 /**
  * @brief Contains any useful global constants.
@@ -98,37 +89,4 @@ class RngHandler {
     gsl_rng* infection_rng;
     gsl_rng* vaccination_rng;
     gsl_rng* behavior_rng;
-};
-
-/**
- * @brief Handles all SQLite database operations.
- * 
- * Includes methods that create a new experiment database using the user-provided
- * configuration file, read simulation parameters for a specific particle, and
- * write simulation metrics to the database after a simulation terminates.
- */
-class DatabaseHandler {
-  public:
-    DatabaseHandler(const Storyteller* storyteller, std::string db_path);
-    ~DatabaseHandler();
-
-    int init_database(json cfg);
-    void create_table();
-    void clear_table();
-
-    bool database_exists();
-    bool table_exists(std::string table);
-
-    void read_parameters(unsigned int serial, std::map<std::string, double>& pars);
-    void write_metrics(const Ledger* ledger, const Parameters* par) const;
-    void start_job(unsigned int serial);
-
-  private:
-    std::vector<std::string> prepare_insert_sql(const Ledger* ledger, const Parameters* par) const;
-
-    std::string database_path;
-    size_t n_transaction_attempts;
-    size_t ms_delay_between_attempts;
-
-    // const Storyteller* owner;
 };
