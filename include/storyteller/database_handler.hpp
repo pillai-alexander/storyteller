@@ -52,11 +52,13 @@ class DatabaseHandler {
     bool database_exists();
     bool table_exists(std::string table);
 
-    void read_parameters(unsigned int serial, std::map<std::string, double>& pars);
+    void read_parameters(unsigned int serial, std::map<std::string, double>& pars) const;
     void write_metrics(const Ledger* ledger, const Parameters* par) const;
-    void start_job(unsigned int serial);
 
   private:
+    void start_job(unsigned int serial) const;
+    void end_job(unsigned int serial) const;
+
     std::vector<std::string> prepare_insert_sql(const Ledger* ledger, const Parameters* par) const;
 
     std::string database_path;
