@@ -18,6 +18,7 @@
 #include <nlohmann/json.hpp>
 
 #include <storyteller/storyteller.hpp>
+#include <storyteller/tome.hpp>
 #include <storyteller/simulator.hpp>
 #include <storyteller/parameters.hpp>
 #include <storyteller/utility.hpp>
@@ -47,6 +48,13 @@ Storyteller::Storyteller(int argc, char* argv[])
     simulation_flags["particle"] = cmdl_args["particle"];
     simulation_flags["example"]  = cmdl_args["example"];
     simulation_flags["simvis"]   = cmdl_args["simvis"];
+
+    if (not (cmdl_args({"-t", "--tome"}) >> config_file)) {
+        std::cerr << "ERROR: pass core config file path using -t or --tome.";
+        exit(-1);
+    }
+    tome = std::make_unique<Tome>(config_file);
+    exit(-2);
 
     // extract sim serial
     if (simulation_flags["particle"] and not (cmdl_args({"-s", "--serial"}) >> simulation_serial)) {

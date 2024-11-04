@@ -4,8 +4,6 @@
 #include <string>
 #include <memory>
 
-// #include <sol/sol.hpp>
-
 #include <storyteller/storyteller.hpp>
 
 // process config file

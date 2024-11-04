@@ -19,6 +19,7 @@ class Simulator;
 class DatabaseHandler;
 class RngHandler;
 class Parameters;
+class Tome;
 
 /**
  * @brief Defines the types of operations that the Storyteller is capable of
@@ -155,6 +156,7 @@ class Storyteller {
      */
     void reset();
 
+    std::unique_ptr<Tome> tome;
     std::unique_ptr<Simulator> simulator;           ///< Created for each simulation to be run
     std::unique_ptr<DatabaseHandler> db_handler;    ///< Handles all database operations
     std::unique_ptr<RngHandler> rng_handler;        ///< Handles all pseudo-random number generation
