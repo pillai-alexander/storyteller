@@ -51,6 +51,8 @@ class Storyteller {
     Storyteller(int argc, char* argv[]);
     ~Storyteller();
 
+    const Parameters* get_parameters() const;
+
     /**
      * @brief Get the simulation serial.
      *

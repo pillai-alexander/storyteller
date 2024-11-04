@@ -24,7 +24,7 @@
 #include <storyteller/utility.hpp>
 #include <storyteller/database_handler.hpp>
 
-Simulator::Simulator(const Parameters* parameters, const DatabaseHandler* dbh, const RngHandler* rngh) : sim_time(0) {
+Simulator::Simulator(const Parameters* parameters, DatabaseHandler* dbh, const RngHandler* rngh) : sim_time(0) {
     rng_handler = rngh;
     par         = parameters;
     db_handler  = dbh;

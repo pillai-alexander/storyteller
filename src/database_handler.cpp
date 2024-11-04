@@ -19,6 +19,7 @@
 
 #include <storyteller/database_handler.hpp>
 #include <storyteller/ledger.hpp>
+#include <storyteller/storyteller.hpp>
 
 using json = nlohmann::json;
 using namespace std::chrono;
@@ -29,33 +30,76 @@ std::map<std::string, ConfigParFlag> cfg_par_flag_lookup = {
     {"STEP", STEP}
 };
 
+ParticleJob::ParticleJob() {}
+
+ParticleJob::ParticleJob(size_t serial)
+    : serial(serial),
+      attempts(0),
+      completions(0),
+      status("prep"),
+      start_time(-1),
+      end_time(-1),
+      duration(-1) {}
+
+void ParticleJob::start() {
+    attempts += 1;
+    start_time = duration_cast<seconds>(high_resolution_clock::now().time_since_epoch()).count();
+    status = "running";
+}
+
+void ParticleJob::end() {
+    completions += 1;
+    end_time = duration_cast<seconds>(high_resolution_clock::now().time_since_epoch()).count();
+    duration = end_time - start_time;
+    status = "done";
+}
+
+std::string ParticleJob::update() {
+    std::ostringstream sql("UPDATE job SET ", std::ios_base::ate);
+    sql << "status='"      << status << "', "
+        << "attempts="      << attempts << ", "
+        << "completions="  << completions << ", "
+        << "start_time="   << start_time << ", "
+        << "duration="     << duration << " "
+        << "WHERE serial=" << serial << ";";
+    return sql.str();
+}
+
 DatabaseHandler::DatabaseHandler(const Storyteller* storyteller, std::string db_path) 
     : n_transaction_attempts(10),
       ms_delay_between_attempts(1000) {
-    // owner = storyteller;
+    owner = storyteller;
     database_path = db_path;
 }
 
 DatabaseHandler::~DatabaseHandler() {}
 
-void DatabaseHandler::start_job(unsigned int serial) const {
-    size_t current_time = duration_cast<seconds>(high_resolution_clock::now().time_since_epoch()).count();
-    std::ostringstream job_update_sql("UPDATE job SET status='R', start_time=", std::ios_base::ate);
-    job_update_sql << current_time << ", attempts=";
-    unsigned int attempts = 1;
-
+void DatabaseHandler::read_job(unsigned int serial) {
+    simulation_job = ParticleJob(serial);
     try {
-        SQLite::Database db(database_path, SQLite::OPEN_READWRITE);
+        SQLite::Database db(database_path, SQLite::OPEN_READONLY);
         SQLite::Statement query(db, "SELECT * FROM job WHERE serial = ?");
         query.bind(1, serial);
         while (query.executeStep()) {
-            attempts += (unsigned int) query.getColumn("attempts");
+            simulation_job.attempts = (unsigned int) query.getColumn("attempts");
+            simulation_job.completions = (unsigned int) query.getColumn("completions");
+            simulation_job.status = (std::string) query.getColumn("status");
         }
+        std::cerr << "Read job " << serial << " succeeded." << '\n';
+    } catch (std::exception& e) {
+        std::cerr << "Read job " << serial << " failed:" << '\n';
+        std::cerr << "\tSQLite exception: " << e.what() << '\n';
+    }
+}
 
-        job_update_sql << attempts << " WHERE serial=" << serial << ";";
+void DatabaseHandler::start_job(unsigned int serial) {
+    read_job(serial);
+    simulation_job.start();
 
+    try {
+        SQLite::Database db(database_path, SQLite::OPEN_READWRITE);
         SQLite::Transaction transaction(db);
-        db.exec(job_update_sql.str());
+        db.exec(simulation_job.update());
         transaction.commit();
         std::cerr << "Start job " << serial << " succeeded." << '\n';
     } catch (std::exception& e) {
@@ -64,24 +108,13 @@ void DatabaseHandler::start_job(unsigned int serial) const {
     }
 }
 
-void DatabaseHandler::end_job(unsigned int serial) const {
-    size_t duration = duration_cast<seconds>(high_resolution_clock::now().time_since_epoch()).count();
-    std::ostringstream job_update_sql("UPDATE job SET status='D', duration=", std::ios_base::ate);
-    unsigned int completions = 1;
+void DatabaseHandler::end_job(unsigned int serial) {
+    simulation_job.end();
 
     try {
         SQLite::Database db(database_path, SQLite::OPEN_READWRITE);
-        SQLite::Statement query(db, "SELECT * FROM job WHERE serial = ?");
-        query.bind(1, serial);
-        while (query.executeStep()) {
-            completions += (unsigned int) query.getColumn("completions");
-            duration    -= (unsigned int) query.getColumn("start_time");
-        }
-
-        job_update_sql << duration << ", completions=" << completions << " WHERE serial=" << serial << ";";
-
         SQLite::Transaction transaction(db);
-        db.exec(job_update_sql.str());
+        db.exec(simulation_job.update());
         transaction.commit();
         std::cerr << "End job " << serial << " succeeded." << '\n';
     } catch (std::exception& e) {
@@ -90,7 +123,7 @@ void DatabaseHandler::end_job(unsigned int serial) const {
     }
 }
 
-void DatabaseHandler::read_parameters(unsigned int serial, std::map<std::string, double>& pars) const {
+void DatabaseHandler::read_parameters(unsigned int serial, std::map<std::string, double>& pars) {
     for (size_t i = 0; i < n_transaction_attempts; ++i) {
         start_job(serial);
         try {
@@ -143,8 +176,9 @@ std::vector<std::string> DatabaseHandler::prepare_insert_sql(const Ledger* ledge
     return inserts;
 }
 
-void DatabaseHandler::write_metrics(const Ledger* ledger, const Parameters* par) const {
+void DatabaseHandler::write_metrics(const Ledger* ledger, const Parameters* par) {
     std::vector<std::string> inserts = prepare_insert_sql(ledger, par);
+    if (simulation_job.completions > 0) clear_metrics(par->simulation_serial);
 
     for (size_t i = 0; i < n_transaction_attempts; ++i) {
         try {
@@ -161,6 +195,26 @@ void DatabaseHandler::write_metrics(const Ledger* ledger, const Parameters* par)
             break;
         } catch (std::exception& e) {
             std::cerr << "Write attempt " << i << " failed:" << '\n';
+            std::cerr << "\tSQLite exception: " << e.what() << '\n';
+            std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
+        }
+    }
+}
+
+void DatabaseHandler::clear_metrics(unsigned int serial) {
+    for (size_t i = 0; i < n_transaction_attempts; ++i) {
+        try {
+            SQLite::Database db(database_path, SQLite::OPEN_READWRITE);
+            SQLite::Transaction transaction(db);
+            SQLite::Statement query(db, "DELETE FROM met WHERE serial=?");
+            query.bind(1, serial);
+            query.exec();
+            query.reset();
+            transaction.commit();
+            std::cerr << "Clear attempt " << serial << " succeeded." << '\n';
+            break;
+        } catch (std::exception& e) {
+            std::cerr << "Clear attempt " << serial << " failed:" << '\n';
             std::cerr << "\tSQLite exception: " << e.what() << '\n';
             std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
         }
@@ -270,7 +324,7 @@ int DatabaseHandler::init_database(json cfg) {
     sql.push_back(job_table_sql);
 
     std::string job_insert_leader("INSERT INTO job VALUES (");
-    std::string job_insert_trailer(", 'Q', -1, -1, 0, 0);");
+    std::string job_insert_trailer(", 'queued', -1, -1, 0, 0);");
     std::ostringstream job_insert_sql(job_insert_leader, std::ios_base::ate);
 
     std::ostringstream par_insert_leader("INSERT INTO par (serial, seed", std::ios_base::ate);

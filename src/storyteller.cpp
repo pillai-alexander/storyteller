@@ -84,10 +84,11 @@ Storyteller::Storyteller(int argc, char* argv[])
 
 Storyteller::~Storyteller() {}
 
-int Storyteller::get_serial()               const { return simulation_serial; }
-size_t Storyteller::get_batch_size()        const { return batch_size; }
-std::string Storyteller::get_config_file()  const { return config_file; }
-bool Storyteller::get_flag(std::string key) const { return simulation_flags.at(key); }
+const Parameters* Storyteller::get_parameters() const { return parameters.get(); }
+int Storyteller::get_serial()                   const { return simulation_serial; }
+size_t Storyteller::get_batch_size()            const { return batch_size; }
+std::string Storyteller::get_config_file()      const { return config_file; }
+bool Storyteller::get_flag(std::string key)     const { return simulation_flags.at(key); }
 
 void Storyteller::set_flag(std::string key, bool val) { simulation_flags[key] = val; }
 
