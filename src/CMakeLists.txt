@@ -25,7 +25,7 @@ target_link_libraries(storyteller PRIVATE SQLiteCpp)
 target_link_libraries(storyteller PRIVATE nlohmann_json::nlohmann_json)
 
 target_link_libraries(storyteller PRIVATE argh)
-# target_include_directories(storyteller PRIVATE argh)
+target_include_directories(storyteller PRIVATE ${argh_INCLUDE_DIR})
 
 # IDEs should put the headers in a nice place
 source_group(
