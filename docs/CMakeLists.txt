@@ -8,8 +8,6 @@ if(DOXYGEN_FOUND)
 
     CONFIGURE_FILE(${DOXY_IN} ${DOXY_OUT} @ONLY)
 
-    message("${DOXYGEN_EXECUTABLE} ${DOXY_OUT}")
-
     add_custom_target(docs
         COMMAND ${DOXYGEN_EXECUTABLE} ${DOXY_OUT}
         WORKING_DIRECTORY ${Storyteller_SOURCE_DIR}
