@@ -1,3 +1,12 @@
+/**
+ * @file person.hpp
+ * @author Alexander N. Pillai
+ * @brief Contains the Storyteller class that is responsible for taking in user
+ *        input and performing the desired operations (eg, database initialization,
+ *        simulations)
+ *
+ * @copyright TBD
+ */
 #pragma once
 
 #include <vector>
@@ -6,6 +15,10 @@
 
 #include "parameters.hpp"
 
+/**
+ * @brief Represents a single infection event for a Person and stores all relevant
+ *        infection information.
+ */
 class Infection {
   friend class Person;
   public:
@@ -26,6 +39,9 @@ class Infection {
     bool sought_care;
 };
 
+/**
+ * @brief Primary agent of the simulation that is stored in a Community.
+ */
 class Person {
   public:
     Person(size_t id, const Parameters* parameters, const RngHandler* rng_handler);

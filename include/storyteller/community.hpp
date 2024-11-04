@@ -1,3 +1,11 @@
+/**
+ * @file community.hpp
+ * @author Alexander N. Pillai
+ * @brief Contains the Community object that stores the synthetic population and
+ *        performs simulation operations to that population.
+ *
+ * @copyright TBD
+ */
 #pragma once
 
 #include <vector>
@@ -11,6 +19,10 @@ class Infection;
 class RngHandler;
 class Ledger;
 
+/**
+ * @brief Object that stores and manipulates a synthetic population for a single
+ *        simulation.
+ */
 class Community {
   friend class Simulator;
   public:

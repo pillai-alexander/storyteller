@@ -1,6 +1,6 @@
 {
     "experiment_name" : "basic_config",
-    "n_realizations"  : 100,
+    "n_realizations"  : 1,
     "sim_duration"    : 200,
     "metric_freq"     : "DAILY",
 
@@ -41,7 +41,7 @@
             "flag"     : "STEP",
             "par1"     : 0.0,
             "par2"     : 1.0,
-            "par3"     : 0.5
+            "par3"     : 0.1
         },
         {
             "fullname" : "pr_symptoms_given_flu",
@@ -70,10 +70,8 @@
         {
             "fullname" : "pr_flu_exposure",
             "datatype" : "REAL",
-            "flag"     : "STEP",
-            "par1"     : 0.001,
-            "par2"     : 0.002,
-            "par3"     : 0.001
+            "flag"     : "CONST",
+            "par1"     : 0.001
         },
         {
             "fullname" : "pr_nonflu_exposure",

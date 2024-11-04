@@ -1,3 +1,11 @@
+/**
+ * @file community.cpp
+ * @author Alexander N. Pillai
+ * @brief Contains the Community object that stores the synthetic population and
+ *        performs simulation operations to that population.
+ *
+ * @copyright TBD
+ */
 #include <algorithm>
 #include <memory>
 

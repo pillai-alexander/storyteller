@@ -1,3 +1,11 @@
+/**
+ * @file simulator.hpp
+ * @author Alexander N. Pillai
+ * @brief Contains the Simulator class that is responsible for performing a single
+ *        simulation (either the default example or a parameterized particle).
+ *
+ * @copyright TBD
+ */
 #pragma once
 
 #include <memory>
@@ -10,49 +18,67 @@
 
 class Community;
 class Infection;
+class Ledger;
+class DatabaseHandler;
+class RngHandler;
 
-enum RngType {
-    INFECTION,
-    VACCINATION,
-    BEHAVIOR,
-    NUM_RNG_TYPES
-};
-
-class RngHandler {
-  public:
-    RngHandler(unsigned long int seed);
-    ~RngHandler();
-
-    double draw_from_rng(RngType type = INFECTION) const;
-    gsl_rng* get_rng(RngType type = INFECTION) const;
-
-  private:
-    gsl_rng* infection_rng;
-    gsl_rng* vaccination_rng;
-    gsl_rng* behavior_rng;
-};
-
+/**
+ * @brief Main simulation object that handles simulation setup, performs the
+ *        actual simulation itself, and processes simualtion data for the
+ *        experiment database.
+ *
+ * A Simulator object is created by the Storyteller for each simulation to be
+ * performed. The object then prepares for, runs, and reports the data from the
+ * specified simulation.
+ */
 class Simulator {
   public:
-    Simulator();
-    Simulator(std::string cfg, size_t serial);
+    /**
+     * @brief Construct a new Simulator object with the Parameters, DatabaseHandler,
+     *        and RngHandler provided by the Storyteller.
+     *
+     * @param parameters Parameters object owned by the Storyteller
+     * @param dbh Database object owned by the Storyteller
+     * @param rngh RngHandler object owned by the Storyteller
+     */
+    Simulator(const Parameters* parameters, DatabaseHandler* dbh, const RngHandler* rngh);
     ~Simulator();
 
+    /**
+     * @brief Store the program flags parsed by the Storyteller
+     *
+     * @param flags Dictionary of program flags
+     */
     void set_flags(std::map<std::string, bool> flags);
 
+    /**
+     * @brief Perform the necessary tasks to initialize a simulation.
+     */
     void init();
+
+    /**
+     * @brief Perform the simulation itself.
+     */
     void simulate();
-    void tick();
+
+    /**
+     * @brief Perform any necessary post-simulation processing and report requested
+     *        simulation metrics.
+     */
     void results();
 
-    void write_metrics_to_database();
-
   private:
-    size_t sim_time;
-    unsigned long int rng_seed;
-    std::map<std::string, bool> sim_flags;
+    /**
+     * @brief Helper function that contains all simulation tasks that need to be
+     *        executed at each simulated time step.
+     */
+    void tick();
 
-    std::unique_ptr<Parameters> par;
-    std::unique_ptr<Community> community;
-    std::unique_ptr<RngHandler> rng_handler;
+    size_t sim_time;                        ///< Current simulation time step
+    std::map<std::string, bool> sim_flags;  ///< Program flags provided by the Storyteller
+
+    std::unique_ptr<Community> community;   ///< Created for each simulation
+    const RngHandler* rng_handler;          ///< Points to #Storyteller::rng_handler
+    const Parameters* par;                  ///< Points to #Storyteller::parameters
+    DatabaseHandler* db_handler;      ///< Points to #Storyteller::db_handler
 };

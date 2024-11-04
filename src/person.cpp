@@ -1,3 +1,12 @@
+/**
+ * @file person.cpp
+ * @author Alexander N. Pillai
+ * @brief Contains the Storyteller class that is responsible for taking in user
+ *        input and performing the desired operations (eg, database initialization,
+ *        simulations)
+ *
+ * @copyright TBD
+ */
 #include <memory>
 #include <iostream>
 #include <algorithm>
@@ -5,6 +14,7 @@
 #include <storyteller/person.hpp>
 #include <storyteller/simulator.hpp>
 #include <storyteller/parameters.hpp>
+#include <storyteller/utility.hpp>
 
 Infection::Infection(Person* p, StrainType strain, size_t t, SymptomClass sympt, bool care)
     : infectee(p),

@@ -1,6 +1,15 @@
+/**
+ * @file ledger.cpp
+ * @author Alexander N. Pillai
+ * @brief Contains the Ledger class that stores simulation data during the core
+ *        simulation loop and pre-processes the data after the simulation ends.
+ *
+ * @copyright TBD
+ */
 #include <numeric>
 #include <iostream>
 #include <fstream>
+#include <math.h>
 
 #include <storyteller/ledger.hpp>
 #include <storyteller/person.hpp>
@@ -98,8 +107,9 @@ void Ledger::calculate_tnd_ve_est() {
     
         auto flu_vax_odds    = ((double) cumul_vax_flu_mais) / cumul_unvax_flu_mais;
         auto nonflu_vax_odds = ((double) cumul_vax_nonflu_mais) / cumul_unvax_nonflu_mais;
+        double ve_est        = 1 - (flu_vax_odds / nonflu_vax_odds);
 
-        tnd_ve_estimate[t] = 1 - (flu_vax_odds / nonflu_vax_odds);
+        tnd_ve_estimate[t] = isinf(ve_est) ? 0.0 : ve_est;
     }
 }
 

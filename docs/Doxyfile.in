@@ -1,0 +1,10 @@
+PROJECT_NAME = Storyteller
+
+OUTPUT_DIRECTORY       = @Storyteller_SOURCE_DIR@/docs
+INPUT                  = @Storyteller_SOURCE_DIR@/src @Storyteller_SOURCE_DIR@/include/storyteller @Storyteller_SOURCE_DIR@/README.md
+
+GENERATE_LATEX = NO
+
+EXTRACT_PRIVATE = YES
+
+USE_MDFILE_AS_MAINPAGE = @Storyteller_SOURCE_DIR@/README.md

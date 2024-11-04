@@ -48,9 +48,16 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(nlohmann_json SQLiteCpp sol2 argh)
 
-add_subdirectory(src)
+option(BUILD_DOCS "Build Doxygen documentation" OFF)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     message("-- Building examples")
     add_subdirectory(examples)
+
+    if(BUILD_DOCS)
+        message("-- Building doxy documentation")
+        add_subdirectory(docs)
+    endif()
 endif()
+
+add_subdirectory(src)

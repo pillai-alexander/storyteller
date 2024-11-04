@@ -1,3 +1,11 @@
+/**
+ * @file ledger.hpp
+ * @author Alexander N. Pillai
+ * @brief Contains the Ledger class that stores simulation data during the core
+ *        simulation loop and pre-processes the data after the simulation ends.
+ *
+ * @copyright TBD
+ */
 #pragma once
 
 #include <vector>
@@ -8,6 +16,10 @@
 
 class Infection;
 
+/**
+ * @brief Keeps track of necessary simulation data while the simulation runs and
+ *        pre-processes the data before metrics are saved to the experiment database.
+ */
 class Ledger {
   friend class Community;
   public:
