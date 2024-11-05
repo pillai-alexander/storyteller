@@ -59,6 +59,10 @@ void Simulator::results() {
     /// @todo the ledger should be owned by the simulator but the community can access it
     auto ledger = community->ledger.get();
 
+    // perform necessary simulation data processing
+    ledger->calculate_cumulatives();
+    ledger->calculate_tnd_ve_est();
+
     // retrieve desired metrics
     auto total_vaxd_flu_infs = ledger->total_infections(VACCINATED, INFLUENZA);
     auto total_vaxd_flu_cases = ledger->total_sympt_infections(VACCINATED, INFLUENZA);
@@ -78,10 +82,6 @@ void Simulator::results() {
               << "nonflu cases (inf%): " << total_vaxd_nonflu_cases << " (" << ((double) total_vaxd_nonflu_cases/total_vaxd_nonflu_infs)*100 << "%)" << '\n'
               << "nonflu mais (inf%):  " << total_vaxd_nonflu_mai << " (" << ((double) total_vaxd_nonflu_mai/total_vaxd_nonflu_infs)*100 << "%)" << '\n'
               << "final tnd ve (vax%): " << final_tnd_ve << " ("<< vax_coverage*100 << "%)" << '\n';
-
-    // perform necessary simulation data processing
-    ledger->calculate_cumulatives();
-    ledger->calculate_tnd_ve_est();
 
     // { // generate linelist csv (sim.linelist)
     //     ledger->generate_linelist_csv();
