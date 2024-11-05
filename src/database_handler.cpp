@@ -151,9 +151,12 @@ void DatabaseHandler::read_parameters(unsigned int serial, std::map<std::string,
 std::vector<std::string> DatabaseHandler::prepare_insert_sql(const Ledger* ledger, const Parameters* par) const {
     size_t n_rows = tome->get_element_as<size_t>("sim_duration");
     std::vector<std::string> inserts(n_rows);
+    std::string tmp_col_order = "(serial,time,c_vax_flu_inf,c_vax_nonflu_inf,c_unvax_flu_inf,c_unvax_nonflu_inf,c_vax_flu_mai,c_vax_nonflu_mai,c_unvax_flu_mai,c_unvax_nonflu_mai,tnd_ve_est)";
     std::stringstream sql;
     for (size_t t = 0; t < n_rows; ++t) {
-        sql << "INSERT INTO met VALUES ("
+        sql << "INSERT INTO met "
+            << tmp_col_order
+            << " VALUES ("
             << par->simulation_serial << ","
             << t << ","
             << ledger->get_cumul_infs(VACCINATED, INFLUENZA, t) << ","
@@ -165,7 +168,7 @@ std::vector<std::string> DatabaseHandler::prepare_insert_sql(const Ledger* ledge
             << ledger->get_cumul_mais(UNVACCINATED, INFLUENZA, t) << ","
             << ledger->get_cumul_mais(UNVACCINATED, NON_INFLUENZA, t) << ","
             << ledger->get_tnd_ve_est(t) << ");";
-        
+
         inserts[t] = sql.str();
         sql.str(std::string());
     }
