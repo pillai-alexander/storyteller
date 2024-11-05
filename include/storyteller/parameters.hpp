@@ -91,6 +91,7 @@ class Parameters {
 
   private:
     void init_parameters();
+    void calc_strain_probs();
 
     const RngHandler* rng;
 };

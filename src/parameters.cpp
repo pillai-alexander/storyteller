@@ -49,6 +49,7 @@ Parameters::Parameters(const RngHandler* rngh, std::map<std::string, double> cfg
 
     pr_exposure[INFLUENZA]     = cfg_params["pr_flu_exposure"];
     pr_exposure[NON_INFLUENZA] = cfg_params["pr_nonflu_exposure"];
+    calc_strain_probs();
 }
 
 Parameters::~Parameters() {}
@@ -70,16 +71,20 @@ void Parameters::init_parameters() {
     vax_effect_distr_params[INFLUENZA] = {0.0, 0.5};
 
     strain_probs = std::vector<double>(NUM_STRAIN_TYPES + 1, 0.0);
-    for (size_t s = 0; s < NUM_STRAIN_TYPES; ++s) {
-        strain_probs[s] = pr_exposure[s];
-    }
-    strain_probs[NUM_STRAIN_TYPES] = 1.0 - std::accumulate(pr_exposure.begin(), pr_exposure.end(), 0.0);
+    calc_strain_probs();
 
     return_metrics = std::vector<std::string>(0);
 
     linelist_file_path = "simlinelist.out";
     simvis_file_path   = "simvis.out";
     database_path      = "";
+}
+
+void Parameters::calc_strain_probs() {
+    for (size_t s = 0; s < NUM_STRAIN_TYPES; ++s) {
+        strain_probs[s] = pr_exposure[s];
+    }
+    strain_probs[NUM_STRAIN_TYPES] = 1.0 - std::accumulate(pr_exposure.begin(), pr_exposure.end(), 0.0);
 }
 
 std::vector<double> Parameters::sample_susceptibility(const Person* p) const {
