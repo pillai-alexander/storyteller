@@ -118,7 +118,7 @@ class Storyteller {
     /**
      * @brief Initialize Storteller for running a single simulation job.
      */
-    void init_simulation();
+    void init_simulation(std::map<std::string, double> sim_params);
 
     /**
      * @brief Constructs a new experiment database given the user-provided
