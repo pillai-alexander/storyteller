@@ -21,6 +21,4 @@
 int main(int argc, char* argv[]) {
     Storyteller storyteller(argc, argv);
     return storyteller.run();
-
-    return 0;
 }

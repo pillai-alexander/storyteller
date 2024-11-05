@@ -14,14 +14,15 @@
 #include <sstream>
 #include <string>
 
+#define SOL_ALL_SAFETIES_ON 1
+#include <sol/sol.hpp>
 #include <SQLiteCpp/SQLiteCpp.h>
-#include <nlohmann/json.hpp>
 
 #include <storyteller/database_handler.hpp>
 #include <storyteller/ledger.hpp>
 #include <storyteller/storyteller.hpp>
+#include <storyteller/tome.hpp>
 
-using json = nlohmann::json;
 using namespace std::chrono;
 
 std::map<std::string, ConfigParFlag> cfg_par_flag_lookup = {
@@ -65,11 +66,12 @@ std::string ParticleJob::update() {
     return sql.str();
 }
 
-DatabaseHandler::DatabaseHandler(const Storyteller* storyteller, std::string db_path) 
+DatabaseHandler::DatabaseHandler(const Storyteller* storyteller) 
     : n_transaction_attempts(10),
-      ms_delay_between_attempts(1000) {
-    owner = storyteller;
-    database_path = db_path;
+      ms_delay_between_attempts(1000),
+      owner(storyteller),
+      tome(storyteller->get_tome()) {
+    database_path = tome->database_path();
 }
 
 DatabaseHandler::~DatabaseHandler() {}
@@ -147,13 +149,7 @@ void DatabaseHandler::read_parameters(unsigned int serial, std::map<std::string,
 }
 
 std::vector<std::string> DatabaseHandler::prepare_insert_sql(const Ledger* ledger, const Parameters* par) const {
-    std::stringstream cols;
-    cols << "serial";
-    for (auto& col : par->return_metrics) {
-        cols << "," << col;
-    }
-
-    size_t n_rows = par->simulation_duration;
+    size_t n_rows = tome->get_element_as<size_t>("sim_duration");
     std::vector<std::string> inserts(n_rows);
     std::stringstream sql;
     for (size_t t = 0; t < n_rows; ++t) {
@@ -224,7 +220,7 @@ void DatabaseHandler::clear_metrics(unsigned int serial) {
 bool DatabaseHandler::database_exists() {
     try {
         SQLite::Database db(database_path, SQLite::OPEN_READONLY);
-        return db.tableExists("par") and db.tableExists("met");
+        return db.tableExists("par") and db.tableExists("met") and db.tableExists("job");
     } catch (std::exception& e) {
         return false;
     }
@@ -235,10 +231,10 @@ bool DatabaseHandler::table_exists(std::string table) {
     return db.tableExists(table);
 }
 
-int DatabaseHandler::init_database(json cfg) {
-    auto cfg_pars         = cfg["model_parameters"];
-    auto cfg_mets         = cfg["metrics"];
-    size_t n_realizations = cfg["n_realizations"];
+int DatabaseHandler::init_database() {
+    auto cfg_pars         = tome->get_config_params();
+    auto cfg_mets         = tome->get_config_metrics();
+    size_t n_realizations = tome->get_element_as<size_t>("n_realizations");
 
     std::vector<std::string> col_name;
     vector2d<double> step_pars;
@@ -248,23 +244,23 @@ int DatabaseHandler::init_database(json cfg) {
     std::map<std::string, std::vector<double>> par_vals;
     std::map<std::string, std::string> copy_who;
 
-    for (auto& [k, el] : cfg_pars.items()) {
-        std::string name = el["fullname"].get<std::string>();
-        par_types[name] = el["datatype"].get<std::string>();
+    for (auto& [name, el] : cfg_pars) {
+        sol::table p = el.as<sol::table>();
+        par_types[name] = p.get<std::string>("datatype");
 
-        auto flag = cfg_par_flag_lookup[el["flag"].get<std::string>()];
+        auto flag = cfg_par_flag_lookup[p.get<std::string>("flag")];
         pars_by_flag[flag].push_back(name);
         switch (flag) {
             case CONST: {
-                par_vals[name] = std::vector<double>{el["par1"].get<double>()};
+                par_vals[name] = std::vector<double>{p.get<double>("par1")};
                 break;
             }
             case STEP: {
                 par_vals[name] = std::vector<double>();
 
-                auto start = el["par1"].get<double>();
-                auto end = el["par2"].get<double>();
-                auto step = el["par3"].get<double>();
+                auto start  = p.get<double>("par1");
+                auto end    = p.get<double>("par2");
+                auto step   = p.get<double>("par3");
                 auto n_vals = (end - start) / step;
 
                 if (n_vals != (int) n_vals) {
@@ -281,7 +277,7 @@ int DatabaseHandler::init_database(json cfg) {
             }
             case COPY: {
                 par_vals[name] = std::vector<double>();
-                copy_who[name] = el["par1"].get<std::string>();
+                copy_who[name] = p.get<std::string>("par1");
             }
             default: { break; }
         }
@@ -307,8 +303,9 @@ int DatabaseHandler::init_database(json cfg) {
     std::vector<std::string> sql;
 
     std::ostringstream met_table_sql("CREATE TABLE met (serial INT", std::ios_base::ate);
-    for (auto& [k, el] : cfg_mets.items()) {
-        met_table_sql << ", " << el["fullname"].get<std::string>() << " " << el["datatype"].get<std::string>();
+    for (auto& [name, el] : cfg_mets) {
+        sol::table m = el.as<sol::table>();
+        met_table_sql << ", " << name << " " << m.get<std::string>("datatype");
     }
     met_table_sql << ");";
     sql.push_back(met_table_sql.str());

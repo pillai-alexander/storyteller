@@ -91,5 +91,5 @@ void Simulator::results() {
     if (sim_flags["simvis"]) ledger->generate_simvis_csv();
 
     // write desired metrics to the experiment database
-    if (sim_flags["particle"]) db_handler->write_metrics(ledger, par);
+    if (sim_flags["simulate"]) db_handler->write_metrics(ledger, par);
 }
