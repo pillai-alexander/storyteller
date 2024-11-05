@@ -22,11 +22,6 @@ set(LUA_INCLUDE_DIR ${BINARY_DIR}/src)
 set(LUA_LIB ${BINARY_DIR}/src/liblua.a)
 
 include(FetchContent)
-FetchContent_Declare(
-    nlohmann_json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG 9cca280a4d0ccf0c08f47a99aa71d1b0e52f8d03 #v3.11.3
-)
 
 FetchContent_Declare(
     SQLiteCpp
@@ -46,7 +41,7 @@ FetchContent_Declare(
   GIT_TAG d17062c870b5919f6d1eae7fe12879869a893b32 #v1.3.2
 )
 
-FetchContent_MakeAvailable(nlohmann_json SQLiteCpp sol2 argh)
+FetchContent_MakeAvailable(SQLiteCpp sol2 argh)
 
 option(BUILD_DOCS "Build Doxygen documentation" OFF)
 

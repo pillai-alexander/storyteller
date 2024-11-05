@@ -29,7 +29,6 @@ target_include_directories(storyteller PRIVATE sol2)
 
 target_link_libraries(storyteller PRIVATE SQLiteCpp)
 
-target_link_libraries(storyteller PRIVATE nlohmann_json::nlohmann_json)
 
 target_link_libraries(storyteller PRIVATE argh)
 target_include_directories(storyteller PUBLIC ${argh_SOURCE_DIR})
