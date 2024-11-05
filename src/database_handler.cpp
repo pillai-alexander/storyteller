@@ -264,15 +264,17 @@ int DatabaseHandler::init_database() {
                 auto start  = p.get<double>("par1");
                 auto end    = p.get<double>("par2");
                 auto step   = p.get<double>("par3");
-                auto n_vals = (end - start) / step;
+                auto n_vals = ((end - start) / step) + 1;
 
                 if (n_vals != (int) n_vals) {
                     std::cerr << "ERROR: " << name << " has invalid step size.\n";
                     exit(-1);
                 }
 
-                for (double v = start; v <= end; v += step) {
+                double v = start;
+                for (double i = 0; i < n_vals; ++i) {
                     par_vals[name].push_back(v);
+                    v += step;
                 }
                 col_name.push_back(name);
                 step_pars.push_back(par_vals[name]);
