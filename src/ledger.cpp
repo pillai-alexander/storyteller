@@ -109,7 +109,7 @@ void Ledger::calculate_tnd_ve_est() {
         auto nonflu_vax_odds = ((double) cumul_vax_nonflu_mais) / cumul_unvax_nonflu_mais;
         double ve_est        = 1 - (flu_vax_odds / nonflu_vax_odds);
 
-        tnd_ve_estimate[t] = isinf(ve_est) ? 0.0 : ve_est;
+        tnd_ve_estimate[t] = isfinite(ve_est) ? ve_est : 0.0;
     }
 }
 

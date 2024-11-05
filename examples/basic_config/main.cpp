@@ -4,8 +4,6 @@
 #include <string>
 #include <memory>
 
-// #include <sol/sol.hpp>
-
 #include <storyteller/storyteller.hpp>
 
 // process config file
@@ -23,6 +21,4 @@
 int main(int argc, char* argv[]) {
     Storyteller storyteller(argc, argv);
     return storyteller.run();
-
-    return 0;
 }

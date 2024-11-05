@@ -11,13 +11,10 @@
 #include <string>
 #include <vector>
 
-#include <nlohmann/json.hpp>
-
-using json = nlohmann::json;
-
 class Storyteller;
 class Ledger;
 class Parameters;
+class Tome;
 
 enum TableName {
     PAR,
@@ -61,10 +58,10 @@ class ParticleJob {
  */
 class DatabaseHandler {
   public:
-    DatabaseHandler(const Storyteller* storyteller, std::string db_path);
+    DatabaseHandler(const Storyteller* storyteller);
     ~DatabaseHandler();
 
-    int init_database(json cfg);
+    int init_database();
     void create_table();
     void clear_table();
 
@@ -87,14 +84,7 @@ class DatabaseHandler {
     size_t n_transaction_attempts;
     size_t ms_delay_between_attempts;
 
-    struct {
-        size_t serial;
-        char status;
-        size_t attempts;
-        size_t completions;
-    } current_job;
-
     const Storyteller* owner;
-    const Parameters* par;
+    const Tome* tome;
     ParticleJob simulation_job;
 };

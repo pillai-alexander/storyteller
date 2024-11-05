@@ -14,16 +14,16 @@
 #include <memory>
 #include <fstream>
 
+#define SOL_ALL_SAFETIES_ON 1
+#include <sol/sol.hpp>
 #include <argh.h>
-#include <nlohmann/json.hpp>
 
 #include <storyteller/storyteller.hpp>
+#include <storyteller/tome.hpp>
 #include <storyteller/simulator.hpp>
 #include <storyteller/parameters.hpp>
 #include <storyteller/utility.hpp>
 #include <storyteller/database_handler.hpp>
-
-using json = nlohmann::json;
 
 /**
  * @details Parses command-line arguments and extracts all necessary program flags into
@@ -36,55 +36,52 @@ Storyteller::Storyteller(int argc, char* argv[])
       simulator(nullptr),
       operation_to_perform(NUM_OPERATION_TYPES),
       simulation_flags() {
+    // inititalize the lua virtual machine using sol2 library
+    lua_vm = std::make_unique<sol::state>();
+
     // parse command-line arguments using Argh! library
     cmdl_args.parse(argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION);
 
-    /// @todo implement #sensible_inputs() to handle all checks here before moving on
-
     // store all necessary program-flags
-    simulation_flags["process"]  = cmdl_args["process"];
+    simulation_flags["init"]     = cmdl_args["init"];
     simulation_flags["simulate"] = cmdl_args["simulate"];
-    simulation_flags["particle"] = cmdl_args["particle"];
     simulation_flags["example"]  = cmdl_args["example"];
     simulation_flags["simvis"]   = cmdl_args["simvis"];
 
-    // extract sim serial
-    if (simulation_flags["particle"] and not (cmdl_args({"-s", "--serial"}) >> simulation_serial)) {
-        std::cerr << "ERROR: pass serial id file after --particle using -s or --serial.";
-        exit(-1);
-    }
+    // extract sim serial or keep default of -1 (ie, no specified serial)
+    cmdl_args({"-s", "--serial"}, -1) >> simulation_serial;
 
     // extract batch size if present or default to one (ie, a single simulation batch)
     cmdl_args({"-b", "--batch"}, 1) >> batch_size;
 
-    if ((simulation_flags["process"] or simulation_flags["particle"]) and not (cmdl_args({"-f", "--file"}) >> config_file)) {
-        std::cerr << "ERROR: pass config file after using -f or --file.";
-        exit(-1);
-    }
-
-    if (simulation_flags["particle"] and simulation_flags["example"]) {
-        std::cerr << "ERROR: particle and example cannot be used together.";
-        exit(-1);
-    }
+    // extract core config file path or default to empty string
+    cmdl_args({"-t", "--tome"}, "") >> config_file;
 
     // determine what operation the user called for
-    if (simulation_flags["process"] and not config_file.empty()) {
-        operation_to_perform = PROCESS_CONFIG;
-    } else if (simulation_flags["simulate"]) {
-        if (simulation_flags["example"] and not simulation_flags["particle"]) {
+    if (sensible_inputs()) {
+        tome = (config_file.empty()) ? nullptr : std::make_unique<Tome>(lua_vm.get(), config_file);
+
+        if (simulation_flags["init"]) {
+            operation_to_perform = INITIALIZE;
+        } else if (simulation_flags["example"]) {
             operation_to_perform = EXAMPLE_SIM;
-        } else if (simulation_flags["particle"] and not config_file.empty() and simulation_serial >= 0 and not simulation_flags["example"]) {
+        } else if (simulation_flags["simulate"]) {
             operation_to_perform = BATCH_SIM;
         } else {
-            std::cerr << "ERROR: incorrect arguments.";
-            exit(-1);
+            operation_to_perform = NUM_OPERATION_TYPES;
         }
+    } else {
+        std::cerr << "ERROR: CLI arguments are not correct.\n";
+        operation_to_perform = NUM_OPERATION_TYPES;
     }
 }
 
-Storyteller::~Storyteller() {}
+Storyteller::~Storyteller() {
+    if(tome) tome->clean();
+}
 
 const Parameters* Storyteller::get_parameters() const { return parameters.get(); }
+const Tome* Storyteller::get_tome()             const { return tome.get(); }
 int Storyteller::get_serial()                   const { return simulation_serial; }
 size_t Storyteller::get_batch_size()            const { return batch_size; }
 std::string Storyteller::get_config_file()      const { return config_file; }
@@ -92,14 +89,34 @@ bool Storyteller::get_flag(std::string key)     const { return simulation_flags.
 
 void Storyteller::set_flag(std::string key, bool val) { simulation_flags[key] = val; }
 
+bool Storyteller::sensible_inputs() const {
+    int ret = 0;
+    bool tome_is_set = not config_file.empty();
+    bool init        = simulation_flags.at("init");
+    bool example     = simulation_flags.at("example");
+    bool sim         = simulation_flags.at("simulate");
+
+    // exec --example
+    ret += example and not sim and not tome_is_set;
+
+    // exec --tome tomefile --init
+    ret += init and tome_is_set and not sim and not example;
+
+    // exec --tome tomefile --simulate --serial 0
+    // exec --tome tomefile --simulate --serial 0 --batch 2
+    ret += sim and tome_is_set and not init and not example;
+
+    return (ret == 1);
+}
+
 int Storyteller::run() {
     switch (operation_to_perform) {
-        case PROCESS_CONFIG: return construct_database();
-        case EXAMPLE_SIM:    return default_simulation();
-        case BATCH_SIM:      return batch_simulation();
+        case INITIALIZE:  return construct_database();
+        case EXAMPLE_SIM: return example_simulation();
+        case BATCH_SIM:   return batch_simulation();
         default: {
             std::cerr << "No operation performed.";
-            return 0;
+            return 0;   
         }
     }
 }
@@ -110,8 +127,11 @@ int Storyteller::run() {
  *          an experiment database. For this operation, #init default-initializes
  *          the #db_handler, #parameters, and #rng_handler objects.
  */
-int Storyteller::default_simulation() {
-    init();
+int Storyteller::example_simulation() {
+    db_handler = nullptr;
+    rng_handler = std::make_unique<RngHandler>(0);
+    parameters = std::make_unique<Parameters>(rng_handler.get());
+
     simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
     simulator->set_flags(simulation_flags);
     simulator->init();
@@ -130,19 +150,15 @@ int Storyteller::default_simulation() {
  *          each simulation in the batch).
  */
 int Storyteller::batch_simulation() {
-    init();
     for (size_t i = 1; i <= batch_size; ++i) {
+        init_batch();
         simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
         simulator->set_flags(simulation_flags);
         simulator->init();
         simulator->simulate();
         simulator->results();
-
-        if (batch_size > 1) {
-            ++simulation_serial;
-            reset();
-            init();
-        }
+        reset();
+        ++simulation_serial;
     }
 
     if (simulation_flags["simvis"]) draw_simvis();
@@ -150,43 +166,27 @@ int Storyteller::batch_simulation() {
 }
 
 /**
- * @details Initializes the Storyteller appropriately for the proper type of
- *          simulation (ie, example or particle). For the example simulation,
- *          the #db_handler, #parameters, and #rng_handler objects are default-
- *          initialized. Otherwise, parameter values are read from the appropriate
- *          particle in the experiment database and used to construct the
- *          #db_handler, #parameters, and #rng_handler objects.
+ * @details Initializes the Storyteller appropriately for a batch simulation
+ *          operation. Parameter values are read from the appropriate particle
+ *          in the experiment database and used to construct the #db_handler,
+ *          #parameters, and #rng_handler objects.
  */
-void Storyteller::init() {
-    if (simulation_flags["simulate"] and not config_file.empty()) {
-        // slurp the JSON configuration file
-        std::ifstream cfg_file(config_file);
-        auto cfg = json::parse(cfg_file);
-        cfg_file.close();
-
-        // extract the experiment database path
-        // if the user specifies a path, use that path
-        // otherwise, the default value is a databse in the main.cpp directory
-        // that is named using the experiment name
-        std::string db_path = (cfg.contains("database_path"))
-                                  ? std::string(cfg["database_path"])
-                                  : std::string(cfg["experiment_name"]) + ".sqlite";
-
+void Storyteller::init_batch() {
         // init a dictionary to store parameter names and values from the
         // experiment database
         std::map<std::string, double> model_params;
-        for (auto& [key, el] : cfg["model_parameters"].items()) {
-            model_params[el["fullname"]] = 0.0;
+        for (auto& [key, el] : tome->get_config_params()) {
+            model_params[key] = 0.0;
         }
 
         // store the names of the metrics to report
         std::vector<std::string> model_mets;
-        for (auto& [key, el] : cfg["metrics"].items()) {
-            model_mets.push_back(el["fullname"]);
+        for (auto& [key, el] : tome->get_config_metrics()) {
+            model_mets.push_back(key);
         }
 
         // create the DatabaseHandler and read the proper parameters
-        db_handler = std::make_unique<DatabaseHandler>(this, db_path);
+        db_handler = std::make_unique<DatabaseHandler>(this);
         db_handler->read_parameters(simulation_serial, model_params);
 
         // create the RngHandler with the proper seed
@@ -194,25 +194,24 @@ void Storyteller::init() {
 
         // create the Parameters and update with the proper values
         parameters = std::make_unique<Parameters>(rng_handler.get(), model_params);
-        parameters->simulation_duration = cfg["sim_duration"];
-        parameters->database_path       = db_path;
+        parameters->simulation_duration = tome->get_element_as<size_t>("sim_duration");
+        parameters->database_path       = tome->database_path();
         parameters->return_metrics      = model_mets;
         parameters->simulation_serial   = simulation_serial;
-    } else {
-        // default-initialize the DatabaseHandler, RngHandler, and Parameters
-        db_handler = nullptr;
-        rng_handler = std::make_unique<RngHandler>(0);
-        parameters = std::make_unique<Parameters>(rng_handler.get());
-
-    }
 }
 
 int Storyteller::construct_database() {
-    if (not config_file.empty()) {
-        return process_config();
-    } else {
-        std::cerr << "ERROR: pass config file after --process.";
+    // create the DatabaseHandler
+    std::string db_path = tome->database_path();
+    db_handler = std::make_unique<DatabaseHandler>(this);
+
+    if (db_handler->database_exists()) {
+        std::cerr << "ERROR: database " << db_path << " already exists\n";
         return -1;
+    } else {
+        // construct the experiment database since it does not exist
+        std::cerr << db_path << " does not exist. Initializing...\n";
+        return db_handler->init_database();
     }
 }
 
@@ -233,40 +232,4 @@ void Storyteller::reset() {
     db_handler.reset(nullptr);
     rng_handler.reset(nullptr);
     parameters.reset(nullptr);
-}
-
-/**
- * @details Constructs the experiment database using the user-provided configuration
- *          file if the database does not already exist.
- */
-int Storyteller::process_config() {
-    if (simulation_flags["process"] and not config_file.empty()) {
-        // slurp the JSON configuration file
-        std::ifstream cfg_file(config_file);
-        auto cfg = json::parse(cfg_file);
-        cfg_file.close();
-
-        // extract the experiment database path
-        // if the user specifies a path, use that path
-        // otherwise, the default value is a databse in the main.cpp directory
-        // that is named using the experiment name
-        std::string db_path = (cfg.contains("database_path"))
-                                  ? std::string(cfg["database_path"])
-                                  : std::string(cfg["experiment_name"]) + ".sqlite";
-
-        // create the DatabaseHandler
-        db_handler = std::make_unique<DatabaseHandler>(this, db_path);
-        if (db_handler->database_exists()) {
-            std::cerr << "ERROR: database " << db_path << " already exists\n";
-            return -1;
-        } else {
-            // construct the experiment database since it does not exist
-            std::cerr << db_path << " does not exist. Initializing...\n";
-            return db_handler->init_database(cfg);
-        }
-    } else {
-        std::cerr << "ERROR: improper args for config processing\n"
-                  << "\t cmd: exec --process -f config.json";
-        return -1;
-    }
 }

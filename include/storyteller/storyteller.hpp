@@ -19,13 +19,15 @@ class Simulator;
 class DatabaseHandler;
 class RngHandler;
 class Parameters;
+class Tome;
+namespace sol { class state; }
 
 /**
  * @brief Defines the types of operations that the Storyteller is capable of
  *        performing.
  */
 enum OperationType {
-    PROCESS_CONFIG,
+    INITIALIZE,
     EXAMPLE_SIM,
     BATCH_SIM,
     NUM_OPERATION_TYPES
@@ -52,6 +54,7 @@ class Storyteller {
     ~Storyteller();
 
     const Parameters* get_parameters() const;
+    const Tome* get_tome() const;
 
     /**
      * @brief Get the simulation serial.
@@ -108,17 +111,14 @@ class Storyteller {
     bool sensible_inputs() const;
 
     /**
-     * @brief Initialize Storteller for running a simulation.
+     * @brief Initialize Storteller for running a batch of simulations.
      */
-    void init();
+    void init_batch();
 
     /**
-     * @brief Process configuration file and construct the database if it does
-     *        not already exist.
-     *
-     * @return int Return code (0 if sucessful)
+     * @brief Initialize Storteller for running a single simulation job.
      */
-    int process_config();
+    void init_simulation();
 
     /**
      * @brief Constructs a new experiment database given the user-provided
@@ -134,7 +134,7 @@ class Storyteller {
      *
      * @return int Return code (0 if sucessful)
      */
-    int default_simulation();
+    int example_simulation();
 
     /**
      * @brief Runs a batch of simulations drawn from an experiment database.
@@ -155,10 +155,12 @@ class Storyteller {
      */
     void reset();
 
+    std::unique_ptr<Tome> tome;
     std::unique_ptr<Simulator> simulator;           ///< Created for each simulation to be run
     std::unique_ptr<DatabaseHandler> db_handler;    ///< Handles all database operations
     std::unique_ptr<RngHandler> rng_handler;        ///< Handles all pseudo-random number generation
     std::unique_ptr<Parameters> parameters;         ///< Stores all necessary simulation parameters
+    std::unique_ptr<sol::state> lua_vm;
 
     OperationType operation_to_perform;
 

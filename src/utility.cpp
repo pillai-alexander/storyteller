@@ -6,25 +6,12 @@
  *
  * @copyright TBD
  */
-// #include <chrono>
-// #include <thread>
-// #include <iostream>
-// #include <sstream>
-// #include <vector>
-// #include <map>
-// #include <string>
 #include <algorithm>
 
-// #include <SQLiteCpp/SQLiteCpp.h>
-// #include <nlohmann/json.hpp>
 
 #include <storyteller/utility.hpp>
 #include <storyteller/simulator.hpp>
-// #include <storyteller/ledger.hpp>
 #include <storyteller/storyteller.hpp>
-
-// using json = nlohmann::json;
-// using namespace std::chrono;
 
 namespace constants {
     unsigned int ZERO = 0;
