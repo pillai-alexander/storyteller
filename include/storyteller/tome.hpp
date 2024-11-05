@@ -26,7 +26,9 @@ class Tome {
     sol::object get_element(std::string key) const;
 
     template<typename T>
-    T get_element_as(std::string key) const;
+    T get_element_as(std::string key) const {
+        return get_element(key).as<T>();
+    }
 
     std::string database_path() const;
 
@@ -46,8 +48,3 @@ class Tome {
 
     sol::state* vm;
 };
-
-template<typename T>
-T Tome::get_element_as(std::string key) const {
-    return get_element(key).as<T>();
-}
