@@ -76,12 +76,14 @@ class DatabaseHandler {
     void write_metrics(const Ledger* ledger, const Parameters* par);
     void clear_metrics(unsigned int serial);
 
-    void add_serial(size_t serial);
     void read_parameters();
     std::map<std::string, double> params_for_serial(size_t serial) const;
+    std::vector<size_t> get_serials() const;
 
   private:
     std::vector<std::string> prepare_insert_sql(const Ledger* ledger, const Parameters* par) const;
+    void get_queued_serials(unsigned int batch_size);
+    void add_serial(size_t serial);
 
     std::string database_path;
     size_t n_transaction_attempts;

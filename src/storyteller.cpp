@@ -92,6 +92,7 @@ void Storyteller::set_flag(std::string key, bool val) { simulation_flags[key] = 
 bool Storyteller::sensible_inputs() const {
     int ret = 0;
     bool tome_is_set = not config_file.empty();
+    bool user_serial = simulation_serial != -1;
     bool init        = simulation_flags.at("init");
     bool example     = simulation_flags.at("example");
     bool sim         = simulation_flags.at("simulate");
@@ -100,11 +101,14 @@ bool Storyteller::sensible_inputs() const {
     ret += example and not sim and not tome_is_set;
 
     // exec --tome tomefile --init
-    ret += init and tome_is_set and not sim and not example;
+    ret += tome_is_set and init and not sim and not example;
 
     // exec --tome tomefile --simulate --serial 0
     // exec --tome tomefile --simulate --serial 0 --batch 2
-    ret += sim and tome_is_set and not init and not example;
+    ret += tome_is_set and sim and user_serial and not init and not example;
+
+    //exec --tome tomefile --simulate --batch 2
+    ret += tome_is_set and sim and not user_serial and not init and not example;
 
     return (ret == 1);
 }
@@ -151,15 +155,15 @@ int Storyteller::example_simulation() {
  */
 int Storyteller::batch_simulation() {
     init_batch();
-    for (size_t i = 1; i <= batch_size; ++i) {
-        init_simulation(db_handler->params_for_serial(simulation_serial));
+    for (auto serial : db_handler->get_serials()) {
+        simulation_serial = serial;
+        init_simulation(db_handler->params_for_serial(serial));
         simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
         simulator->set_flags(simulation_flags);
         simulator->init();
         simulator->simulate();
         simulator->results();
         reset();
-        ++simulation_serial;
     }
 
     if (simulation_flags["simvis"]) draw_simvis();
@@ -174,9 +178,6 @@ int Storyteller::batch_simulation() {
  */
 void Storyteller::init_batch() {
     db_handler = std::make_unique<DatabaseHandler>(this);
-    for (size_t i = 0; i < batch_size; ++i) {
-        db_handler->add_serial(simulation_serial + i);
-    }
     db_handler->read_parameters();
 }
 

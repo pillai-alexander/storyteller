@@ -127,6 +127,17 @@ void DatabaseHandler::end_job(unsigned int serial) {
 }
 
 void DatabaseHandler::read_parameters() {
+    int starting_serial = owner->get_serial();
+    if (starting_serial == -1) {
+        // get batch_size amount of queued serials
+        get_queued_serials(owner->get_batch_size());
+    } else {
+        // run batch starting from user-specified serial
+        for (size_t i = 0; i < owner->get_batch_size(); ++i) {
+            add_serial(starting_serial + i);
+        }
+    }
+
     const auto& cfg_params = tome->get_config_params();
     for (unsigned int s : serials) {
         try {
@@ -376,3 +387,20 @@ int DatabaseHandler::init_database() {
 }
 
 void DatabaseHandler::add_serial(size_t serial) { serials.push_back(serial); }
+
+void DatabaseHandler::get_queued_serials(unsigned int batch_size) {
+    serials.clear();
+    try {
+        SQLite::Database db(database_path, SQLite::OPEN_READONLY);
+        SQLite::Statement query(db, "SELECT * FROM job WHERE status='queued' limit ?");
+        query.bind(1, batch_size);
+        while (query.executeStep()) {
+            auto serial = (unsigned int) query.getColumn("serial");
+            serials.push_back((size_t) serial);
+        }
+    } catch (std::exception& e) {
+        std::cerr << "SQLite exception: " << e.what() << '\n';
+    }
+}
+
+std::vector<size_t> DatabaseHandler::get_serials() const { return serials; }
