@@ -47,6 +47,7 @@ Storyteller::Storyteller(int argc, char* argv[])
     simulation_flags["simulate"] = cmdl_args["simulate"];
     simulation_flags["example"]  = cmdl_args["example"];
     simulation_flags["simvis"]   = cmdl_args["simvis"];
+    simulation_flags["verbose"]  = cmdl_args[{"-v", "--verbose"}];
 
     // extract sim serial or keep default of -1 (ie, no specified serial)
     cmdl_args({"-s", "--serial"}, -1) >> simulation_serial;

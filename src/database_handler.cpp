@@ -87,7 +87,12 @@ void DatabaseHandler::read_job(unsigned int serial) {
             simulation_job.completions = (unsigned int) query.getColumn("completions");
             simulation_job.status = (std::string) query.getColumn("status");
         }
-        std::cerr << "Read job " << serial << " succeeded." << '\n';
+
+        if (owner->get_flag("verbose")) {
+            std::cerr << "Read job " << serial << " succeeded." << '\n';
+        } else {
+            std::cerr << serial << ": job ";
+        }
     } catch (std::exception& e) {
         std::cerr << "Read job " << serial << " failed:" << '\n';
         std::cerr << "\tSQLite exception: " << e.what() << '\n';
@@ -103,7 +108,12 @@ void DatabaseHandler::start_job(unsigned int serial) {
         SQLite::Transaction transaction(db);
         db.exec(simulation_job.update());
         transaction.commit();
-        std::cerr << "Start job " << serial << " succeeded." << '\n';
+
+        if (owner->get_flag("verbose")) {
+            std::cerr << "Start job " << serial << " succeeded." << '\n';
+        } else {
+            std::cerr << "started... ";
+        }
     } catch (std::exception& e) {
         std::cerr << "Start job " << serial << " failed:" << '\n';
         std::cerr << "\tSQLite exception: " << e.what() << '\n';
@@ -118,7 +128,12 @@ void DatabaseHandler::end_job(unsigned int serial) {
         SQLite::Transaction transaction(db);
         db.exec(simulation_job.update());
         transaction.commit();
-        std::cerr << "End job " << serial << " succeeded." << '\n';
+
+        if (owner->get_flag("verbose")) {
+            std::cerr << "End job " << serial << " succeeded." << '\n';
+        } else {
+            std::cerr << "job end\n";
+        }
     } catch (std::exception& e) {
         std::cerr << "Start job " << serial << " failed:" << '\n';
         std::cerr << "\tSQLite exception: " << e.what() << '\n';
@@ -138,7 +153,12 @@ void DatabaseHandler::read_parameters(unsigned int serial, std::map<std::string,
                     pars[param] = query.getColumn(param.c_str());
                 }
             }
-            std::cerr << "Read attempt " << i << " succeeded." << '\n';
+
+            if (owner->get_flag("verbose")) {
+                std::cerr << "Read attempt " << i << " succeeded." << '\n';
+            } else {
+                std::cerr << "params read... ";
+            }
             break;
         } catch (std::exception& e) {
             std::cerr << "Read attempt " << i << " failed:" << '\n';
@@ -189,7 +209,12 @@ void DatabaseHandler::write_metrics(const Ledger* ledger, const Parameters* par)
                 query.reset();
             }
             transaction.commit();
-            std::cerr << "Write attempt " << i << " succeeded." << '\n';
+
+            if (owner->get_flag("verbose")) {
+                std::cerr << "Write attempt " << i << " succeeded." << '\n';
+            } else {
+                std::cerr << "mets written... ";
+            }
             end_job((unsigned int) par->simulation_serial);
             break;
         } catch (std::exception& e) {
@@ -210,7 +235,10 @@ void DatabaseHandler::clear_metrics(unsigned int serial) {
             query.exec();
             query.reset();
             transaction.commit();
-            std::cerr << "Clear attempt " << serial << " succeeded." << '\n';
+
+            if (owner->get_flag("verbose")) {
+                std::cerr << "Clear attempt " << serial << " succeeded." << '\n';
+            }
             break;
         } catch (std::exception& e) {
             std::cerr << "Clear attempt " << serial << " failed:" << '\n';
