@@ -43,7 +43,8 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(SQLiteCpp sol2 argh)
 
-option(BUILD_DOCS "Build Doxygen documentation" OFF)
+option(BUILD_DOCS  "Build Doxygen documentation" OFF)
+option(BUILD_TESTS "Build tests" OFF)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     message("-- Building examples")
@@ -52,6 +53,11 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     if(BUILD_DOCS)
         message("-- Building doxy documentation")
         add_subdirectory(docs)
+    endif()
+
+    if(BUILD_TESTS)
+        message("-- Building tests")
+        add_subdirectory(tests)
     endif()
 endif()
 
