@@ -72,4 +72,11 @@ parameters["pr_nonflu_exposure"] = {
     datatype = "REAL",
     flag = "CONST",
     par1 = 0.001
+
+parameters["pr_prior_immunity"] = {
+    datatype = "REAL",
+    flag = "STEP",
+    par1 = 0.0,
+    par2 = 1.0,
+    par3 = 0.1
 }
