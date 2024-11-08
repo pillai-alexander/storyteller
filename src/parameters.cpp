@@ -60,7 +60,7 @@ void Parameters::init_parameters() {
     simulation_duration = 200;
 
     pr_vaccination = 0.5;
-    pr_prior_immunity = 1.0;
+    pr_prior_immunity = 0.0;
     pr_exposure = std::vector<double>(NUM_STRAIN_TYPES, 0.01);
     pr_symptoms = std::vector<double>(NUM_STRAIN_TYPES, 1);
     pr_seek_care = std::vector<double>(NUM_VACCINATION_STATUSES, 1);
@@ -90,7 +90,11 @@ void Parameters::calc_strain_probs() {
 }
 
 double Parameters::sample_discrete_susceptibility(const GammaDistrParamArray& params) const {
-    return (rng->draw_from_rng(INFECTION) < pr_prior_immunity) ? params[SCALE] : 1.0;
+    if (pr_prior_immunity == 0.0) {
+        return params[SCALE];
+    } else {
+        return (rng->draw_from_rng(INFECTION) < pr_prior_immunity) ? params[SCALE] : 1.0;
+    }
 }
 
 double Parameters::sample_continuous_susceptibility(const GammaDistrParamArray& params) const {
