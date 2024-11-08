@@ -195,10 +195,11 @@ void Storyteller::init_batch() {
 
         // create the Parameters and update with the proper values
         parameters = std::make_unique<Parameters>(rng_handler.get(), model_params);
-        parameters->simulation_duration = tome->get_element_as<size_t>("sim_duration");
+        parameters->simulation_duration = tome->get_element_as("sim_duration");
         parameters->database_path       = tome->database_path();
         parameters->return_metrics      = model_mets;
         parameters->simulation_serial   = simulation_serial;
+        parameters->population_size     = tome->get_element_as("pop_size");
 }
 
 int Storyteller::construct_database() {

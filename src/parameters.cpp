@@ -27,6 +27,7 @@ Parameters::Parameters(const RngHandler* rngh) {
 Parameters::Parameters(const RngHandler* rngh, std::map<std::string, double> cfg_params) : Parameters(rngh) {
     simulation_duration = cfg_params["sim_duration"];
     database_path       = cfg_params["db_path"];
+    population_size     = cfg_params["pop_size"];
 
     suscep_distr_params[VACCINATED][INFLUENZA][SHAPE]     = cfg_params["vaxd_suscep_distr_shape"];
     suscep_distr_params[VACCINATED][NON_INFLUENZA][SHAPE] = cfg_params["vaxd_suscep_distr_shape"];

@@ -25,7 +25,7 @@ class Tome {
 
     sol::object get_element(std::string key) const;
 
-    template<typename T>
+    template<typename T = double>
     T get_element_as(std::string key) const {
         return get_element(key).as<T>();
     }
