@@ -92,9 +92,9 @@ void Tome::slurp_table(sol::table from, std::map<std::string, sol::object>& into
 }
 
 void Tome::clean() {
-    config_core = {};
-    config_params = {};
-    config_metrics = {};
-    element_lookup = {};
+    config_core.clear();
+    config_params.clear();
+    config_metrics.clear();
+    element_lookup.clear();
     vm->collect_garbage();
 }
