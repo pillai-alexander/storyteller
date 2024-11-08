@@ -93,5 +93,7 @@ class Parameters {
     void init_parameters();
     void calc_strain_probs();
 
+    double sample_discrete_vaccine_effect(const BetaDistrParamArray& params) const;
+    double sample_continuous_vaccine_effect(const BetaDistrParamArray& params) const;
     const RngHandler* rng;
 };

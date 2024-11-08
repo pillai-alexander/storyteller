@@ -103,15 +103,21 @@ std::vector<double> Parameters::sample_susceptibility(const Person* p) const {
     return susceps;
 }
 
+double Parameters::sample_discrete_vaccine_effect(const BetaDistrParamArray& params) const {
+    return params[B];
+}
+
+double Parameters::sample_continuous_vaccine_effect(const BetaDistrParamArray& params) const {
+    return gsl_ran_beta(rng->get_rng(VACCINATION), params[A], params[B]);
+}
+
 std::vector<double> Parameters::sample_vaccine_effect() const {
     std::vector<double> vax_effects(NUM_STRAIN_TYPES, 0.0);
     for (size_t strain = 0; strain < NUM_STRAIN_TYPES; ++strain) {
         auto strain_specific_vax_params = vax_effect_distr_params[strain];
         vax_effects[strain] = strain_specific_vax_params[A] == 0.0
-                                  ? strain_specific_vax_params[B]
-                                  : gsl_ran_beta(rng->get_rng(VACCINATION),
-                                                 strain_specific_vax_params[A],
-                                                 strain_specific_vax_params[B]);
+                                  ? sample_discrete_vaccine_effect(strain_specific_vax_params)
+                                  : sample_continuous_vaccine_effect(strain_specific_vax_params);
     }
     return vax_effects;
 }
