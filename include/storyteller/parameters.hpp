@@ -70,6 +70,8 @@ class Parameters {
     void update_time_varying_parameters();
 
     double pr_vaccination;
+    double pr_prior_immunity;
+
     std::vector<double> pr_exposure;
     std::vector<double> pr_symptoms;
     std::vector<double> pr_seek_care;
@@ -93,7 +95,11 @@ class Parameters {
     void init_parameters();
     void calc_strain_probs();
 
+    double sample_discrete_susceptibility(const GammaDistrParamArray& params) const;
+    double sample_continuous_susceptibility(const GammaDistrParamArray& params) const;
+
     double sample_discrete_vaccine_effect(const BetaDistrParamArray& params) const;
     double sample_continuous_vaccine_effect(const BetaDistrParamArray& params) const;
+
     const RngHandler* rng;
 };

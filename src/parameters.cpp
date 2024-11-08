@@ -60,6 +60,7 @@ void Parameters::init_parameters() {
     simulation_duration = 200;
 
     pr_vaccination = 0.5;
+    pr_prior_immunity = 1.0;
     pr_exposure = std::vector<double>(NUM_STRAIN_TYPES, 0.01);
     pr_symptoms = std::vector<double>(NUM_STRAIN_TYPES, 1);
     pr_seek_care = std::vector<double>(NUM_VACCINATION_STATUSES, 1);
@@ -88,16 +89,22 @@ void Parameters::calc_strain_probs() {
     strain_probs[NUM_STRAIN_TYPES] = 1.0 - std::accumulate(pr_exposure.begin(), pr_exposure.end(), 0.0);
 }
 
+double Parameters::sample_discrete_susceptibility(const GammaDistrParamArray& params) const {
+    return (rng->draw_from_rng(INFECTION) < pr_prior_immunity) ? params[SCALE] : 1.0;
+}
+
+double Parameters::sample_continuous_susceptibility(const GammaDistrParamArray& params) const {
+    return gsl_ran_gamma(rng->get_rng(INFECTION), params[SHAPE], params[SCALE]);
+}
+
 std::vector<double> Parameters::sample_susceptibility(const Person* p) const {
     std::vector<double> susceps(NUM_STRAIN_TYPES, 1.0);
     auto vax_specific_suscep_params = p->is_vaccinated() ? suscep_distr_params[VACCINATED] : suscep_distr_params[UNVACCINATED];
     for (size_t strain = 0; strain < NUM_STRAIN_TYPES; ++strain) {
         auto strain_specific_suscep_params = vax_specific_suscep_params[strain];
         susceps[strain] = strain_specific_suscep_params[SHAPE] == 0.0
-                              ? strain_specific_suscep_params[SCALE]
-                              : gsl_ran_gamma(rng->get_rng(INFECTION),
-                                              strain_specific_suscep_params[SHAPE],
-                                              strain_specific_suscep_params[SCALE]);
+                              ? sample_discrete_susceptibility(strain_specific_suscep_params)
+                              : sample_continuous_susceptibility(strain_specific_suscep_params);
     }
 
     return susceps;
