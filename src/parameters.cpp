@@ -11,126 +11,162 @@
 #include <array>
 #include <numeric>
 #include <string>
+#include <memory>
+#include <limits>
 
 #include <gsl/gsl_randist.h>
+#include <sol/sol.hpp>
 
 #include <storyteller/parameters.hpp>
 #include <storyteller/person.hpp>
 #include <storyteller/simulator.hpp>
 #include <storyteller/utility.hpp>
+#include <storyteller/database_handler.hpp>
+#include <storyteller/tome.hpp>
 
-Parameters::Parameters(const RngHandler* rngh) {
-    rng = rngh;
-    init_parameters();
+Parameter::Parameter(const std::string name, const sol::table& attributes)
+    : fullname(name),
+      nickname(attributes.get<std::string>("nickname")),
+      description(attributes.get<std::string>("description")),
+      flag(attributes.get<std::string>("flag")),
+      datatype(attributes.get<std::string>("datatype")),
+      _validate(attributes.get<sol::function>("validate")) {
+    value = (flag == "const") ? attributes.get<double>("value") : std::numeric_limits<double>::infinity();
 }
 
-Parameters::Parameters(const RngHandler* rngh, std::map<std::string, double> cfg_params) : Parameters(rngh) {
-    simulation_duration = cfg_params["sim_duration"];
-    database_path       = cfg_params["db_path"];
-    population_size     = cfg_params["pop_size"];
-    pr_prior_immunity   = cfg_params["pr_prior_immunity"];
+inline std::string Parameter::get_fullname() const { return fullname; }
+inline std::string Parameter::get_nickname() const { return nickname; }
+inline double      Parameter::get_value()    const { return value; }
+inline bool        Parameter::validate()     const { return _validate(value); }
 
-    suscep_distr_params[VACCINATED][INFLUENZA][SHAPE]     = cfg_params["vaxd_suscep_distr_shape"];
-    suscep_distr_params[VACCINATED][NON_INFLUENZA][SHAPE] = cfg_params["vaxd_suscep_distr_shape"];
-    suscep_distr_params[VACCINATED][INFLUENZA][SCALE]     = util::gamma_scale_from_mean(cfg_params["vaxd_suscep_distr_shape"], cfg_params["vaxd_suscep_mean"]);
-    suscep_distr_params[VACCINATED][NON_INFLUENZA][SCALE] = util::gamma_scale_from_mean(cfg_params["vaxd_suscep_distr_shape"], cfg_params["vaxd_suscep_mean"]);
+Parameters::Parameters(RngHandler* rngh, DatabaseHandler* dbh, Tome* t)
+    : rng(rngh),
+      db(dbh),
+      tome(t) {
+    database_path = tome->database_path();
 
-    suscep_distr_params[UNVACCINATED][INFLUENZA][SHAPE]     = cfg_params["unvaxd_suscep_distr_shape"];
-    suscep_distr_params[UNVACCINATED][NON_INFLUENZA][SHAPE] = cfg_params["unvaxd_suscep_distr_shape"];
-    suscep_distr_params[UNVACCINATED][INFLUENZA][SCALE]     = util::gamma_scale_from_mean(cfg_params["unvaxd_suscep_distr_shape"], cfg_params["unvaxd_suscep_mean"]);
-    suscep_distr_params[UNVACCINATED][NON_INFLUENZA][SCALE] = util::gamma_scale_from_mean(cfg_params["unvaxd_suscep_distr_shape"], cfg_params["unvaxd_suscep_mean"]);
+    return_metrics.clear();
+    for (auto& [key, el] : tome->get_config_metrics()) {
+        return_metrics.push_back(key);
+    }
 
-    vax_effect_distr_params[INFLUENZA][A] = cfg_params["flu_vax_effect_distr_a"];
-    vax_effect_distr_params[INFLUENZA][B] = cfg_params["flu_vax_effect_distr_b"];
+    sol::optional<sol::table> pars = tome->get_config_params().at("parameters").as<sol::table>();
+    if (pars) {
+        for (const auto& [key, obj] : pars.value()) {
+            auto fullname   = key.as<std::string>();
+            auto attributes = obj.as<sol::table>();
+            auto nickname   = attributes.get<std::string>("nickname");
+            auto flag       = attributes.get<std::string>("flag");
+            if (flag != "const") pars_to_read.insert({nickname, std::numeric_limits<double>::infinity()});
+            insert(fullname, attributes);
+        }
+        calc_strain_probs();
+    }
+}
 
-    pr_symptoms[INFLUENZA]     = cfg_params["pr_symptoms_given_flu"];
-    pr_symptoms[NON_INFLUENZA] = cfg_params["pr_symptoms_given_nonflu"];
+void Parameters::read_parameters_for_serial(size_t serial) {
+    simulation_serial = serial;
+    db->read_parameters(serial, pars_to_read);
 
-    pr_seek_care[VACCINATED]   = cfg_params["pr_careseeking_given_vaxd"];
-    pr_seek_care[UNVACCINATED] = cfg_params["pr_careseeking_given_unvaxd"];
+    for (const auto& [nickname, value] : pars_to_read) {
+        if (value == std::numeric_limits<double>::infinity()) {
+            std::cerr << "ERROR: " << nickname << " not found\n";
+            exit(-1);
+        }
 
-    pr_exposure[INFLUENZA]     = cfg_params["pr_flu_exposure"];
-    pr_exposure[NON_INFLUENZA] = cfg_params["pr_nonflu_exposure"];
+        if (nickname == "seed") {
+            rng->set_seed(value);
+        } else {
+            auto fullname = lookup.at(nickname);
+            params.at(fullname)->value = value;
+        }
+        pars_to_read.erase(nickname);
+    }
+
+    if (pars_to_read.size() != 0) {
+        std::cerr << "ERROR: some params not found\n";
+        exit(-1);
+    }
+
     calc_strain_probs();
 }
 
-Parameters::~Parameters() {}
+bool Parameters::insert(const std::string key, const sol::table& attributes) {
+    auto nickname = attributes.get<std::string>("nickname");
+    lookup[key] = key;
+    lookup[nickname] = key;
+    auto ret = params.insert({key, std::make_unique<Parameter>(key, attributes)});
+    return ret.second;
+}
 
-void Parameters::init_parameters() {
-    population_size = (size_t) 1e3;
-    simulation_duration = 200;
-
-    pr_vaccination = 0.5;
-    pr_prior_immunity = 0.0;
-    pr_exposure = std::vector<double>(NUM_STRAIN_TYPES, 0.01);
-    pr_symptoms = std::vector<double>(NUM_STRAIN_TYPES, 1);
-    pr_seek_care = std::vector<double>(NUM_VACCINATION_STATUSES, 1);
-
-    suscep_distr_params = std::vector<std::vector<GammaDistrParamArray>>(NUM_VACCINATION_STATUSES,
-                                                                         std::vector<GammaDistrParamArray>(NUM_STRAIN_TYPES,
-                                                                                                           {0.0, 1.0}));
-
-    vax_effect_distr_params = std::vector<BetaDistrParamArray>(NUM_STRAIN_TYPES, {0.0, 0.0});
-    vax_effect_distr_params[INFLUENZA] = {0.0, 0.5};
-
-    strain_probs = std::vector<double>(NUM_STRAIN_TYPES + 1, 0.0);
-    calc_strain_probs();
-
-    return_metrics = std::vector<std::string>(0);
-
-    linelist_file_path = "simlinelist.out";
-    simvis_file_path   = "simvis.out";
-    database_path      = "";
+double Parameters::get(std::string key) const {
+    auto fullname = lookup.at(key);
+    auto p = params.at(fullname).get();
+    return p->get_value();
 }
 
 void Parameters::calc_strain_probs() {
-    for (size_t s = 0; s < NUM_STRAIN_TYPES; ++s) {
-        strain_probs[s] = pr_exposure[s];
-    }
-    strain_probs[NUM_STRAIN_TYPES] = 1.0 - std::accumulate(pr_exposure.begin(), pr_exposure.end(), 0.0);
+    strain_probs = std::vector<double>(NUM_STRAIN_TYPES + 1, 0.0);
+
+    strain_probs[NON_INFLUENZA] = get("pr_nonflu_exposure");
+    strain_probs[INFLUENZA]     = get("pr_flu_exposure");
+    strain_probs[NUM_STRAIN_TYPES] = 1.0 - (strain_probs[NON_INFLUENZA] + strain_probs[INFLUENZA]);
 }
 
-double Parameters::sample_discrete_susceptibility(const GammaDistrParamArray& params) const {
+double Parameters::sample_discrete_susceptibility(const bool vaccinated, const double mean) const {
+    auto pr_prior_immunity = (vaccinated) ? get("pr_prior_imm_vaxd") : get("pr_prior_imm_unvaxd");
     if (pr_prior_immunity == 0.0) {
-        return params[SCALE];
+        return mean;
     } else {
-        return (rng->draw_from_rng(INFECTION) < pr_prior_immunity) ? params[SCALE] : 1.0;
+        return (rng->draw_from_rng(INFECTION) < pr_prior_immunity) ? mean : 1.0;
     }
 }
 
-double Parameters::sample_continuous_susceptibility(const GammaDistrParamArray& params) const {
-    return gsl_ran_gamma(rng->get_rng(INFECTION), params[SHAPE], params[SCALE]);
+double Parameters::sample_continuous_susceptibility(const double shape, const double mean) const {
+    auto scale = util::gamma_scale_from_mean(shape, mean);
+    return gsl_ran_gamma(rng->get_rng(INFECTION), shape, scale);
 }
 
 std::vector<double> Parameters::sample_susceptibility(const Person* p) const {
     std::vector<double> susceps(NUM_STRAIN_TYPES, 1.0);
-    auto vax_specific_suscep_params = p->is_vaccinated() ? suscep_distr_params[VACCINATED] : suscep_distr_params[UNVACCINATED];
-    for (size_t strain = 0; strain < NUM_STRAIN_TYPES; ++strain) {
-        auto strain_specific_suscep_params = vax_specific_suscep_params[strain];
-        susceps[strain] = strain_specific_suscep_params[SHAPE] == 0.0
-                              ? sample_discrete_susceptibility(strain_specific_suscep_params)
-                              : sample_continuous_susceptibility(strain_specific_suscep_params);
-    }
 
+    auto is_vaxd      = p->is_vaccinated();
+    auto flu_shape    = (is_vaxd) ? get("vaxd_flu_suscep_shape")    : get("unvaxd_flu_suscep_shape");
+    auto flu_mean     = (is_vaxd) ? get("vaxd_flu_suscep_mean")     : get("unvaxd_flu_suscep_mean");
+    auto nonflu_shape = (is_vaxd) ? get("vaxd_nonflu_suscep_shape") : get("unvaxd_nonflu_suscep_shape");
+    auto nonflu_mean  = (is_vaxd) ? get("vaxd_nonflu_suscep_mean")  : get("unvaxd_nonflu_suscep_mean");
+
+    susceps[NON_INFLUENZA] = (nonflu_shape == 0.0)
+                                 ? sample_discrete_susceptibility(is_vaxd, nonflu_mean)
+                                 : sample_continuous_susceptibility(nonflu_shape, nonflu_mean);
+    susceps[INFLUENZA]     = (flu_shape == 0.0)
+                                 ? sample_discrete_susceptibility(is_vaxd, nonflu_mean)
+                                 : sample_continuous_susceptibility(nonflu_shape, nonflu_mean);
     return susceps;
 }
 
-double Parameters::sample_discrete_vaccine_effect(const BetaDistrParamArray& params) const {
-    return params[B];
+double Parameters::sample_discrete_vaccine_effect(const double b) const {
+    return b;
 }
 
-double Parameters::sample_continuous_vaccine_effect(const BetaDistrParamArray& params) const {
-    return gsl_ran_beta(rng->get_rng(VACCINATION), params[A], params[B]);
+double Parameters::sample_continuous_vaccine_effect(const double a, const double b) const {
+    return gsl_ran_beta(rng->get_rng(VACCINATION), a, b);
 }
 
 std::vector<double> Parameters::sample_vaccine_effect() const {
     std::vector<double> vax_effects(NUM_STRAIN_TYPES, 0.0);
-    for (size_t strain = 0; strain < NUM_STRAIN_TYPES; ++strain) {
-        auto strain_specific_vax_params = vax_effect_distr_params[strain];
-        vax_effects[strain] = strain_specific_vax_params[A] == 0.0
-                                  ? sample_discrete_vaccine_effect(strain_specific_vax_params)
-                                  : sample_continuous_vaccine_effect(strain_specific_vax_params);
-    }
+
+    auto flu_a    = get("flu_vax_effect_a");
+    auto flu_b    = get("flu_vax_effect_b");
+    auto nonflu_a = get("nonflu_vax_effect_a");
+    auto nonflu_b = get("nonflu_vax_effect_b");
+
+    vax_effects[NON_INFLUENZA] = (nonflu_a == 0.0)
+                                     ? sample_discrete_vaccine_effect(nonflu_b)
+                                     : sample_continuous_vaccine_effect(nonflu_a, nonflu_b);
+    vax_effects[INFLUENZA]     = (nonflu_a == 0.0)
+                                     ? sample_discrete_vaccine_effect(flu_b)
+                                     : sample_continuous_vaccine_effect(flu_a, flu_b);
     return vax_effects;
 }
 
@@ -149,4 +185,4 @@ StrainType Parameters::sample_strain() const {
     return (StrainType) idx;
 }
 
-void Parameters::update_time_varying_parameters() {}
+// void Parameters::update_time_varying_parameters() {}
