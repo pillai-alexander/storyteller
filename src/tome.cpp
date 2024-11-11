@@ -54,8 +54,6 @@ Tome::Tome(sol::state* lua_vm, std::string core_config)
     slurp_table(metrics_table.value(), config_metrics);
 }
 
-Tome::~Tome() {}
-
 std::map<std::string, sol::object> Tome::get_config_core()    const { return config_core; }
 std::map<std::string, sol::object> Tome::get_config_params()  const { return config_params; }
 std::map<std::string, sol::object> Tome::get_config_metrics() const { return config_metrics; }

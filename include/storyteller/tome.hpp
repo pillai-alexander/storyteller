@@ -17,7 +17,7 @@
 class Tome {
   public:
     Tome(sol::state* lua_vm, std::string core_config);
-    ~Tome();
+    ~Tome() = default;
 
     std::map<std::string, sol::object> get_config_core() const;
     std::map<std::string, sol::object> get_config_params() const;
