@@ -76,8 +76,10 @@ enum RngType {
  */
 class RngHandler {
   public:
-    RngHandler(unsigned long int seed);
+    RngHandler();
     ~RngHandler();
+
+    void set_seed(const unsigned long int seed);
 
     double draw_from_rng(RngType type = INFECTION) const;
     gsl_rng* get_rng(RngType type = INFECTION) const;

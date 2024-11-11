@@ -51,20 +51,23 @@ namespace util {
     }
 }
 
-RngHandler::RngHandler(unsigned long int seed) : rng_seed(seed) {
+RngHandler::RngHandler() {
     infection_rng   = gsl_rng_alloc(gsl_rng_mt19937);
     vaccination_rng = gsl_rng_alloc(gsl_rng_mt19937);
     behavior_rng    = gsl_rng_alloc(gsl_rng_mt19937);
-
-    gsl_rng_set(infection_rng, seed);
-    gsl_rng_set(vaccination_rng, seed);
-    gsl_rng_set(behavior_rng, seed);
 }
 
 RngHandler::~RngHandler() {
     gsl_rng_free(infection_rng);
     gsl_rng_free(vaccination_rng);
     gsl_rng_free(behavior_rng);
+}
+
+void RngHandler::set_seed(const unsigned long int seed) {
+    rng_seed = seed;
+    gsl_rng_set(infection_rng, seed);
+    gsl_rng_set(vaccination_rng, seed);
+    gsl_rng_set(behavior_rng, seed);
 }
 
 double RngHandler::draw_from_rng(RngType type) const {
