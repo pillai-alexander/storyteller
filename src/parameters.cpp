@@ -65,6 +65,8 @@ Parameters::Parameters(RngHandler* rngh, DatabaseHandler* dbh, Tome* t)
     }
 }
 
+Parameter::~Parameter() { _validate = {}; }
+
 void Parameters::read_parameters_for_serial(size_t serial) {
     simulation_serial = serial;
     db->read_parameters(serial, pars_to_read);

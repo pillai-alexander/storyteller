@@ -13,6 +13,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <iostream>
 
 #include <sol/sol.hpp>
 
@@ -59,7 +60,7 @@ class Parameter {
   friend class Parameters;
   public:
     Parameter(const std::string name, const sol::table& attributes);
-    ~Parameter() = default;
+    ~Parameter();
 
     std::string get_fullname() const;
     std::string get_nickname() const;
@@ -74,7 +75,7 @@ class Parameter {
     std::string    flag;
     std::string    datatype;
     double         value;
-    sol::function _validate;
+    sol::protected_function _validate;
 };
 
 /**
