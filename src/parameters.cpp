@@ -13,6 +13,7 @@
 #include <string>
 #include <memory>
 #include <limits>
+#include <cmath>
 
 #include <gsl/gsl_randist.h>
 #include <sol/sol.hpp>
@@ -68,19 +69,25 @@ void Parameters::read_parameters_for_serial(size_t serial) {
     simulation_serial = serial;
     db->read_parameters(serial, pars_to_read);
 
-    for (const auto& [nickname, value] : pars_to_read) {
-        if (value == std::numeric_limits<double>::infinity()) {
-            std::cerr << "ERROR: " << nickname << " not found\n";
-            exit(-1);
-        }
-
-        if (nickname == "seed") {
-            rng->set_seed(value);
+    bool can_continue = false;
+    for (const auto& [k, v] : pars_to_read) {
+        if (std::isinf(v)) {
+            can_continue = false;
+            std::cerr << "ERROR: " << k << " not found\n";
         } else {
+            can_continue = true;
+        }
+    }
+
+    if (can_continue) {
+        rng->set_seed(pars_to_read.at("seed"));
+        pars_to_read.erase("seed");
+
+        for (const auto& [nickname, value] : pars_to_read) {
             auto fullname = lookup.at(nickname);
             params.at(fullname)->value = value;
         }
-        pars_to_read.erase(nickname);
+        pars_to_read.clear();
     }
 
     if (pars_to_read.size() != 0) {
