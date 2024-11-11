@@ -147,8 +147,8 @@ std::vector<double> Parameters::sample_susceptibility(const Person* p) const {
                                  ? sample_discrete_susceptibility(is_vaxd, nonflu_mean)
                                  : sample_continuous_susceptibility(nonflu_shape, nonflu_mean);
     susceps[INFLUENZA]     = (flu_shape == 0.0)
-                                 ? sample_discrete_susceptibility(is_vaxd, nonflu_mean)
-                                 : sample_continuous_susceptibility(nonflu_shape, nonflu_mean);
+                                 ? sample_discrete_susceptibility(is_vaxd, flu_mean)
+                                 : sample_continuous_susceptibility(flu_shape, flu_mean);
     return susceps;
 }
 
