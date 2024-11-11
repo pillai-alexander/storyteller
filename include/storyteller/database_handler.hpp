@@ -25,7 +25,7 @@ enum TableName {
 
 enum ConfigParFlag {
     CONST,
-    COPY,
+    // COPY,
     STEP,
     NUM_CONFIG_PAR_FLAGS
 };

@@ -26,9 +26,9 @@
 using namespace std::chrono;
 
 std::map<std::string, ConfigParFlag> cfg_par_flag_lookup = {
-    {"CONST", CONST},
-    {"COPY", COPY},
-    {"STEP", STEP}
+    {"const", CONST},
+    // {"copy",  COPY},
+    {"step",  STEP}
 };
 
 ParticleJob::ParticleJob() {}
@@ -308,10 +308,15 @@ int DatabaseHandler::init_database() {
                 step_pars.push_back(par_vals[name]);
                 break;
             }
-            case COPY: {
-                par_vals[name] = std::vector<double>();
-                copy_who[name] = p.get<std::string>("par1");
-            }
+            // case COPY: {
+            //     auto who = p.get<std::string>("who");
+            //     bool copying_step = (par_types.at(who) == "step");
+            //     if (copying_step) {
+            //         pars_by_flag[flag].push_back(name);
+            //         par_vals[name] = std::vector<double>();
+            //         copy_who[name] = who;
+            //     }
+            // }
             default: { break; }
         }
     }
@@ -325,13 +330,13 @@ int DatabaseHandler::init_database() {
         }
     }
 
-    for (auto& k : pars_by_flag[COPY]) {
-        auto copy_from_idx = std::find(col_name.cbegin(), col_name.cend(), copy_who[k]) - col_name.cbegin();
-        col_name.push_back(k);
-        for (auto& row : rows) {
-            row.push_back(row[copy_from_idx]);
-        }
-    }
+    // for (auto& k : pars_by_flag[COPY]) {
+    //     auto copy_from_idx = std::find(col_name.cbegin(), col_name.cend(), copy_who[k]) - col_name.cbegin();
+    //     col_name.push_back(k);
+    //     for (auto& row : rows) {
+    //         row.push_back(row[copy_from_idx]);
+    //     }
+    // }
 
     std::vector<std::string> sql;
 
