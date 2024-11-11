@@ -148,10 +148,10 @@ void DatabaseHandler::read_parameters(unsigned int serial, std::map<std::string,
             SQLite::Statement query(db, "SELECT * FROM par WHERE serial = ?");
             query.bind(1, serial);
             while (query.executeStep()) {
-                pars["seed"] = query.getColumn("seed");
                 for (auto& [param, val] : pars) {
                     pars[param] = query.getColumn(param.c_str());
                 }
+                pars["seed"] = query.getColumn("seed");
             }
 
             if (owner->get_flag("verbose")) {
@@ -169,7 +169,7 @@ void DatabaseHandler::read_parameters(unsigned int serial, std::map<std::string,
 }
 
 std::vector<std::string> DatabaseHandler::prepare_insert_sql(const Ledger* ledger, const Parameters* par) const {
-    size_t n_rows = tome->get_element_as<size_t>("sim_duration");
+    size_t n_rows = par->get("sim_duration");
     std::vector<std::string> inserts(n_rows);
     std::string tmp_col_order = "(serial,time,c_vax_flu_inf,c_vax_nonflu_inf,c_unvax_flu_inf,c_unvax_nonflu_inf,c_vax_flu_mai,c_vax_nonflu_mai,c_unvax_flu_mai,c_unvax_nonflu_mai,tnd_ve_est)";
     std::stringstream sql;
@@ -263,7 +263,8 @@ bool DatabaseHandler::table_exists(std::string table) {
 }
 
 int DatabaseHandler::init_database() {
-    auto cfg_pars         = tome->get_config_params();
+    auto par_table        = tome->get_config_params();
+    auto cfg_pars         = par_table.at("parameters").as<sol::table>();
     auto cfg_mets         = tome->get_config_metrics();
     size_t n_realizations = tome->get_element_as<size_t>("n_realizations");
 
@@ -271,27 +272,32 @@ int DatabaseHandler::init_database() {
     vector2d<double> step_pars;
 
     std::vector<std::vector<std::string>> pars_by_flag(NUM_CONFIG_PAR_FLAGS);
+    std::map<std::string, std::string> par_flags;
     std::map<std::string, std::string> par_types;
+    std::map<std::string, std::string> par_nicknames;
     std::map<std::string, std::vector<double>> par_vals;
     std::map<std::string, std::string> copy_who;
 
-    for (auto& [name, el] : cfg_pars) {
-        sol::table p = el.as<sol::table>();
+    for (auto& [key, attrs] : cfg_pars) {
+        auto name       = key.as<std::string>();
+        sol::table p    = attrs.as<sol::table>();
         par_types[name] = p.get<std::string>("datatype");
+        par_flags[name] = p.get<std::string>("flag");
+        par_nicknames[name] = p.get<std::string>("nickname");
 
-        auto flag = cfg_par_flag_lookup[p.get<std::string>("flag")];
-        pars_by_flag[flag].push_back(name);
+        auto flag = cfg_par_flag_lookup[par_flags.at(name)];
         switch (flag) {
             case CONST: {
-                par_vals[name] = std::vector<double>{p.get<double>("par1")};
+                // par_vals[name] = std::vector<double>{p.get<double>("value")};
                 break;
             }
             case STEP: {
+                pars_by_flag[flag].push_back(name);
                 par_vals[name] = std::vector<double>();
 
-                auto start  = p.get<double>("par1");
-                auto end    = p.get<double>("par2");
-                auto step   = p.get<double>("par3");
+                auto start  = p.get<double>("lower");
+                auto end    = p.get<double>("upper");
+                auto step   = p.get<double>("step");
                 auto n_vals = ((end - start) / step) + 1;
 
                 if (n_vals != (int) n_vals) {
@@ -323,12 +329,12 @@ int DatabaseHandler::init_database() {
 
     vector2d<double> rows = util::vec_combinations(step_pars);
 
-    for (auto& k : pars_by_flag[CONST]) {
-        col_name.push_back(k);
-        for (auto& row : rows) {
-            row.push_back(par_vals[k].front());
-        }
-    }
+    // for (auto& k : pars_by_flag[CONST]) {
+    //     col_name.push_back(k);
+    //     for (auto& row : rows) {
+    //         row.push_back(par_vals[k].front());
+    //     }
+    // }
 
     // for (auto& k : pars_by_flag[COPY]) {
     //     auto copy_from_idx = std::find(col_name.cbegin(), col_name.cend(), copy_who[k]) - col_name.cbegin();
@@ -349,9 +355,12 @@ int DatabaseHandler::init_database() {
     sql.push_back(met_table_sql.str());
 
     std::ostringstream par_table_sql("CREATE TABLE par (serial INT, seed INT", std::ios_base::ate);
-    for (auto& [k, t] : par_types) {
-        par_table_sql << ", " << k << " " << t;
+    for (auto& c : col_name) {
+        auto nickname = par_nicknames.at(c);
+        auto type = par_types.at(c);
+        par_table_sql << ", " << nickname << " " << type;
     }
+
     par_table_sql << ");";
     sql.push_back(par_table_sql.str());
 
@@ -364,20 +373,17 @@ int DatabaseHandler::init_database() {
 
     std::ostringstream par_insert_leader("INSERT INTO par (serial, seed", std::ios_base::ate);
     for (auto& c : col_name) {
-        par_insert_leader << "," << c;
+        auto nickname = par_nicknames.at(c);
+        par_insert_leader << ", " << nickname;
     }
     par_insert_leader << ") VALUES (";
 
     std::ostringstream par_insert_sql(par_insert_leader.str(), std::ios_base::ate);
     size_t serial = 0, seed = 0;
     for (size_t r = 0; r < n_realizations; ++r) {
-        for (auto& row : rows) {
+        if (rows.size() == 0) {
             job_insert_sql << serial << job_insert_trailer;
-            par_insert_sql << serial << ", " << seed;
-            for (auto& val : row) {
-                par_insert_sql << ", "<< val;
-            }
-            par_insert_sql << ");";
+            par_insert_sql << serial << ", " << seed << ");";
 
             sql.push_back(job_insert_sql.str());
             sql.push_back(par_insert_sql.str());
@@ -385,6 +391,22 @@ int DatabaseHandler::init_database() {
             job_insert_sql.str(job_insert_leader);
             par_insert_sql.str(par_insert_leader.str());
             ++serial;
+        } else {
+            for (auto& row : rows) {
+                job_insert_sql << serial << job_insert_trailer;
+                par_insert_sql << serial << ", " << seed;
+                for (auto& val : row) {
+                    par_insert_sql << ", "<< val;
+                }
+                par_insert_sql << ");";
+
+                sql.push_back(job_insert_sql.str());
+                sql.push_back(par_insert_sql.str());
+
+                job_insert_sql.str(job_insert_leader);
+                par_insert_sql.str(par_insert_leader.str());
+                ++serial;
+            }
         }
         ++seed;
     }
