@@ -62,21 +62,22 @@ class DatabaseHandler {
     ~DatabaseHandler();
 
     int init_database();
-    void create_table();
-    void clear_table();
 
     bool database_exists();
     bool table_exists(std::string table);
 
-    void read_job(unsigned int serial);
-
     void read_parameters(unsigned int serial, std::map<std::string, double>& pars);
     void write_metrics(const Ledger* ledger, const Parameters* par);
-    void clear_metrics(unsigned int serial);
 
   private:
+    void create_table();
+    void clear_table();
+
+    void read_job(unsigned int serial);
     void start_job(unsigned int serial);
     void end_job(unsigned int serial);
+
+    void clear_metrics(unsigned int serial);
 
     std::vector<std::string> prepare_insert_sql(const Ledger* ledger, const Parameters* par) const;
 
