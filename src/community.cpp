@@ -24,14 +24,14 @@ Community::Community(const Parameters* parameters, const RngHandler* rng_handler
 
     ledger = std::make_unique<Ledger>(par);
     
-    people.reserve(par->population_size);
+    people.reserve(par->get("pop_size"));
     init_population();
 }
 
 Community::~Community() {}
 
 void Community::init_population() {
-    for (size_t i = 0; i < par->population_size; ++i) {
+    for (size_t i = 0; i < par->get("pop_size"); ++i) {
         people.push_back(std::make_unique<Person>(i, par, rng));
         Person* p = people.back().get();
 
@@ -51,9 +51,10 @@ void Community::transmission(size_t time) {
 }
 
 void Community::vaccinate_population(size_t time) {
-    if (par->pr_vaccination == 0) { return; }
+    auto pr_vaccination = par->get("pr_vax");
+    if (pr_vaccination == 0) { return; }
     for (auto& p : people) {
-        if (rng->draw_from_rng(VACCINATION) < par->pr_vaccination) {
+        if (rng->draw_from_rng(VACCINATION) < pr_vaccination) {
             p->vaccinate();
             ledger->vax_incidence[time]++;
         }
