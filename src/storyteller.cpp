@@ -45,7 +45,6 @@ Storyteller::Storyteller(int argc, char* argv[])
     // store all necessary program-flags
     simulation_flags["init"]     = cmdl_args["init"];
     simulation_flags["simulate"] = cmdl_args["simulate"];
-    simulation_flags["example"]  = cmdl_args["example"];
     simulation_flags["simvis"]   = cmdl_args["simvis"];
     simulation_flags["verbose"]  = cmdl_args[{"-v", "--verbose"}];
 
@@ -64,8 +63,6 @@ Storyteller::Storyteller(int argc, char* argv[])
 
         if (simulation_flags["init"]) {
             operation_to_perform = INITIALIZE;
-        } else if (simulation_flags["example"]) {
-            operation_to_perform = EXAMPLE_SIM;
         } else if (simulation_flags["simulate"]) {
             operation_to_perform = BATCH_SIM;
         } else {
@@ -94,18 +91,17 @@ bool Storyteller::sensible_inputs() const {
     int ret = 0;
     bool tome_is_set = not config_file.empty();
     bool init        = simulation_flags.at("init");
-    bool example     = simulation_flags.at("example");
     bool sim         = simulation_flags.at("simulate");
-
-    // exec --example
-    ret += example and not sim and not tome_is_set;
+    bool serial      = (simulation_serial != -1) and (simulation_serial >= 0);
 
     // exec --tome tomefile --init
-    ret += init and tome_is_set and not sim and not example;
+    // ret += init and tome_is_set and not sim and not example;
+    ret += init and tome_is_set and not sim;
 
     // exec --tome tomefile --simulate --serial 0
     // exec --tome tomefile --simulate --serial 0 --batch 2
-    ret += sim and tome_is_set and not init and not example;
+    // ret += sim and tome_is_set and not init and not example;
+    ret += sim and tome_is_set and serial and not init;
 
     return (ret == 1);
 }
@@ -113,34 +109,12 @@ bool Storyteller::sensible_inputs() const {
 int Storyteller::run() {
     switch (operation_to_perform) {
         case INITIALIZE:  return construct_database();
-        case EXAMPLE_SIM: return example_simulation();
         case BATCH_SIM:   return batch_simulation();
         default: {
             std::cerr << "No operation performed.";
             return 0;   
         }
     }
-}
-
-/**
- * @details Performs a built-in simulation that uses all of the default parameter
- *          values and that does not require any user-provided configuration nor
- *          an experiment database. For this operation, #init default-initializes
- *          the #db_handler, #parameters, and #rng_handler objects.
- */
-int Storyteller::example_simulation() {
-    db_handler = nullptr;
-    rng_handler = std::make_unique<RngHandler>(0);
-    parameters = std::make_unique<Parameters>(rng_handler.get());
-
-    simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
-    simulator->set_flags(simulation_flags);
-    simulator->init();
-    simulator->simulate();
-    simulator->results();
-
-    if (simulation_flags["simvis"]) draw_simvis();
-    return 0;
 }
 
 /**

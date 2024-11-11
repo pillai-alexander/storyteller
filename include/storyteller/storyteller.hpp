@@ -28,7 +28,6 @@ namespace sol { class state; }
  */
 enum OperationType {
     INITIALIZE,
-    EXAMPLE_SIM,
     BATCH_SIM,
     NUM_OPERATION_TYPES
 };
@@ -127,14 +126,6 @@ class Storyteller {
      * @return int Return code (0 if sucessful)
      */
     int construct_database();
-
-    /**
-     * @brief Built-in example simulation that does not require a configuration
-     *        file.
-     *
-     * @return int Return code (0 if sucessful)
-     */
-    int example_simulation();
 
     /**
      * @brief Runs a batch of simulations drawn from an experiment database.
