@@ -147,33 +147,10 @@ int Storyteller::batch_simulation() {
  *          #parameters, and #rng_handler objects.
  */
 void Storyteller::init_batch() {
-        // init a dictionary to store parameter names and values from the
-        // experiment database
-        std::map<std::string, double> model_params;
-        for (auto& [key, el] : tome->get_config_params()) {
-            model_params[key] = 0.0;
-        }
-
-        // store the names of the metrics to report
-        std::vector<std::string> model_mets;
-        for (auto& [key, el] : tome->get_config_metrics()) {
-            model_mets.push_back(key);
-        }
-
-        // create the DatabaseHandler and read the proper parameters
         db_handler = std::make_unique<DatabaseHandler>(this);
-        db_handler->read_parameters(simulation_serial, model_params);
-
-        // create the RngHandler with the proper seed
-        rng_handler = std::make_unique<RngHandler>(model_params["seed"]);
-
-        // create the Parameters and update with the proper values
-        parameters = std::make_unique<Parameters>(rng_handler.get(), model_params);
-        parameters->simulation_duration = tome->get_element_as("sim_duration");
-        parameters->database_path       = tome->database_path();
-        parameters->return_metrics      = model_mets;
-        parameters->simulation_serial   = simulation_serial;
-        parameters->population_size     = tome->get_element_as("pop_size");
+        rng_handler = std::make_unique<RngHandler>();
+        parameters = std::make_unique<Parameters>(rng_handler.get(), db_handler.get(), tome.get());
+        parameters->read_parameters_for_serial(simulation_serial);
 }
 
 int Storyteller::construct_database() {
