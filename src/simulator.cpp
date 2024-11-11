@@ -97,3 +97,7 @@ void Simulator::results() {
     // write desired metrics to the experiment database
     if (sim_flags["simulate"]) db_handler->write_metrics(ledger, par);
 }
+
+std::vector<Person*> Simulator::get_population() const {
+    return community->get_population();
+}

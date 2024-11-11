@@ -24,6 +24,7 @@
 #include <storyteller/parameters.hpp>
 #include <storyteller/utility.hpp>
 #include <storyteller/database_handler.hpp>
+#include <storyteller/person.hpp>
 
 /**
  * @details Parses command-line arguments and extracts all necessary program flags into
@@ -47,6 +48,7 @@ Storyteller::Storyteller(int argc, char* argv[])
     simulation_flags["simulate"] = cmdl_args["simulate"];
     simulation_flags["simvis"]   = cmdl_args["simvis"];
     simulation_flags["verbose"]  = cmdl_args[{"-v", "--verbose"}];
+    simulation_flags["synthpop"] = cmdl_args["gen-synth-pop"];
 
     // extract sim serial or keep default of -1 (ie, no specified serial)
     cmdl_args({"-s", "--serial"}, -1) >> simulation_serial;
@@ -65,6 +67,8 @@ Storyteller::Storyteller(int argc, char* argv[])
             operation_to_perform = INITIALIZE;
         } else if (simulation_flags["simulate"]) {
             operation_to_perform = BATCH_SIM;
+        } else if (simulation_flags["synthpop"]) {
+            operation_to_perform = GENERATE_SYNTHETIC_POPULATION;
         } else {
             operation_to_perform = NUM_OPERATION_TYPES;
         }
@@ -93,6 +97,7 @@ bool Storyteller::sensible_inputs() const {
     bool init        = simulation_flags.at("init");
     bool sim         = simulation_flags.at("simulate");
     bool serial      = (simulation_serial != -1) and (simulation_serial >= 0);
+    bool synthpop    = simulation_flags.at("synthpop");
 
     // exec --tome tomefile --init
     // ret += init and tome_is_set and not sim and not example;
@@ -103,6 +108,9 @@ bool Storyteller::sensible_inputs() const {
     // ret += sim and tome_is_set and not init and not example;
     ret += sim and tome_is_set and serial and not init;
 
+    //exec --tome tomefile --gen-synth-pop --serial 0
+    ret += synthpop and tome_is_set and serial and not sim;
+
     return (ret == 1);
 }
 
@@ -110,11 +118,37 @@ int Storyteller::run() {
     switch (operation_to_perform) {
         case INITIALIZE:  return construct_database();
         case BATCH_SIM:   return batch_simulation();
+        case GENERATE_SYNTHETIC_POPULATION: return generate_synthpop();
         default: {
             std::cerr << "No operation performed.";
             return 0;   
         }
     }
+}
+
+int Storyteller::generate_synthpop() {
+    init_batch();
+    simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
+    simulator->set_flags(simulation_flags);
+    simulator->init();
+
+    std::string pop_file_name = "synthpop_" + std::to_string(simulation_serial) + ".out";
+    std::ofstream popfile(pop_file_name);
+    popfile << "pid,flu_suscep,nonflu_suscep,vax_status,flu_vax_protec,nonflu_vax_protec\n";
+
+    auto pop = simulator->get_population();
+    for (const auto& p : pop) {
+        popfile << p->get_id() << ','
+                  << p->get_susceptibility(INFLUENZA) << ','
+                  << p->get_susceptibility(NON_INFLUENZA) << ','
+                  << p->is_vaccinated() << ','
+                  << p->get_vaccine_protection(INFLUENZA) << ','
+                  << p->get_vaccine_protection(NON_INFLUENZA) << '\n';
+    }
+    popfile.close();
+
+    reset();
+    return 0;
 }
 
 /**

@@ -60,3 +60,11 @@ void Community::vaccinate_population(size_t time) {
         }
     }
 }
+
+std::vector<Person*> Community::get_population() const {
+    std::vector<Person*> ret;
+    for (const auto& p : people) {
+        ret.push_back(p.get());
+    }
+    return ret;
+}

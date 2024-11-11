@@ -28,6 +28,8 @@ class Community {
 
     void transmission(size_t time);
 
+    std::vector<Person*> get_population() const;
+
   private:
     void init_population();
     void vaccinate_population(size_t time);

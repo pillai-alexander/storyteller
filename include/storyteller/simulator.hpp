@@ -11,6 +11,7 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <vector>
 
 #include <gsl/gsl_rng.h>
 
@@ -20,6 +21,7 @@ class Infection;
 class Ledger;
 class DatabaseHandler;
 class RngHandler;
+class Person;
 
 /**
  * @brief Main simulation object that handles simulation setup, performs the
@@ -65,6 +67,8 @@ class Simulator {
      *        simulation metrics.
      */
     void results();
+
+    std::vector<Person*> get_population() const;
 
   private:
     /**

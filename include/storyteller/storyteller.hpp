@@ -28,6 +28,7 @@ namespace sol { class state; }
  */
 enum OperationType {
     INITIALIZE,
+    GENERATE_SYNTHETIC_POPULATION,
     BATCH_SIM,
     NUM_OPERATION_TYPES
 };
@@ -145,6 +146,8 @@ class Storyteller {
      * @brief Resets the Storteller before a new simulation.
      */
     void reset();
+
+    int generate_synthpop();
 
     std::unique_ptr<Tome> tome;
     std::unique_ptr<Simulator> simulator;           ///< Created for each simulation to be run
