@@ -14,8 +14,7 @@
 
 #include <gsl/gsl_rng.h>
 
-#include "parameters.hpp"
-
+class Parameters;
 class Community;
 class Infection;
 class Ledger;
