@@ -28,6 +28,7 @@ Parameters["parameters"] = {}
 --     end
 -- }
 
+-- GENERIC PARAMETERS
 Parameters["parameters"]["simulation_durations"] = {
     nickname = "sim_duration",
     description = "",
@@ -52,6 +53,7 @@ Parameters["parameters"]["population_size"] = {
     end
 }
 
+-- PROBABILITY OF IMMUNE STATUSES
 Parameters["parameters"]["probability_of_vaccination"] = {
     nickname = "pr_vax",
     description = "",
@@ -69,7 +71,7 @@ Parameters["parameters"]["probability_of_prior_immunity_if_vaccinated"] = {
     description = "",
     flag  = "const",
     datatype = "double",
-    value = 0.5,
+    value = 0.0,
     validate = function(v)
         local ret = (v == 0.5)
         return ret
@@ -81,13 +83,14 @@ Parameters["parameters"]["probability_of_prior_immunity_if_unvaccinated"] = {
     description = "",
     flag  = "const",
     datatype = "double",
-    value = 0.5,
+    value = 0.0,
     validate = function(v)
         local ret = (v == 0.5)
         return ret
     end
 }
 
+-- INFLUENZA SUSCEPTIBILITY PARAMETERS
 Parameters["parameters"]["vaccinated_influenza_susceptibility_distribution_shape"] = {
     nickname = "vaxd_flu_suscep_shape",
     description = "",
@@ -112,20 +115,8 @@ Parameters["parameters"]["vaccinated_influenza_susceptibility_distribution_mean"
     end
 }
 
-Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_shape"] = {
-    nickname = "vaxd_nonflu_suscep_shape",
-    description = "",
-    flag  = "const",
-    datatype = "double",
-    value = 0.0,
-    validate = function(v)
-        local ret = (v == 0.0)
-        return ret
-    end
-}
-
-Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_mean"] = {
-    nickname = "vaxd_nonflu_suscep_mean",
+Parameters["parameters"]["vaccinated_influenza_susceptibility_baseline"] = {
+    nickname = "vaxd_flu_suscep_baseline",
     description = "",
     flag  = "const",
     datatype = "double",
@@ -160,6 +151,55 @@ Parameters["parameters"]["unvaccinated_influenza_susceptibility_distribution_mea
     end
 }
 
+Parameters["parameters"]["unvaccinated_influenza_susceptibility_baseline"] = {
+    nickname = "unvaxd_flu_suscep_baseline",
+    description = "",
+    flag  = "const",
+    datatype = "double",
+    value = 1.0,
+    validate = function(v)
+        local ret = (v == 1.0)
+        return ret
+    end
+}
+
+-- NONINFLUENZA SUSCEPTIBILITY PARAMETERS
+Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_shape"] = {
+    nickname = "vaxd_nonflu_suscep_shape",
+    description = "",
+    flag  = "const",
+    datatype = "double",
+    value = 0.0,
+    validate = function(v)
+        local ret = (v == 0.0)
+        return ret
+    end
+}
+
+Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_mean"] = {
+    nickname = "vaxd_nonflu_suscep_mean",
+    description = "",
+    flag  = "const",
+    datatype = "double",
+    value = 1.0,
+    validate = function(v)
+        local ret = (v == 1.0)
+        return ret
+    end
+}
+
+Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_baseline"] = {
+    nickname = "vaxd_nonflu_suscep_baseline",
+    description = "",
+    flag  = "const",
+    datatype = "double",
+    value = 1.0,
+    validate = function(v)
+        local ret = (v == 1.0)
+        return ret
+    end
+}
+
 Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_distribution_shape"] = {
     nickname = "unvaxd_nonflu_suscep_shape",
     description = "",
@@ -184,6 +224,19 @@ Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_distribution_
     end
 }
 
+Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_baseline"] = {
+    nickname = "unvaxd_nonflu_suscep_baseline",
+    description = "",
+    flag  = "const",
+    datatype = "double",
+    value = 1.0,
+    validate = function(v)
+        local ret = (v == 1.0)
+        return ret
+    end
+}
+
+-- INFLUENZA VACCINE PARAMETERS
 Parameters["parameters"]["influenza_vaccine_effect_distribution_a"] = {
     nickname = "flu_vax_effect_a",
     description = "",
@@ -210,6 +263,7 @@ Parameters["parameters"]["influenza_vaccine_effect_distribution_b"] = {
     end
 }
 
+-- NONINFLUENZA VACCINE PARAMETERS
 Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_a"] = {
     nickname = "nonflu_vax_effect_a",
     description = "",
@@ -234,6 +288,7 @@ Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_b"] = {
     end
 }
 
+-- INFECTION OUTCOME PARAMETERS
 Parameters["parameters"]["probability_of_symptoms_if_influenza"] = {
     nickname = "pr_sympt_flu",
     description = "",
@@ -282,6 +337,7 @@ Parameters["parameters"]["probability_of_care_seeking_if_unvaccinated"] = {
     end
 }
 
+-- EXPOSURE/FORCE OF INFECTION PARAMETERS
 Parameters["parameters"]["probability_of_daily_influenza_exposure"] = {
     nickname = "pr_flu_exposure",
     description = "",
