@@ -36,7 +36,7 @@ class Tome {
 
   private:
     bool check_for_req_items(sol::table core_tome_table);
-    void slurp_table(sol::table from, std::map<std::string, sol::object>& into);
+    void slurp_table(sol::table& from, std::map<std::string, sol::object>& into);
 
     std::map<std::string, sol::object> config_core;
     std::map<std::string, sol::object> config_params;
