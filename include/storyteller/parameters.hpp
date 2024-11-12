@@ -87,7 +87,7 @@ class Parameter {
  */
 class Parameters {
   public:
-    Parameters(RngHandler* rngh, DatabaseHandler* dbh, Tome* t);
+    Parameters(RngHandler* rngh, DatabaseHandler* dbh, const Tome* t);
     ~Parameters() = default;
 
     void read_parameters_for_serial(size_t serial);
@@ -110,6 +110,8 @@ class Parameters {
 
     std::vector<std::string> return_metrics;
 
+    const Tome* tome;
+
   private:
     std::map<std::string, std::unique_ptr<Parameter>> params;
     std::map<std::string, std::string> lookup;
@@ -125,6 +127,5 @@ class Parameters {
     double sample_continuous_vaccine_effect(const double a, const double b) const;
 
     RngHandler* rng;
-    Tome* tome;
     DatabaseHandler* db;
 };
