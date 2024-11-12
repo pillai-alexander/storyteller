@@ -8,17 +8,20 @@
  */
 #include <map>
 #include <string>
+#include <filesystem>
 
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
 #include <storyteller/tome.hpp>
 
-Tome::Tome(sol::state* lua_vm, std::string core_config)
-    : core_config_path(core_config),
-      vm(lua_vm) {
+namespace fs = std::filesystem;
+
+Tome::Tome(sol::state* lua_vm, std::string path)
+    : vm(lua_vm),
+      tome_path(path) {
     vm->open_libraries();
-    vm->script_file(core_config_path);
+    vm->script_file(tome_path);
 
     // check for tome object in the core config
     sol::optional<sol::table> core_tome_table = vm->get<sol::table>("Tome");
@@ -35,7 +38,10 @@ Tome::Tome(sol::state* lua_vm, std::string core_config)
 
     slurp_table(core_tome_table.value(), config_core);
 
-    vm->script_file(config_core["parameters"].as<std::string>());
+    fs::path parameters_config_path = tome_path.parent_path();
+    parameters_config_path /= config_core["parameters"].as<std::string>();
+
+    vm->script_file(parameters_config_path);
     sol::optional<sol::table> param_table = vm->get<sol::table>("Parameters");
     if (param_table == sol::nullopt) {
         std::cerr << "ERROR: parameter config file must include a `Parameters` table.\n";
@@ -44,7 +50,10 @@ Tome::Tome(sol::state* lua_vm, std::string core_config)
 
     slurp_table(param_table.value(), config_params);
 
-    vm->script_file(config_core["metrics"].as<std::string>());
+    fs::path metrics_config_path = tome_path.parent_path();
+    metrics_config_path /= config_core["metrics"].as<std::string>();
+
+    vm->script_file(metrics_config_path);
     sol::optional<sol::table> metrics_table = vm->get<sol::table>("Metrics");
     if (metrics_table == sol::nullopt) {
         std::cerr << "ERROR: parameter config file must include a `Metrics` table.\n";
@@ -64,10 +73,11 @@ sol::object Tome::get_element(std::string key) const {
 }
 
 std::string Tome::database_path() const {
+    fs::path db_path = tome_path.parent_path();
     bool user_defined_db_path = element_lookup.count("database_path");
-    std::string db_path = user_defined_db_path
-                              ? get_element_as<std::string>("database_path")
-                              : get_element_as<std::string>("experiment_name") + ".sqlite";
+    db_path /= user_defined_db_path
+                   ? get_element_as<std::string>("database_path")
+                   : get_element_as<std::string>("experiment_name") + ".sqlite";
     return db_path;
 }
 

@@ -10,13 +10,16 @@
 
 #include <map>
 #include <string>
+#include <filesystem>
 
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
+namespace fs = std::filesystem;
+
 class Tome {
   public:
-    Tome(sol::state* lua_vm, std::string core_config);
+    Tome(sol::state* lua_vm, std::string path);
     ~Tome() = default;
 
     std::map<std::string, sol::object> get_config_core() const;
@@ -44,7 +47,7 @@ class Tome {
 
     std::map<std::string, std::map<std::string, sol::object>*> element_lookup;
 
-    const std::string core_config_path;
+    const fs::path tome_path;
 
     sol::state* vm;
 };
