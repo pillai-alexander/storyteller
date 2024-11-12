@@ -278,6 +278,20 @@ int DatabaseHandler::init_database() {
     std::map<std::string, std::vector<double>> par_vals;
     std::map<std::string, std::string> copy_who;
 
+    /*  DATABASE CONSTRUCTION REFACTOR (re-impl copy params)
+        // lua param list pre-processing
+            // store fullnames and flags
+        // primary parameter processing
+            // if const: fetch value
+            // if step: calculate all intermediate vals
+            // if copy: lookup who to copy
+                // if const: fetch value from the specified const param
+                // if step: store name of param to copy
+        // calculate combinations of step params
+        // add values for params that copy step values
+        // construct database
+    */
+
     for (auto& [key, attrs] : cfg_pars) {
         auto name       = key.as<std::string>();
         sol::table p    = attrs.as<sol::table>();
