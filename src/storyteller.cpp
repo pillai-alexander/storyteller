@@ -189,9 +189,14 @@ void Storyteller::init_simulation() {
         parameters = std::make_unique<Parameters>(rng_handler.get(), db_handler.get(), tome.get());
         parameters->read_parameters_for_serial(simulation_serial);
 
-        simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
-        simulator->set_flags(simulation_flags);
-        simulator->init();
+        if (parameters->are_valid()) {
+            simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
+            simulator->set_flags(simulation_flags);
+            simulator->init();
+        } else {
+            std::cerr << "ERROR: invalid parameters\n";
+            exit(-1);
+        }
 }
 
 int Storyteller::construct_database() {

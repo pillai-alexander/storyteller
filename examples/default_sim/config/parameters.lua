@@ -73,7 +73,7 @@ Parameters["parameters"]["probability_of_prior_immunity_if_vaccinated"] = {
     datatype = "double",
     value = 0.0,
     validate = function(v)
-        local ret = (v == 0.5)
+        local ret = (v == 0.0)
         return ret
     end
 }
@@ -85,7 +85,7 @@ Parameters["parameters"]["probability_of_prior_immunity_if_unvaccinated"] = {
     datatype = "double",
     value = 0.0,
     validate = function(v)
-        local ret = (v == 0.5)
+        local ret = (v == 0.0)
         return ret
     end
 }

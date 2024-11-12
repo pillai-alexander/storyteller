@@ -198,4 +198,18 @@ StrainType Parameters::sample_strain() const {
     return (StrainType) idx;
 }
 
+bool Parameters::are_valid() const {
+    std::vector<bool> rets;
+    for (const auto& [fullname, p] : params) {
+        bool p_is_valid = p->validate();
+        if (not p_is_valid) {
+            rets.push_back(false);
+            std::cerr << "ERROR: " << fullname <<  " has invalid value = " << p->value << '\n';
+        } else {
+            rets.push_back(true);
+        }
+    }
+    return std::all_of(rets.cbegin(), rets.cend(), [](bool v){ return (v == true);});
+}
+
 // void Parameters::update_time_varying_parameters() {}

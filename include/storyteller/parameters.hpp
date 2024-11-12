@@ -99,6 +99,8 @@ class Parameters {
     std::vector<double> sample_vaccine_effect() const;
     StrainType sample_strain() const;
 
+    bool are_valid() const;
+
     // void update_time_varying_parameters();
 
     std::vector<double> strain_probs;
