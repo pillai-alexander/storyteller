@@ -87,9 +87,9 @@ void Tome::determine_paths() {
     fs::path db_path = user_defined_db_path
                    ? get_element_as<std::string>("database_path")
                    : get_element_as<std::string>("experiment_name") + ".sqlite";
-    paths["database"] = tome_root / db_path;
 
     paths["tome_rt"]  = tome_root;
+    paths["database"] = tome_root / db_path;
     paths["simvis"]   = tome_root / "simvis.out";
     paths["synthpop"] = tome_root / "synthpop.out";
     paths["linelist"] = tome_root / "linelist.out";
