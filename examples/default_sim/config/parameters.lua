@@ -28,6 +28,18 @@ Parameters["parameters"] = {}
 --     end
 -- }
 
+-- Parameters["parameters"]["fullname"] = {
+--     nickname = "nickname",
+--     description = "description",
+--     flag  = "copy",
+--     datatype = "integer/double",
+--     who = "fullname/nickname of param to copy from",
+--     validate = function(v)
+--         local ret = (boolean check)
+--         return ret
+--     end
+-- }
+
 -- GENERIC PARAMETERS
 Parameters["parameters"]["simulation_durations"] = {
     nickname = "sim_duration",
@@ -81,9 +93,9 @@ Parameters["parameters"]["probability_of_prior_immunity_if_vaccinated"] = {
 Parameters["parameters"]["probability_of_prior_immunity_if_unvaccinated"] = {
     nickname = "pr_prior_imm_unvaxd",
     description = "",
-    flag  = "const",
+    flag  = "copy",
     datatype = "double",
-    value = 0.0,
+    who = "pr_prior_imm_vaxd",
     validate = function(v)
         local ret = (v == 0.0)
         return ret

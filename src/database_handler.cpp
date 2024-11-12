@@ -268,100 +268,121 @@ int DatabaseHandler::init_database() {
     auto cfg_mets         = tome->get_config_metrics();
     size_t n_realizations = tome->get_element_as<size_t>("n_realizations");
 
-    std::vector<std::string> col_name;
-    vector2d<double> step_pars;
-
-    std::vector<std::vector<std::string>> pars_by_flag(NUM_CONFIG_PAR_FLAGS);
+    // parameter pre-processing
+    std::map<std::string, std::vector<std::string>> par_names_by_type;
     std::map<std::string, std::string> par_flags;
-    std::map<std::string, std::string> par_types;
-    std::map<std::string, std::string> par_nicknames;
-    std::map<std::string, std::vector<double>> par_vals;
-    std::map<std::string, std::string> copy_who;
+    for (const auto& [key, p] : cfg_pars) {
+        const auto fullname = key.as<std::string>();
+        const auto flag     = p.as<sol::table>().get<std::string>("flag");
 
-    /*  DATABASE CONSTRUCTION REFACTOR (re-impl copy params)
-        // lua param list pre-processing
-            // store fullnames and flags
-        // primary parameter processing
-            // if const: fetch value
-            // if step: calculate all intermediate vals
-            // if copy: lookup who to copy
-                // if const: fetch value from the specified const param
-                // if step: store name of param to copy
-        // calculate combinations of step params
-        // add values for params that copy step values
-        // construct database
-    */
-
-    for (auto& [key, attrs] : cfg_pars) {
-        auto name       = key.as<std::string>();
-        sol::table p    = attrs.as<sol::table>();
-        par_types[name] = p.get<std::string>("datatype");
-        par_flags[name] = p.get<std::string>("flag");
-        par_nicknames[name] = p.get<std::string>("nickname");
-
-        auto flag = cfg_par_flag_lookup[par_flags.at(name)];
-        switch (flag) {
-            case CONST: {
-                // par_vals[name] = std::vector<double>{p.get<double>("value")};
-                break;
-            }
-            case STEP: {
-                pars_by_flag[flag].push_back(name);
-                par_vals[name] = std::vector<double>();
-
-                auto start  = p.get<double>("lower");
-                auto end    = p.get<double>("upper");
-                auto step   = p.get<double>("step");
-                auto n_vals = ((end - start) / step) + 1;
-
-                if (n_vals != (int) n_vals) {
-                    std::cerr << "ERROR: " << name << " has invalid step size.\n";
-                    exit(-1);
-                }
-
-                double v = start;
-                for (double i = 0; i < n_vals; ++i) {
-                    par_vals[name].push_back(v);
-                    v += step;
-                }
-                col_name.push_back(name);
-                step_pars.push_back(par_vals[name]);
-                break;
-            }
-            // case COPY: {
-            //     auto who = p.get<std::string>("who");
-            //     bool copying_step = (par_types.at(who) == "step");
-            //     if (copying_step) {
-            //         pars_by_flag[flag].push_back(name);
-            //         par_vals[name] = std::vector<double>();
-            //         copy_who[name] = who;
-            //     }
-            // }
-            default: { break; }
+        if ((flag == "const") or (flag == "step") or (flag == "copy")) {
+            par_flags[fullname] = flag;
+            par_names_by_type[flag].push_back(fullname);
+        } else {
+            std::cerr << "ERROR: " << fullname << " has an unsupported flag (" << flag << ")\n";
+            exit(-1);
         }
     }
 
-    vector2d<double> rows = util::vec_combinations(step_pars);
+    // process const, step, copy params in that order
+    std::vector<std::string> par_fullnames(par_names_by_type["const"]);
+    par_fullnames.reserve(par_names_by_type["const"].size() + par_names_by_type["step"].size() + par_names_by_type["copy"].size());
+    par_fullnames.insert(par_fullnames.end(), par_names_by_type["step"].begin(), par_names_by_type["step"].end());
+    par_fullnames.insert(par_fullnames.end(), par_names_by_type["copy"].begin(), par_names_by_type["copy"].end());
 
-    // for (auto& k : pars_by_flag[CONST]) {
-    //     col_name.push_back(k);
-    //     for (auto& row : rows) {
-    //         row.push_back(par_vals[k].front());
-    //     }
-    // }
+    std::map<std::string, std::string> par_nicknames;
+    std::map<std::string, std::string> par_datatypes;
+    std::map<std::string, std::string> par_copy_who;
+    std::map<std::string, std::vector<double>> par_values;
+    std::map<std::string, std::string> par_name_lookup;
+    for (const auto& fullname : par_fullnames) {
+        const auto p        = cfg_pars.get<sol::table>(fullname);
+        const auto nickname = p.get<std::string>("nickname");
+        const auto datatype = p.get<std::string>("datatype");
+        const auto flag     = par_flags.at(fullname);
 
-    // for (auto& k : pars_by_flag[COPY]) {
-    //     auto copy_from_idx = std::find(col_name.cbegin(), col_name.cend(), copy_who[k]) - col_name.cbegin();
-    //     col_name.push_back(k);
-    //     for (auto& row : rows) {
-    //         row.push_back(row[copy_from_idx]);
-    //     }
-    // }
+        par_name_lookup[fullname] = fullname;
+        par_name_lookup[nickname] = fullname;
+        par_nicknames[fullname]   = nickname;
+        par_datatypes[fullname]   = datatype;
+
+        if (flag == "const") {
+            par_values[fullname] = {p.get<double>("value")};
+        } else if (flag == "step") {
+            const auto start  = p.get<double>("lower");
+            const auto end    = p.get<double>("upper");
+            const auto step   = p.get<double>("step");
+            const auto n_vals = ((end - start) / step) + 1;
+
+            if (n_vals != (int) n_vals) {
+                std::cerr << "ERROR: " << fullname << " has invalid step size.\n";
+                exit(-1);
+            }
+
+            double v = start;
+            for (double i = 0; i < n_vals; ++i) {
+                par_values[fullname].push_back(v);
+                v += step;
+            }
+        } else if (flag == "copy") {
+            const auto who = p.get<std::string>("who");
+            const auto par_to_copy = par_name_lookup.at(who);
+            const auto flag_to_copy = par_flags.at(par_to_copy);
+
+            if ((flag_to_copy == "const") or (flag_to_copy == "step")) {
+                par_copy_who[fullname] = par_to_copy;
+            } else {
+                std::cerr << "ERROR: " << fullname << " copies " << par_to_copy << " with unsupported flag (" << flag_to_copy << ")\n";
+                exit(-1);
+            }
+        } else {
+            std::cerr << "ERROR: " << fullname << " has an unsupported flag (" << flag << ")\n";
+            exit(-1);
+        }
+    }
+
+    // calculate step param combinations or create empty single row if no step params exist
+    std::vector<std::string> sql_par_col_order;
+    vector2d<double> par_rows;
+    if (not par_names_by_type.at("step").empty()) {
+        vector2d<double> step_par_vecs;
+        for (const auto& fullname : par_names_by_type.at("step")) {
+            sql_par_col_order.push_back(par_nicknames.at(fullname));
+            step_par_vecs.push_back(par_values.at(fullname));
+        }
+        par_rows = util::vec_combinations(step_par_vecs);
+    } else {
+        par_rows = {{}};
+    }
+
+    for (const auto& fullname : par_names_by_type.at("const")) {
+        const auto val = par_values.at(fullname).front();
+
+        sql_par_col_order.push_back(par_nicknames.at(fullname));
+        if (not par_rows.empty()) {
+            for (auto& row : par_rows) {
+                row.push_back(val);
+            }
+        } else {
+            par_rows.front().push_back(val);
+        }
+    }
+
+    for (const auto& fullname : par_names_by_type.at("copy")) {
+        const auto who_fullname = par_copy_who.at(fullname);
+        const auto who_nickname = par_nicknames.at(who_fullname);
+        const auto who_idx      = std::find(sql_par_col_order.cbegin(), sql_par_col_order.cend(), who_nickname) - sql_par_col_order.cbegin();
+
+        sql_par_col_order.push_back(par_nicknames.at(fullname));
+        for (auto& row : par_rows) {
+            row.push_back(row[who_idx]);
+        }
+    }
 
     std::vector<std::string> sql;
 
     std::ostringstream met_table_sql("CREATE TABLE met (serial INT", std::ios_base::ate);
-    for (auto& [name, el] : cfg_mets) {
+    for (const auto& [name, el] : cfg_mets) {
         sol::table m = el.as<sol::table>();
         met_table_sql << ", " << name << " " << m.get<std::string>("datatype");
     }
@@ -369,10 +390,10 @@ int DatabaseHandler::init_database() {
     sql.push_back(met_table_sql.str());
 
     std::ostringstream par_table_sql("CREATE TABLE par (serial INT, seed INT", std::ios_base::ate);
-    for (auto& c : col_name) {
-        auto nickname = par_nicknames.at(c);
-        auto type = par_types.at(c);
-        par_table_sql << ", " << nickname << " " << type;
+    for (const auto& col : sql_par_col_order) {
+        const auto fullname = par_name_lookup.at(col);
+        const auto datatype = par_datatypes.at(fullname);
+        par_table_sql << ", " << col << " " << datatype;
     }
 
     par_table_sql << ");";
@@ -386,18 +407,21 @@ int DatabaseHandler::init_database() {
     std::ostringstream job_insert_sql(job_insert_leader, std::ios_base::ate);
 
     std::ostringstream par_insert_leader("INSERT INTO par (serial, seed", std::ios_base::ate);
-    for (auto& c : col_name) {
-        auto nickname = par_nicknames.at(c);
-        par_insert_leader << ", " << nickname;
+    for (const auto& col : sql_par_col_order) {
+        par_insert_leader << ", " << col;
     }
     par_insert_leader << ") VALUES (";
 
     std::ostringstream par_insert_sql(par_insert_leader.str(), std::ios_base::ate);
     size_t serial = 0, seed = 0;
     for (size_t r = 0; r < n_realizations; ++r) {
-        if (rows.size() == 0) {
+        for (const auto& row : par_rows) {
             job_insert_sql << serial << job_insert_trailer;
-            par_insert_sql << serial << ", " << seed << ");";
+            par_insert_sql << serial << ", " << seed;
+            for (const auto& val : row) {
+                par_insert_sql << ", "<< val;
+            }
+            par_insert_sql << ");";
 
             sql.push_back(job_insert_sql.str());
             sql.push_back(par_insert_sql.str());
@@ -405,22 +429,6 @@ int DatabaseHandler::init_database() {
             job_insert_sql.str(job_insert_leader);
             par_insert_sql.str(par_insert_leader.str());
             ++serial;
-        } else {
-            for (auto& row : rows) {
-                job_insert_sql << serial << job_insert_trailer;
-                par_insert_sql << serial << ", " << seed;
-                for (auto& val : row) {
-                    par_insert_sql << ", "<< val;
-                }
-                par_insert_sql << ");";
-
-                sql.push_back(job_insert_sql.str());
-                sql.push_back(par_insert_sql.str());
-
-                job_insert_sql.str(job_insert_leader);
-                par_insert_sql.str(par_insert_leader.str());
-                ++serial;
-            }
         }
         ++seed;
     }
