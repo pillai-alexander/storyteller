@@ -93,7 +93,7 @@ void Tome::determine_paths() {
     paths["simvis"]   = tome_root / "simvis.out";
     paths["synthpop"] = tome_root / "synthpop.out";
     paths["linelist"] = tome_root / "linelist.out";
-    paths["scripts"]  = storyteller_root / "src" / "scripts";
+    paths["scripts"]  = storyteller_root / "scripts";
     paths["simvis.R"] = paths.at("scripts") / "simvis.R";
 }
 
