@@ -33,7 +33,7 @@
 Storyteller::Storyteller(int argc, char* argv[])
     : simulation_serial(-1),
       batch_size(1),
-      config_file(""),
+      tome_path(""),
       simulator(nullptr),
       operation_to_perform(NUM_OPERATION_TYPES),
       simulation_flags() {
@@ -57,11 +57,11 @@ Storyteller::Storyteller(int argc, char* argv[])
     cmdl_args({"-b", "--batch"}, 1) >> batch_size;
 
     // extract core config file path or default to empty string
-    cmdl_args({"-t", "--tome"}, "") >> config_file;
+    cmdl_args({"-t", "--tome"}, "") >> tome_path;
 
     // determine what operation the user called for
     if (sensible_inputs()) {
-        tome = (config_file.empty()) ? nullptr : std::make_unique<Tome>(lua_vm.get(), config_file);
+        tome = (tome_path.empty()) ? nullptr : std::make_unique<Tome>(lua_vm.get(), tome_path);
 
         if (simulation_flags["init"]) {
             operation_to_perform = INITIALIZE;
@@ -86,14 +86,14 @@ const Parameters* Storyteller::get_parameters() const { return parameters.get();
 const Tome* Storyteller::get_tome()             const { return tome.get(); }
 int Storyteller::get_serial()                   const { return simulation_serial; }
 size_t Storyteller::get_batch_size()            const { return batch_size; }
-std::string Storyteller::get_config_file()      const { return config_file; }
+std::string Storyteller::get_config_file()      const { return tome_path; }
 bool Storyteller::get_flag(std::string key)     const { return simulation_flags.at(key); }
 
 void Storyteller::set_flag(std::string key, bool val) { simulation_flags[key] = val; }
 
 bool Storyteller::sensible_inputs() const {
     int ret = 0;
-    bool tome_is_set = not config_file.empty();
+    bool tome_is_set = not tome_path.empty();
     bool init        = simulation_flags.at("init");
     bool sim         = simulation_flags.at("simulate");
     bool serial      = (simulation_serial != -1) and (simulation_serial >= 0);

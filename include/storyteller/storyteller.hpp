@@ -163,5 +163,5 @@ class Storyteller {
 
     int simulation_serial;
     size_t batch_size;
-    std::string config_file;
+    std::string tome_path;
 };
