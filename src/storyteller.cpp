@@ -116,9 +116,18 @@ bool Storyteller::sensible_inputs() const {
 
 int Storyteller::run() {
     switch (operation_to_perform) {
-        case INITIALIZE:  return construct_database();
-        case BATCH_SIM:   return batch_simulation();
-        case GENERATE_SYNTHETIC_POPULATION: return generate_synthpop();
+        case INITIALIZE: {
+            return construct_database();
+        }
+        case BATCH_SIM: {
+            return batch_simulation();
+        }
+        case GENERATE_SYNTHETIC_POPULATION: {
+            init_simulation();
+            auto ret = generate_synthpop();
+            reset();
+            return ret;
+        }
         default: {
             std::cerr << "No operation performed.";
             return 0;   
@@ -127,11 +136,6 @@ int Storyteller::run() {
 }
 
 int Storyteller::generate_synthpop() {
-    init_batch();
-    simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
-    simulator->set_flags(simulation_flags);
-    simulator->init();
-
     std::string pop_file_name = "synthpop_" + std::to_string(simulation_serial) + ".out";
     std::ofstream popfile(pop_file_name);
     popfile << "pid,flu_suscep,nonflu_suscep,vax_status,flu_vax_protec,nonflu_vax_protec\n";
@@ -147,7 +151,6 @@ int Storyteller::generate_synthpop() {
     }
     popfile.close();
 
-    reset();
     return 0;
 }
 
@@ -160,10 +163,7 @@ int Storyteller::generate_synthpop() {
  */
 int Storyteller::batch_simulation() {
     for (size_t i = 1; i <= batch_size; ++i) {
-        init_batch();
-        simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
-        simulator->set_flags(simulation_flags);
-        simulator->init();
+        init_simulation();
         simulator->simulate();
         simulator->results();
         reset();
@@ -175,16 +175,20 @@ int Storyteller::batch_simulation() {
 }
 
 /**
- * @details Initializes the Storyteller appropriately for a batch simulation
- *          operation. Parameter values are read from the appropriate particle
- *          in the experiment database and used to construct the #db_handler,
- *          #parameters, and #rng_handler objects.
+ * @details Initializes the Storyteller appropriately for a simulation operation
+ *          Parameter values are read from the appropriate particle in the
+ *          experiment database and used to construct the #db_handler, #parameters
+ *          and #rng_handler objects.
  */
-void Storyteller::init_batch() {
+void Storyteller::init_simulation() {
         db_handler = std::make_unique<DatabaseHandler>(this);
         rng_handler = std::make_unique<RngHandler>();
         parameters = std::make_unique<Parameters>(rng_handler.get(), db_handler.get(), tome.get());
         parameters->read_parameters_for_serial(simulation_serial);
+
+        simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
+        simulator->set_flags(simulation_flags);
+        simulator->init();
 }
 
 int Storyteller::construct_database() {
