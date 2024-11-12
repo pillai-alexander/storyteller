@@ -24,11 +24,12 @@
 #include <storyteller/utility.hpp>
 #include <storyteller/database_handler.hpp>
 
-Simulator::Simulator(const Parameters* parameters, DatabaseHandler* dbh, const RngHandler* rngh) : sim_time(0) {
-    rng_handler = rngh;
-    par         = parameters;
-    db_handler  = dbh;
-    community   = std::make_unique<Community>(par, rngh);
+Simulator::Simulator(const Parameters* parameters, DatabaseHandler* dbh, const RngHandler* rngh)
+    : sim_time(0),
+      rng_handler(rngh),
+      par(parameters),
+      db_handler(dbh) {
+    community = std::make_unique<Community>(par, rngh);
 }
 
 Simulator::~Simulator() {}
