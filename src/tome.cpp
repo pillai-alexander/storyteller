@@ -77,7 +77,11 @@ sol::object Tome::get_element(std::string key) const {
 std::string Tome::get_path(std::string key) const { return paths.at(key); }
 
 void Tome::determine_paths() {
-    fs::path tome_root = tome_path.parent_path();
+    fs::path tome_root = tome_path.is_absolute()
+                             ? tome_path.parent_path()
+                             : fs::current_path() / tome_path.parent_path();
+
+    fs::path storyteller_root = fs::path(__FILE__).parent_path().parent_path();
 
     bool user_defined_db_path = element_lookup.count("database_path");
     fs::path db_path = user_defined_db_path
@@ -85,9 +89,12 @@ void Tome::determine_paths() {
                    : get_element_as<std::string>("experiment_name") + ".sqlite";
     paths["database"] = tome_root / db_path;
 
-    paths["simvis"]   = tome_root / fs::path("simvis.out");
-    paths["synthpop"] = tome_root / fs::path("synthpop.out");
-    paths["linelist"] = tome_root / fs::path("linelist.out");
+    paths["tome_rt"]  = tome_root;
+    paths["simvis"]   = tome_root / "simvis.out";
+    paths["synthpop"] = tome_root / "synthpop.out";
+    paths["linelist"] = tome_root / "linelist.out";
+    paths["scripts"]  = storyteller_root / "src" / "scripts";
+    paths["simvis.R"] = paths.at("scripts") / "simvis.R";
 }
 
 bool Tome::check_for_req_items(sol::table core_tome_table) {
