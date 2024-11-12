@@ -33,13 +33,14 @@ class Tome {
         return get_element(key).as<T>();
     }
 
-    std::string database_path() const;
+    std::string get_path(std::string key) const;
 
     void clean();
 
   private:
     bool check_for_req_items(sol::table core_tome_table);
     void slurp_table(sol::table& from, std::map<std::string, sol::object>& into);
+    void determine_paths();
 
     std::map<std::string, sol::object> config_core;
     std::map<std::string, sol::object> config_params;
@@ -48,6 +49,7 @@ class Tome {
     std::map<std::string, std::map<std::string, sol::object>*> element_lookup;
 
     const fs::path tome_path;
+    std::map<std::string, fs::path> paths;
 
     sol::state* vm;
 };

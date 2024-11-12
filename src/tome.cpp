@@ -61,6 +61,8 @@ Tome::Tome(sol::state* lua_vm, std::string path)
     }
 
     slurp_table(metrics_table.value(), config_metrics);
+
+    determine_paths();
 }
 
 std::map<std::string, sol::object> Tome::get_config_core()    const { return config_core; }
@@ -72,13 +74,20 @@ sol::object Tome::get_element(std::string key) const {
     return dict->at(key);
 }
 
-std::string Tome::database_path() const {
-    fs::path db_path = tome_path.parent_path();
+std::string Tome::get_path(std::string key) const { return paths.at(key); }
+
+void Tome::determine_paths() {
+    fs::path tome_root = tome_path.parent_path();
+
     bool user_defined_db_path = element_lookup.count("database_path");
-    db_path /= user_defined_db_path
+    fs::path db_path = user_defined_db_path
                    ? get_element_as<std::string>("database_path")
                    : get_element_as<std::string>("experiment_name") + ".sqlite";
-    return db_path;
+    paths["database"] = tome_root / db_path;
+
+    paths["simvis"]   = tome_root / fs::path("simvis.out");
+    paths["synthpop"] = tome_root / fs::path("synthpop.out");
+    paths["linelist"] = tome_root / fs::path("linelist.out");
 }
 
 bool Tome::check_for_req_items(sol::table core_tome_table) {
