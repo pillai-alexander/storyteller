@@ -71,7 +71,7 @@ DatabaseHandler::DatabaseHandler(const Storyteller* storyteller)
       ms_delay_between_attempts(1000),
       owner(storyteller),
       tome(storyteller->get_tome()) {
-    database_path = tome->database_path();
+    database_path = tome->get_path("database");
 }
 
 DatabaseHandler::~DatabaseHandler() {}

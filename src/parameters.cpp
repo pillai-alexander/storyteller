@@ -40,11 +40,11 @@ inline std::string Parameter::get_nickname() const { return nickname; }
 inline double      Parameter::get_value()    const { return value; }
 inline bool        Parameter::validate()     const { return _validate(value); }
 
-Parameters::Parameters(RngHandler* rngh, DatabaseHandler* dbh, Tome* t)
+Parameters::Parameters(RngHandler* rngh, DatabaseHandler* dbh, const Tome* t)
     : rng(rngh),
       db(dbh),
       tome(t) {
-    database_path = tome->database_path();
+    database_path = tome->get_path("database");
 
     return_metrics.clear();
     for (auto& [key, el] : tome->get_config_metrics()) {

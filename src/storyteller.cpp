@@ -136,8 +136,7 @@ int Storyteller::run() {
 }
 
 int Storyteller::generate_synthpop() {
-    std::string pop_file_name = "synthpop_" + std::to_string(simulation_serial) + ".out";
-    std::ofstream popfile(pop_file_name);
+    std::ofstream popfile(tome->get_path("synthpop"));
     popfile << "pid,flu_suscep,nonflu_suscep,vax_status,flu_vax_protec,nonflu_vax_protec\n";
 
     auto pop = simulator->get_population();
@@ -193,7 +192,7 @@ void Storyteller::init_simulation() {
 
 int Storyteller::construct_database() {
     // create the DatabaseHandler
-    std::string db_path = tome->database_path();
+    std::string db_path = tome->get_path("database");
     db_handler = std::make_unique<DatabaseHandler>(this);
 
     if (db_handler->database_exists()) {

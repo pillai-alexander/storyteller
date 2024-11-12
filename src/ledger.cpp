@@ -13,6 +13,7 @@
 
 #include <storyteller/ledger.hpp>
 #include <storyteller/person.hpp>
+#include <storyteller/tome.hpp>
 
 Ledger::Ledger(const Parameters* parameters) {
     par = parameters;
@@ -115,7 +116,7 @@ void Ledger::calculate_tnd_ve_est() {
 }
 
 void Ledger::generate_linelist_csv(std::string filepath) {
-    if (filepath.empty()) filepath = par->linelist_file_path;
+    if (filepath.empty()) filepath = par->tome->get_path("linelist");
     std::ofstream file(filepath);
     file << linelist_header << '\n';
     for (size_t i = 0; i < infections.size(); ++i) {
@@ -136,7 +137,7 @@ void Ledger::generate_linelist_csv(std::string filepath) {
 }
 
 void Ledger::generate_simvis_csv(std::string filepath) {
-    if (filepath.empty()) filepath = par->simvis_file_path;
+    if (filepath.empty()) filepath = par->tome->get_path("simvis");
     std::ofstream file(filepath);
     file << simvis_header << '\n';
     for (size_t t = 0; t < par->get("sim_duration"); ++t) {
