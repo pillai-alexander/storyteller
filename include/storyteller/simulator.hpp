@@ -83,5 +83,5 @@ class Simulator {
     std::unique_ptr<Community> community;   ///< Created for each simulation
     const RngHandler* rng_handler;          ///< Points to #Storyteller::rng_handler
     const Parameters* par;                  ///< Points to #Storyteller::parameters
-    DatabaseHandler* db_handler;      ///< Points to #Storyteller::db_handler
+    DatabaseHandler* db_handler;            ///< Points to #Storyteller::db_handler
 };
