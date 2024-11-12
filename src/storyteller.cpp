@@ -165,11 +165,15 @@ int Storyteller::batch_simulation() {
         init_simulation();
         simulator->simulate();
         simulator->results();
+
+        if (simulation_flags["simvis"]) {
+            generate_synthpop();
+            draw_simvis();
+        }
+
         reset();
         ++simulation_serial;
     }
-
-    if (simulation_flags["simvis"]) draw_simvis();
     return 0;
 }
 
@@ -207,8 +211,8 @@ int Storyteller::construct_database() {
 
 int Storyteller::draw_simvis() {
     std::stringstream cmd;
-    cmd << "Rscript figs/simvis.R";
-    std::cerr << "Calling `" << cmd.str() << "`\n";
+    cmd << "Rscript " << tome->get_path("simvis.R") << ' ' << tome->get_path("tome_rt");
+    if (simulation_flags["verbose"]) std::cerr << "Calling `" << cmd.str() << "`\n";
     return system(cmd.str().c_str());
 }
 
