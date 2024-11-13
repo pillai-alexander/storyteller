@@ -73,6 +73,8 @@ void Parameters::init_parameters() {
     strain_probs = std::vector<double>(NUM_STRAIN_TYPES + 1, 0.0);
     calc_strain_probs();
 
+    return_metrics = std::vector<std::string>(0);
+
     linelist_file_path = "simlinelist.out";
     simvis_file_path   = "simvis.out";
     database_path      = "";

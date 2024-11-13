@@ -87,6 +87,8 @@ class Parameters {
     std::string database_path;
     size_t simulation_serial;
 
+    std::vector<std::string> return_metrics;
+
   private:
     void init_parameters();
     void calc_strain_probs();

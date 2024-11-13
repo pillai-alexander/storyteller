@@ -92,7 +92,6 @@ void Storyteller::set_flag(std::string key, bool val) { simulation_flags[key] = 
 bool Storyteller::sensible_inputs() const {
     int ret = 0;
     bool tome_is_set = not config_file.empty();
-    bool user_serial = simulation_serial != -1;
     bool init        = simulation_flags.at("init");
     bool example     = simulation_flags.at("example");
     bool sim         = simulation_flags.at("simulate");
@@ -101,14 +100,11 @@ bool Storyteller::sensible_inputs() const {
     ret += example and not sim and not tome_is_set;
 
     // exec --tome tomefile --init
-    ret += tome_is_set and init and not sim and not example;
+    ret += init and tome_is_set and not sim and not example;
 
     // exec --tome tomefile --simulate --serial 0
     // exec --tome tomefile --simulate --serial 0 --batch 2
-    ret += tome_is_set and sim and user_serial and not init and not example;
-
-    //exec --tome tomefile --simulate --batch 2
-    ret += tome_is_set and sim and not user_serial and not init and not example;
+    ret += sim and tome_is_set and not init and not example;
 
     return (ret == 1);
 }
@@ -154,16 +150,15 @@ int Storyteller::example_simulation() {
  *          each simulation in the batch).
  */
 int Storyteller::batch_simulation() {
-    init_batch();
-    for (auto serial : db_handler->get_serials()) {
-        simulation_serial = serial;
-        init_simulation(db_handler->params_for_serial(serial));
+    for (size_t i = 1; i <= batch_size; ++i) {
+        init_batch();
         simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
         simulator->set_flags(simulation_flags);
         simulator->init();
         simulator->simulate();
         simulator->results();
         reset();
+        ++simulation_serial;
     }
 
     if (simulation_flags["simvis"]) draw_simvis();
@@ -177,20 +172,32 @@ int Storyteller::batch_simulation() {
  *          #parameters, and #rng_handler objects.
  */
 void Storyteller::init_batch() {
-    db_handler = std::make_unique<DatabaseHandler>(this);
-    db_handler->read_parameters();
-}
+        // init a dictionary to store parameter names and values from the
+        // experiment database
+        std::map<std::string, double> model_params;
+        for (auto& [key, el] : tome->get_config_params()) {
+            model_params[key] = 0.0;
+        }
 
-void Storyteller::init_simulation(std::map<std::string, double> sim_params) {
-    db_handler->start_job(simulation_serial);
-    // create the RngHandler with the proper seed
-    rng_handler = std::make_unique<RngHandler>(sim_params["seed"]);
+        // store the names of the metrics to report
+        std::vector<std::string> model_mets;
+        for (auto& [key, el] : tome->get_config_metrics()) {
+            model_mets.push_back(key);
+        }
 
-    // create the Parameters and update with the proper values
-    parameters = std::make_unique<Parameters>(rng_handler.get(), sim_params);
-    parameters->simulation_duration = tome->get_element_as<size_t>("sim_duration");
-    parameters->database_path       = tome->database_path();
-    parameters->simulation_serial   = simulation_serial;
+        // create the DatabaseHandler and read the proper parameters
+        db_handler = std::make_unique<DatabaseHandler>(this);
+        db_handler->read_parameters(simulation_serial, model_params);
+
+        // create the RngHandler with the proper seed
+        rng_handler = std::make_unique<RngHandler>(model_params["seed"]);
+
+        // create the Parameters and update with the proper values
+        parameters = std::make_unique<Parameters>(rng_handler.get(), model_params);
+        parameters->simulation_duration = tome->get_element_as<size_t>("sim_duration");
+        parameters->database_path       = tome->database_path();
+        parameters->return_metrics      = model_mets;
+        parameters->simulation_serial   = simulation_serial;
 }
 
 int Storyteller::construct_database() {
@@ -222,6 +229,7 @@ int Storyteller::draw_simvis() {
  */
 void Storyteller::reset() {
     simulator.reset(nullptr);
+    db_handler.reset(nullptr);
     rng_handler.reset(nullptr);
     parameters.reset(nullptr);
 }

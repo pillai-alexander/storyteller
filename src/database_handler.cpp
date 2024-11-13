@@ -70,8 +70,7 @@ DatabaseHandler::DatabaseHandler(const Storyteller* storyteller)
     : n_transaction_attempts(10),
       ms_delay_between_attempts(1000),
       owner(storyteller),
-      tome(storyteller->get_tome()),
-      serials({}) {
+      tome(storyteller->get_tome()) {
     database_path = tome->database_path();
 }
 
@@ -126,39 +125,28 @@ void DatabaseHandler::end_job(unsigned int serial) {
     }
 }
 
-void DatabaseHandler::read_parameters() {
-    int starting_serial = owner->get_serial();
-    if (starting_serial == -1) {
-        // get batch_size amount of queued serials
-        get_queued_serials(owner->get_batch_size());
-    } else {
-        // run batch starting from user-specified serial
-        for (size_t i = 0; i < owner->get_batch_size(); ++i) {
-            add_serial(starting_serial + i);
-        }
-    }
-
-    const auto& cfg_params = tome->get_config_params();
-    for (unsigned int s : serials) {
+void DatabaseHandler::read_parameters(unsigned int serial, std::map<std::string, double>& pars) {
+    for (size_t i = 0; i < n_transaction_attempts; ++i) {
+        start_job(serial);
         try {
             SQLite::Database db(database_path);
             SQLite::Statement query(db, "SELECT * FROM par WHERE serial = ?");
-            query.bind(1, s);
+            query.bind(1, serial);
             while (query.executeStep()) {
-                batch_params[s]["seed"] = query.getColumn("seed");
-                for (auto& [key, val] : cfg_params) {
-                    batch_params[s][key] = query.getColumn(key.c_str());
+                pars["seed"] = query.getColumn("seed");
+                for (auto& [param, val] : pars) {
+                    pars[param] = query.getColumn(param.c_str());
                 }
             }
-            std::cerr << "Read attempt " << s << " succeeded." << '\n';
+            std::cerr << "Read attempt " << i << " succeeded." << '\n';
+            break;
         } catch (std::exception& e) {
-            std::cerr << "Read attempt " << s << " failed:" << '\n';
+            std::cerr << "Read attempt " << i << " failed:" << '\n';
             std::cerr << "\tSQLite exception: " << e.what() << '\n';
+            std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
         }
     }
 }
-
-std::map<std::string, double> DatabaseHandler::params_for_serial(size_t serial) const { return batch_params.at(serial); }
 
 std::vector<std::string> DatabaseHandler::prepare_insert_sql(const Ledger* ledger, const Parameters* par) const {
     size_t n_rows = tome->get_element_as<size_t>("sim_duration");
@@ -385,22 +373,3 @@ int DatabaseHandler::init_database() {
         return -1;
     }
 }
-
-void DatabaseHandler::add_serial(size_t serial) { serials.push_back(serial); }
-
-void DatabaseHandler::get_queued_serials(unsigned int batch_size) {
-    serials.clear();
-    try {
-        SQLite::Database db(database_path, SQLite::OPEN_READONLY);
-        SQLite::Statement query(db, "SELECT * FROM job WHERE status='queued' limit ?");
-        query.bind(1, batch_size);
-        while (query.executeStep()) {
-            auto serial = (unsigned int) query.getColumn("serial");
-            serials.push_back((size_t) serial);
-        }
-    } catch (std::exception& e) {
-        std::cerr << "SQLite exception: " << e.what() << '\n';
-    }
-}
-
-std::vector<size_t> DatabaseHandler::get_serials() const { return serials; }

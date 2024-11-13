@@ -10,7 +10,6 @@
 
 #include <string>
 #include <vector>
-#include <map>
 
 class Storyteller;
 class Ledger;
@@ -70,27 +69,20 @@ class DatabaseHandler {
     bool table_exists(std::string table);
 
     void read_job(unsigned int serial);
-    void start_job(unsigned int serial);
-    void end_job(unsigned int serial);
 
+    void read_parameters(unsigned int serial, std::map<std::string, double>& pars);
     void write_metrics(const Ledger* ledger, const Parameters* par);
     void clear_metrics(unsigned int serial);
 
-    void read_parameters();
-    std::map<std::string, double> params_for_serial(size_t serial) const;
-    std::vector<size_t> get_serials() const;
-
   private:
+    void start_job(unsigned int serial);
+    void end_job(unsigned int serial);
+
     std::vector<std::string> prepare_insert_sql(const Ledger* ledger, const Parameters* par) const;
-    void get_queued_serials(unsigned int batch_size);
-    void add_serial(size_t serial);
 
     std::string database_path;
     size_t n_transaction_attempts;
     size_t ms_delay_between_attempts;
-
-    std::vector<size_t> serials;
-    std::map<size_t, std::map<std::string, double>> batch_params;
 
     const Storyteller* owner;
     const Tome* tome;
