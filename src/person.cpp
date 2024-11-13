@@ -61,10 +61,14 @@ Infection* Person::attempt_infection(StrainType strain, size_t time) {
         current_suscep *= is_vaccinated() ? 1 - vaccine_protection[strain] : 1;
 
         if (rng->draw_from_rng(INFECTION) < current_suscep) {
-            auto sympt = (rng->draw_from_rng(INFECTION) < par->pr_symptoms[strain]) ? SYMPTOMATIC : ASYMPTOMATIC;
-            auto seek_care = sympt == SYMPTOMATIC
-                                ? rng->draw_from_rng(BEHAVIOR) < par->pr_seek_care[vaccination_status]
-                                : false;
+            auto pr_symptoms    = (strain == INFLUENZA)
+                                      ? par->get("pr_sympt_flu")
+                                      : par->get("pr_sympt_nonflu");
+            auto pr_careseeking = (is_vaccinated())
+                                      ? par->get("pr_careseeking_vaxd")
+                                      : par->get("pr_careseeking_unvaxd");
+            auto sympt = (rng->draw_from_rng(INFECTION) < pr_symptoms) ? SYMPTOMATIC : ASYMPTOMATIC;
+            auto seek_care = sympt == SYMPTOMATIC ? rng->draw_from_rng(BEHAVIOR) < pr_careseeking : false;
             infection_history.push_back(std::make_unique<Infection>(this, strain, time, sympt, seek_care));
 
             inf = infection_history.back().get();

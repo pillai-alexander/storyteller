@@ -28,7 +28,7 @@ namespace sol { class state; }
  */
 enum OperationType {
     INITIALIZE,
-    EXAMPLE_SIM,
+    GENERATE_SYNTHETIC_POPULATION,
     BATCH_SIM,
     NUM_OPERATION_TYPES
 };
@@ -129,14 +129,6 @@ class Storyteller {
     int construct_database();
 
     /**
-     * @brief Built-in example simulation that does not require a configuration
-     *        file.
-     *
-     * @return int Return code (0 if sucessful)
-     */
-    int example_simulation();
-
-    /**
      * @brief Runs a batch of simulations drawn from an experiment database.
      *
      * @return int Return code (0 if sucessful)
@@ -155,6 +147,8 @@ class Storyteller {
      */
     void reset();
 
+    int generate_synthpop();
+
     std::unique_ptr<Tome> tome;
     std::unique_ptr<Simulator> simulator;           ///< Created for each simulation to be run
     std::unique_ptr<DatabaseHandler> db_handler;    ///< Handles all database operations
@@ -169,5 +163,5 @@ class Storyteller {
 
     int simulation_serial;
     size_t batch_size;
-    std::string config_file;
+    std::string tome_path;
 };

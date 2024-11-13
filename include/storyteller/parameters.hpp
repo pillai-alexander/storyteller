@@ -12,9 +12,15 @@
 #include <array>
 #include <string>
 #include <map>
+#include <memory>
+#include <iostream>
+
+#include <sol/sol.hpp>
 
 class Person;
 class RngHandler;
+class DatabaseHandler;
+class Tome;
 
 enum StrainType {
     NON_INFLUENZA,
@@ -50,6 +56,28 @@ enum GammaDistributionParameter {
 
 typedef std::array<double, NUM_GAMMA_DISTR_PARAMS> GammaDistrParamArray;
 
+class Parameter {
+  friend class Parameters;
+  public:
+    Parameter(const std::string name, const sol::table& attributes);
+    ~Parameter();
+
+    std::string get_fullname() const;
+    std::string get_nickname() const;
+    double      get_value()    const;
+
+    bool validate() const;
+
+  private:
+    std::string    fullname;
+    std::string    nickname;
+    std::string    description;
+    std::string    flag;
+    std::string    datatype;
+    double         value;
+    sol::protected_function _validate;
+};
+
 /**
  * @brief Stores all necessary parameters to perform a single simulation.
  *
@@ -59,28 +87,23 @@ typedef std::array<double, NUM_GAMMA_DISTR_PARAMS> GammaDistrParamArray;
  */
 class Parameters {
   public:
-    Parameters(const RngHandler* rngh);
-    Parameters(const RngHandler* rngh, std::map<std::string, double> cfg_params);
-    ~Parameters();
+    Parameters(RngHandler* rngh, DatabaseHandler* dbh, const Tome* t);
+    ~Parameters() = default;
+
+    void read_parameters_for_serial(size_t serial);
+
+    bool insert(const std::string key, const sol::table& attributes);
+    double get(std::string key) const;
 
     std::vector<double> sample_susceptibility(const Person* p) const;
     std::vector<double> sample_vaccine_effect() const;
     StrainType sample_strain() const;
 
-    void update_time_varying_parameters();
+    bool are_valid() const;
 
-    double pr_vaccination;
-    std::vector<double> pr_exposure;
-    std::vector<double> pr_symptoms;
-    std::vector<double> pr_seek_care;
+    // void update_time_varying_parameters();
 
     std::vector<double> strain_probs;
-
-    std::vector<std::vector<GammaDistrParamArray>> suscep_distr_params;
-    std::vector<BetaDistrParamArray> vax_effect_distr_params;
-
-    size_t population_size;
-    size_t simulation_duration;
 
     std::string linelist_file_path;
     std::string simvis_file_path;
@@ -89,9 +112,22 @@ class Parameters {
 
     std::vector<std::string> return_metrics;
 
+    const Tome* tome;
+
   private:
-    void init_parameters();
+    std::map<std::string, std::unique_ptr<Parameter>> params;
+    std::map<std::string, std::string> lookup;
+
+    std::vector<std::string> pars_to_read;
+
     void calc_strain_probs();
 
-    const RngHandler* rng;
+    double sample_discrete_susceptibility(const bool vaccinated, const double suscep_w_prior, const double suscep_wo_prior) const;
+    double sample_continuous_susceptibility(const double shape, const double mean) const;
+
+    double sample_discrete_vaccine_effect(const double b) const;
+    double sample_continuous_vaccine_effect(const double a, const double b) const;
+
+    RngHandler* rng;
+    DatabaseHandler* db;
 };

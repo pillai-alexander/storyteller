@@ -26,9 +26,9 @@
 using namespace std::chrono;
 
 std::map<std::string, ConfigParFlag> cfg_par_flag_lookup = {
-    {"CONST", CONST},
-    {"COPY", COPY},
-    {"STEP", STEP}
+    {"const", CONST},
+    // {"copy",  COPY},
+    {"step",  STEP}
 };
 
 ParticleJob::ParticleJob() {}
@@ -71,7 +71,7 @@ DatabaseHandler::DatabaseHandler(const Storyteller* storyteller)
       ms_delay_between_attempts(1000),
       owner(storyteller),
       tome(storyteller->get_tome()) {
-    database_path = tome->database_path();
+    database_path = tome->get_path("database");
 }
 
 DatabaseHandler::~DatabaseHandler() {}
@@ -87,7 +87,12 @@ void DatabaseHandler::read_job(unsigned int serial) {
             simulation_job.completions = (unsigned int) query.getColumn("completions");
             simulation_job.status = (std::string) query.getColumn("status");
         }
-        std::cerr << "Read job " << serial << " succeeded." << '\n';
+
+        if (owner->get_flag("verbose")) {
+            std::cerr << "Read job " << serial << " succeeded." << '\n';
+        } else {
+            std::cerr << serial << ": job ";
+        }
     } catch (std::exception& e) {
         std::cerr << "Read job " << serial << " failed:" << '\n';
         std::cerr << "\tSQLite exception: " << e.what() << '\n';
@@ -103,7 +108,12 @@ void DatabaseHandler::start_job(unsigned int serial) {
         SQLite::Transaction transaction(db);
         db.exec(simulation_job.update());
         transaction.commit();
-        std::cerr << "Start job " << serial << " succeeded." << '\n';
+
+        if (owner->get_flag("verbose")) {
+            std::cerr << "Start job " << serial << " succeeded." << '\n';
+        } else {
+            std::cerr << "started... ";
+        }
     } catch (std::exception& e) {
         std::cerr << "Start job " << serial << " failed:" << '\n';
         std::cerr << "\tSQLite exception: " << e.what() << '\n';
@@ -118,27 +128,38 @@ void DatabaseHandler::end_job(unsigned int serial) {
         SQLite::Transaction transaction(db);
         db.exec(simulation_job.update());
         transaction.commit();
-        std::cerr << "End job " << serial << " succeeded." << '\n';
+
+        if (owner->get_flag("verbose")) {
+            std::cerr << "End job " << serial << " succeeded." << '\n';
+        } else {
+            std::cerr << "job end\n";
+        }
     } catch (std::exception& e) {
         std::cerr << "Start job " << serial << " failed:" << '\n';
         std::cerr << "\tSQLite exception: " << e.what() << '\n';
     }
 }
 
-void DatabaseHandler::read_parameters(unsigned int serial, std::map<std::string, double>& pars) {
+std::map<std::string, double> DatabaseHandler::read_parameters(unsigned int serial, const std::vector<std::string>& pars) {
+    std::map<std::string, double> ret;
     for (size_t i = 0; i < n_transaction_attempts; ++i) {
+        ret.clear();
         start_job(serial);
         try {
             SQLite::Database db(database_path);
             SQLite::Statement query(db, "SELECT * FROM par WHERE serial = ?");
             query.bind(1, serial);
             while (query.executeStep()) {
-                pars["seed"] = query.getColumn("seed");
-                for (auto& [param, val] : pars) {
-                    pars[param] = query.getColumn(param.c_str());
+                for (auto& nickname : pars) {
+                    ret[nickname] = query.getColumn(nickname.c_str());
                 }
             }
-            std::cerr << "Read attempt " << i << " succeeded." << '\n';
+
+            if (owner->get_flag("verbose")) {
+                std::cerr << "Read attempt " << i << " succeeded." << '\n';
+            } else {
+                std::cerr << "params read... ";
+            }
             break;
         } catch (std::exception& e) {
             std::cerr << "Read attempt " << i << " failed:" << '\n';
@@ -146,10 +167,11 @@ void DatabaseHandler::read_parameters(unsigned int serial, std::map<std::string,
             std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
         }
     }
+    return ret;
 }
 
 std::vector<std::string> DatabaseHandler::prepare_insert_sql(const Ledger* ledger, const Parameters* par) const {
-    size_t n_rows = tome->get_element_as<size_t>("sim_duration");
+    size_t n_rows = par->get("sim_duration");
     std::vector<std::string> inserts(n_rows);
     std::string tmp_col_order = "(serial,time,c_vax_flu_inf,c_vax_nonflu_inf,c_unvax_flu_inf,c_unvax_nonflu_inf,c_vax_flu_mai,c_vax_nonflu_mai,c_unvax_flu_mai,c_unvax_nonflu_mai,tnd_ve_est)";
     std::stringstream sql;
@@ -189,7 +211,12 @@ void DatabaseHandler::write_metrics(const Ledger* ledger, const Parameters* par)
                 query.reset();
             }
             transaction.commit();
-            std::cerr << "Write attempt " << i << " succeeded." << '\n';
+
+            if (owner->get_flag("verbose")) {
+                std::cerr << "Write attempt " << i << " succeeded." << '\n';
+            } else {
+                std::cerr << "mets written... ";
+            }
             end_job((unsigned int) par->simulation_serial);
             break;
         } catch (std::exception& e) {
@@ -210,7 +237,10 @@ void DatabaseHandler::clear_metrics(unsigned int serial) {
             query.exec();
             query.reset();
             transaction.commit();
-            std::cerr << "Clear attempt " << serial << " succeeded." << '\n';
+
+            if (owner->get_flag("verbose")) {
+                std::cerr << "Clear attempt " << serial << " succeeded." << '\n';
+            }
             break;
         } catch (std::exception& e) {
             std::cerr << "Clear attempt " << serial << " failed:" << '\n';
@@ -235,80 +265,126 @@ bool DatabaseHandler::table_exists(std::string table) {
 }
 
 int DatabaseHandler::init_database() {
-    auto cfg_pars         = tome->get_config_params();
+    auto par_table        = tome->get_config_params();
+    auto cfg_pars         = par_table.at("parameters").as<sol::table>();
     auto cfg_mets         = tome->get_config_metrics();
     size_t n_realizations = tome->get_element_as<size_t>("n_realizations");
 
-    std::vector<std::string> col_name;
-    vector2d<double> step_pars;
+    // parameter pre-processing
+    std::map<std::string, std::vector<std::string>> par_names_by_type;
+    std::map<std::string, std::string> par_flags;
+    for (const auto& [key, p] : cfg_pars) {
+        const auto fullname = key.as<std::string>();
+        const auto flag     = p.as<sol::table>().get<std::string>("flag");
 
-    std::vector<std::vector<std::string>> pars_by_flag(NUM_CONFIG_PAR_FLAGS);
-    std::map<std::string, std::string> par_types;
-    std::map<std::string, std::vector<double>> par_vals;
-    std::map<std::string, std::string> copy_who;
-
-    for (auto& [name, el] : cfg_pars) {
-        sol::table p = el.as<sol::table>();
-        par_types[name] = p.get<std::string>("datatype");
-
-        auto flag = cfg_par_flag_lookup[p.get<std::string>("flag")];
-        pars_by_flag[flag].push_back(name);
-        switch (flag) {
-            case CONST: {
-                par_vals[name] = std::vector<double>{p.get<double>("par1")};
-                break;
-            }
-            case STEP: {
-                par_vals[name] = std::vector<double>();
-
-                auto start  = p.get<double>("par1");
-                auto end    = p.get<double>("par2");
-                auto step   = p.get<double>("par3");
-                auto n_vals = ((end - start) / step) + 1;
-
-                if (n_vals != (int) n_vals) {
-                    std::cerr << "ERROR: " << name << " has invalid step size.\n";
-                    exit(-1);
-                }
-
-                double v = start;
-                for (double i = 0; i < n_vals; ++i) {
-                    par_vals[name].push_back(v);
-                    v += step;
-                }
-                col_name.push_back(name);
-                step_pars.push_back(par_vals[name]);
-                break;
-            }
-            case COPY: {
-                par_vals[name] = std::vector<double>();
-                copy_who[name] = p.get<std::string>("par1");
-            }
-            default: { break; }
+        if ((flag == "const") or (flag == "step") or (flag == "copy")) {
+            par_flags[fullname] = flag;
+            par_names_by_type[flag].push_back(fullname);
+        } else {
+            std::cerr << "ERROR: " << fullname << " has an unsupported flag (" << flag << ")\n";
+            exit(-1);
         }
     }
 
-    vector2d<double> rows = util::vec_combinations(step_pars);
+    // process const, step, copy params in that order
+    std::vector<std::string> par_fullnames(par_names_by_type["const"]);
+    par_fullnames.reserve(par_names_by_type["const"].size() + par_names_by_type["step"].size() + par_names_by_type["copy"].size());
+    par_fullnames.insert(par_fullnames.end(), par_names_by_type["step"].begin(), par_names_by_type["step"].end());
+    par_fullnames.insert(par_fullnames.end(), par_names_by_type["copy"].begin(), par_names_by_type["copy"].end());
 
-    for (auto& k : pars_by_flag[CONST]) {
-        col_name.push_back(k);
-        for (auto& row : rows) {
-            row.push_back(par_vals[k].front());
+    std::map<std::string, std::string> par_nicknames;
+    std::map<std::string, std::string> par_datatypes;
+    std::map<std::string, std::string> par_copy_who;
+    std::map<std::string, std::vector<double>> par_values;
+    std::map<std::string, std::string> par_name_lookup;
+    for (const auto& fullname : par_fullnames) {
+        const auto p        = cfg_pars.get<sol::table>(fullname);
+        const auto nickname = p.get_or<std::string>("nickname", fullname);
+        const auto datatype = p.get<std::string>("datatype");
+        const auto flag     = par_flags.at(fullname);
+
+        par_name_lookup[fullname] = fullname;
+        par_name_lookup[nickname] = fullname;
+        par_nicknames[fullname]   = nickname;
+        par_datatypes[fullname]   = datatype;
+
+        if (flag == "const") {
+            par_values[fullname] = {p.get<double>("value")};
+        } else if (flag == "step") {
+            const auto start  = p.get<double>("lower");
+            const auto end    = p.get<double>("upper");
+            const auto step   = p.get<double>("step");
+            const auto n_vals = ((end - start) / step) + 1;
+
+            if (n_vals != (int) n_vals) {
+                std::cerr << "ERROR: " << fullname << " has invalid step size.\n";
+                exit(-1);
+            }
+
+            double v = start;
+            for (double i = 0; i < n_vals; ++i) {
+                par_values[fullname].push_back(v);
+                v += step;
+            }
+        } else if (flag == "copy") {
+            const auto who = p.get<std::string>("who");
+            const auto par_to_copy = par_name_lookup.at(who);
+            const auto flag_to_copy = par_flags.at(par_to_copy);
+
+            if ((flag_to_copy == "const") or (flag_to_copy == "step")) {
+                par_copy_who[fullname] = par_to_copy;
+            } else {
+                std::cerr << "ERROR: " << fullname << " copies " << par_to_copy << " with unsupported flag (" << flag_to_copy << ")\n";
+                exit(-1);
+            }
+        } else {
+            std::cerr << "ERROR: " << fullname << " has an unsupported flag (" << flag << ")\n";
+            exit(-1);
         }
     }
 
-    for (auto& k : pars_by_flag[COPY]) {
-        auto copy_from_idx = std::find(col_name.cbegin(), col_name.cend(), copy_who[k]) - col_name.cbegin();
-        col_name.push_back(k);
-        for (auto& row : rows) {
-            row.push_back(row[copy_from_idx]);
+    // calculate step param combinations or create empty single row if no step params exist
+    std::vector<std::string> sql_par_col_order;
+    vector2d<double> par_rows;
+    if (not par_names_by_type.at("step").empty()) {
+        vector2d<double> step_par_vecs;
+        for (const auto& fullname : par_names_by_type.at("step")) {
+            sql_par_col_order.push_back(par_nicknames.at(fullname));
+            step_par_vecs.push_back(par_values.at(fullname));
+        }
+        par_rows = util::vec_combinations(step_par_vecs);
+    } else {
+        par_rows = {{}};
+    }
+
+    for (const auto& fullname : par_names_by_type.at("const")) {
+        const auto val = par_values.at(fullname).front();
+
+        sql_par_col_order.push_back(par_nicknames.at(fullname));
+        if (not par_rows.empty()) {
+            for (auto& row : par_rows) {
+                row.push_back(val);
+            }
+        } else {
+            par_rows.front().push_back(val);
+        }
+    }
+
+    for (const auto& fullname : par_names_by_type.at("copy")) {
+        const auto who_fullname = par_copy_who.at(fullname);
+        const auto who_nickname = par_nicknames.at(who_fullname);
+        const auto who_idx      = std::find(sql_par_col_order.cbegin(), sql_par_col_order.cend(), who_nickname) - sql_par_col_order.cbegin();
+
+        sql_par_col_order.push_back(par_nicknames.at(fullname));
+        for (auto& row : par_rows) {
+            row.push_back(row[who_idx]);
         }
     }
 
     std::vector<std::string> sql;
 
     std::ostringstream met_table_sql("CREATE TABLE met (serial INT", std::ios_base::ate);
-    for (auto& [name, el] : cfg_mets) {
+    for (const auto& [name, el] : cfg_mets) {
         sol::table m = el.as<sol::table>();
         met_table_sql << ", " << name << " " << m.get<std::string>("datatype");
     }
@@ -316,9 +392,12 @@ int DatabaseHandler::init_database() {
     sql.push_back(met_table_sql.str());
 
     std::ostringstream par_table_sql("CREATE TABLE par (serial INT, seed INT", std::ios_base::ate);
-    for (auto& [k, t] : par_types) {
-        par_table_sql << ", " << k << " " << t;
+    for (const auto& col : sql_par_col_order) {
+        const auto fullname = par_name_lookup.at(col);
+        const auto datatype = par_datatypes.at(fullname);
+        par_table_sql << ", " << col << " " << datatype;
     }
+
     par_table_sql << ");";
     sql.push_back(par_table_sql.str());
 
@@ -330,18 +409,18 @@ int DatabaseHandler::init_database() {
     std::ostringstream job_insert_sql(job_insert_leader, std::ios_base::ate);
 
     std::ostringstream par_insert_leader("INSERT INTO par (serial, seed", std::ios_base::ate);
-    for (auto& c : col_name) {
-        par_insert_leader << "," << c;
+    for (const auto& col : sql_par_col_order) {
+        par_insert_leader << ", " << col;
     }
     par_insert_leader << ") VALUES (";
 
     std::ostringstream par_insert_sql(par_insert_leader.str(), std::ios_base::ate);
     size_t serial = 0, seed = 0;
     for (size_t r = 0; r < n_realizations; ++r) {
-        for (auto& row : rows) {
+        for (const auto& row : par_rows) {
             job_insert_sql << serial << job_insert_trailer;
             par_insert_sql << serial << ", " << seed;
-            for (auto& val : row) {
+            for (const auto& val : row) {
                 par_insert_sql << ", "<< val;
             }
             par_insert_sql << ");";

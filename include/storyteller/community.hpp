@@ -11,11 +11,8 @@
 #include <vector>
 #include <memory>
 
-#include "parameters.hpp"
-#include "utility.hpp"
-
 class Person;
-class Infection;
+class Parameters;
 class RngHandler;
 class Ledger;
 
@@ -30,6 +27,8 @@ class Community {
     ~Community();
 
     void transmission(size_t time);
+
+    std::vector<Person*> get_population() const;
 
   private:
     void init_population();

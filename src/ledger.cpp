@@ -13,20 +13,22 @@
 
 #include <storyteller/ledger.hpp>
 #include <storyteller/person.hpp>
+#include <storyteller/tome.hpp>
 
 Ledger::Ledger(const Parameters* parameters) {
     par = parameters;
-    inf_incidence       = vector3d<size_t>(NUM_VACCINATION_STATUSES, vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(par->simulation_duration, 0)));
-    sympt_inf_incidence = vector3d<size_t>(NUM_VACCINATION_STATUSES, vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(par->simulation_duration, 0)));
-    mai_incidence       = vector3d<size_t>(NUM_VACCINATION_STATUSES, vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(par->simulation_duration, 0)));
+    auto sim_duration = par->get("sim_duration");
+    inf_incidence       = vector3d<size_t>(NUM_VACCINATION_STATUSES, vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(sim_duration, 0)));
+    sympt_inf_incidence = vector3d<size_t>(NUM_VACCINATION_STATUSES, vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(sim_duration, 0)));
+    mai_incidence       = vector3d<size_t>(NUM_VACCINATION_STATUSES, vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(sim_duration, 0)));
 
-    cumul_infs       = vector3d<size_t>(NUM_VACCINATION_STATUSES, vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(par->simulation_duration, 0)));
-    cumul_sympt_infs = vector3d<size_t>(NUM_VACCINATION_STATUSES, vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(par->simulation_duration, 0)));
-    cumul_mais       = vector3d<size_t>(NUM_VACCINATION_STATUSES, vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(par->simulation_duration, 0)));
+    cumul_infs       = vector3d<size_t>(NUM_VACCINATION_STATUSES, vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(sim_duration, 0)));
+    cumul_sympt_infs = vector3d<size_t>(NUM_VACCINATION_STATUSES, vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(sim_duration, 0)));
+    cumul_mais       = vector3d<size_t>(NUM_VACCINATION_STATUSES, vector2d<size_t>(NUM_STRAIN_TYPES, std::vector<size_t>(sim_duration, 0)));
 
-    tnd_ve_estimate = std::vector<double>(par->simulation_duration, 0.0);
+    tnd_ve_estimate = std::vector<double>(sim_duration, 0.0);
 
-    vax_incidence = std::vector<size_t>(par->simulation_duration, 0);
+    vax_incidence = std::vector<size_t>(sim_duration, 0);
 
     linelist_header = "inf_id,inf_time,inf_strain,inf_sympts,inf_care,p_id,vax_status,baseline_suscep,vax_effect";
     simvis_header = "time,vaxd_flu_infs,vaxd_flu_mais,vaxd_nonflu_infs,vaxd_nonflu_mais,unvaxd_flu_infs,unvaxd_flu_mais,unvaxd_nonflu_infs,unvaxd_nonflu_mais,tnd_ve_est";
@@ -99,7 +101,7 @@ void Ledger::calculate_cumulatives() {
 }
 
 void Ledger::calculate_tnd_ve_est() {
-    for (size_t t = 0; t < par->simulation_duration; ++t) {
+    for (size_t t = 0; t < par->get("sim_duration"); ++t) {
         auto cumul_vax_flu_mais      = cumul_mais[VACCINATED][INFLUENZA][t];
         auto cumul_vax_nonflu_mais   = cumul_mais[VACCINATED][NON_INFLUENZA][t];
         auto cumul_unvax_flu_mais    = cumul_mais[UNVACCINATED][INFLUENZA][t];
@@ -114,7 +116,7 @@ void Ledger::calculate_tnd_ve_est() {
 }
 
 void Ledger::generate_linelist_csv(std::string filepath) {
-    if (filepath.empty()) filepath = par->linelist_file_path;
+    if (filepath.empty()) filepath = par->tome->get_path("linelist");
     std::ofstream file(filepath);
     file << linelist_header << '\n';
     for (size_t i = 0; i < infections.size(); ++i) {
@@ -135,10 +137,10 @@ void Ledger::generate_linelist_csv(std::string filepath) {
 }
 
 void Ledger::generate_simvis_csv(std::string filepath) {
-    if (filepath.empty()) filepath = par->simvis_file_path;
+    if (filepath.empty()) filepath = par->tome->get_path("simvis");
     std::ofstream file(filepath);
     file << simvis_header << '\n';
-    for (size_t t = 0; t < par->simulation_duration; ++t) {
+    for (size_t t = 0; t < par->get("sim_duration"); ++t) {
         file << t << ','
              << inf_incidence[VACCINATED][INFLUENZA][t] << ','
              << mai_incidence[VACCINATED][INFLUENZA][t] << ','

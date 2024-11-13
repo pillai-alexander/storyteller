@@ -1,4 +1,5 @@
-.pkgs <- c("tidyverse", "tidytable", "cowplot", "geomtextpath", "here")
+.pkgs <- c("tidyverse", "tidytable", "cowplot", "geomtextpath", "here",
+           "paletteer")
 
 if (interactive()) {
   stopifnot(all(sapply(.pkgs, require, character.only = TRUE)))
@@ -8,9 +9,13 @@ if (interactive()) {
   )
 }
 
+.args <- if (interactive()) c(
+  here("examples", "default_sim")
+) else commandArgs(trailingOnly = TRUE)
+
 #' setup required paths
 #' assumes here() is properly at project root level
-model_dir <- here("examples", "basic_config")
+model_dir <- .args[1]
 fig_path <- here(model_dir, "figs")
 
 sim_data_path <- here(model_dir, "simvis.out")
@@ -21,6 +26,10 @@ sim_dat <- fread(sim_data_path) %>%
     total_flu_mais = vaxd_flu_mais + unvaxd_flu_mais,
     total_nonflu_mais = vaxd_nonflu_mais + unvaxd_nonflu_mais
   )
+
+synthpop_path <- here(model_dir, "synthpop.out")
+pop_dt <- fread(synthpop_path) %>%
+  pivot_longer(!c(pid, vax_status))
 
 colors <- list(
   scale_color_manual(
@@ -86,14 +95,30 @@ tnd_ve <- ggplot(sim_dat) +
   aes(x = time) +
   geom_line(aes(y = tnd_ve_est, color = "ve")) +
   labs(x = "time", y = "TND VE est.") +
+  ylim(0, 1) +
   shared_attrs +
   theme(legend.position = "none")
 
-dash <- plot_grid(
+pop <- ggplot(pop_dt) +
+  aes(x = value, fill = factor(vax_status)) +
+  geom_histogram(binwidth = 0.01, position = "identity", alpha = 0.5) +
+  facet_wrap(vars(name), axes = "all", axis.labels = "all") +
+  ylim(0, NA) +
+  scale_fill_discrete(name = "Vax status") +
+  theme_cowplot() +
+  theme(legend.position = "top")
+
+dash_left <- plot_grid(
   inf_by_strain,
   flu_inf_by_vax,
   mai_by_strain_vax,
   tnd_ve
+)
+
+dash <- plot_grid(
+  dash_left,
+  pop,
+  nrow = 1
 )
 
 dir.create(fig_path, showWarnings = FALSE)

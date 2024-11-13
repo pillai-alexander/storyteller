@@ -8,22 +8,25 @@
  */
 #include <map>
 #include <string>
+#include <filesystem>
 
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
 #include <storyteller/tome.hpp>
 
-Tome::Tome(sol::state* lua_vm, std::string core_config)
-    : core_config_path(core_config),
-      vm(lua_vm) {
-    vm->open_libraries(sol::lib::base);
-    vm->script_file(core_config_path);
+namespace fs = std::filesystem;
+
+Tome::Tome(sol::state* lua_vm, std::string path)
+    : vm(lua_vm),
+      tome_path(path) {
+    vm->open_libraries();
+    vm->script_file(tome_path);
 
     // check for tome object in the core config
-    sol::optional<sol::table> core_tome_table = (*vm)["tome"];
+    sol::optional<sol::table> core_tome_table = vm->get<sol::table>("Tome");
     if (core_tome_table == sol::nullopt) {
-        std::cerr << "ERROR: core config file must include a `tome` table.\n";
+        std::cerr << "ERROR: core config file must include a `Tome` table.\n";
         exit(-1);
     }
 
@@ -35,26 +38,32 @@ Tome::Tome(sol::state* lua_vm, std::string core_config)
 
     slurp_table(core_tome_table.value(), config_core);
 
-    vm->script_file(config_core["parameters"].as<std::string>());
-    sol::optional<sol::table> param_table = (*vm)["parameters"];
+    fs::path parameters_config_path = tome_path.parent_path();
+    parameters_config_path /= config_core["parameters"].as<std::string>();
+
+    vm->script_file(parameters_config_path);
+    sol::optional<sol::table> param_table = vm->get<sol::table>("Parameters");
     if (param_table == sol::nullopt) {
-        std::cerr << "ERROR: parameter config file must include a `parameters` table.\n";
+        std::cerr << "ERROR: parameter config file must include a `Parameters` table.\n";
         exit(-1);
     }
 
     slurp_table(param_table.value(), config_params);
 
-    vm->script_file(config_core["metrics"].as<std::string>());
-    sol::optional<sol::table> metrics_table = (*vm)["metrics"];
+    fs::path metrics_config_path = tome_path.parent_path();
+    metrics_config_path /= config_core["metrics"].as<std::string>();
+
+    vm->script_file(metrics_config_path);
+    sol::optional<sol::table> metrics_table = vm->get<sol::table>("Metrics");
     if (metrics_table == sol::nullopt) {
-        std::cerr << "ERROR: parameter config file must include a `metrics` table.\n";
+        std::cerr << "ERROR: parameter config file must include a `Metrics` table.\n";
         exit(-1);
     }
 
     slurp_table(metrics_table.value(), config_metrics);
-}
 
-Tome::~Tome() {}
+    determine_paths();
+}
 
 std::map<std::string, sol::object> Tome::get_config_core()    const { return config_core; }
 std::map<std::string, sol::object> Tome::get_config_params()  const { return config_params; }
@@ -65,36 +74,50 @@ sol::object Tome::get_element(std::string key) const {
     return dict->at(key);
 }
 
-std::string Tome::database_path() const {
+std::string Tome::get_path(std::string key) const { return paths.at(key); }
+
+void Tome::determine_paths() {
+    fs::path tome_root = tome_path.is_absolute()
+                             ? tome_path.parent_path()
+                             : fs::current_path() / tome_path.parent_path();
+
+    fs::path storyteller_root = fs::path(__FILE__).parent_path().parent_path();
+
     bool user_defined_db_path = element_lookup.count("database_path");
-    std::string db_path = user_defined_db_path
-                              ? get_element_as<std::string>("database_path")
-                              : get_element_as<std::string>("experiment_name") + ".sqlite";
-    return db_path;
+    fs::path db_path = user_defined_db_path
+                   ? get_element_as<std::string>("database_path")
+                   : get_element_as<std::string>("experiment_name") + ".sqlite";
+
+    paths["tome_rt"]  = tome_root;
+    paths["database"] = tome_root / db_path;
+    paths["simvis"]   = tome_root / "simvis.out";
+    paths["synthpop"] = tome_root / "synthpop.out";
+    paths["linelist"] = tome_root / "linelist.out";
+    paths["scripts"]  = storyteller_root / "scripts";
+    paths["simvis.R"] = paths.at("scripts") / "simvis.R";
 }
 
 bool Tome::check_for_req_items(sol::table core_tome_table) {
     sol::optional<std::string> exp_name = core_tome_table["experiment_name"];
     sol::optional<size_t> n_rlztns      = core_tome_table["n_realizations"];
-    sol::optional<size_t> sim_dur       = core_tome_table["sim_duration"];
     sol::optional<std::string> par_file = core_tome_table["parameters"];
     sol::optional<std::string> met_file = core_tome_table["metrics"];
 
-    return exp_name and n_rlztns and sim_dur and par_file and met_file;
+    return exp_name and n_rlztns and par_file and met_file;
 }
 
-void Tome::slurp_table(sol::table from, std::map<std::string, sol::object>& into) {
-    for (const auto& el : from) {
-        auto el_key = el.first.as<std::string>();
-        element_lookup[el_key] = &into;
-        into[el_key] = el.second;
+void Tome::slurp_table(sol::table& from, std::map<std::string, sol::object>& into) {
+    for (const auto& [name, obj] : from) {
+        auto key = name.as<std::string>();
+        element_lookup[key] = &into;
+        into[key] = obj;
     }
 }
 
 void Tome::clean() {
-    config_core = {};
-    config_params = {};
-    config_metrics = {};
-    element_lookup = {};
+    config_core.clear();
+    config_params.clear();
+    config_metrics.clear();
+    element_lookup.clear();
     vm->collect_garbage();
 }

@@ -11,16 +11,17 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <vector>
 
 #include <gsl/gsl_rng.h>
 
-#include "parameters.hpp"
-
+class Parameters;
 class Community;
 class Infection;
 class Ledger;
 class DatabaseHandler;
 class RngHandler;
+class Person;
 
 /**
  * @brief Main simulation object that handles simulation setup, performs the
@@ -67,6 +68,8 @@ class Simulator {
      */
     void results();
 
+    std::vector<Person*> get_population() const;
+
   private:
     /**
      * @brief Helper function that contains all simulation tasks that need to be
@@ -80,5 +83,5 @@ class Simulator {
     std::unique_ptr<Community> community;   ///< Created for each simulation
     const RngHandler* rng_handler;          ///< Points to #Storyteller::rng_handler
     const Parameters* par;                  ///< Points to #Storyteller::parameters
-    DatabaseHandler* db_handler;      ///< Points to #Storyteller::db_handler
+    DatabaseHandler* db_handler;            ///< Points to #Storyteller::db_handler
 };

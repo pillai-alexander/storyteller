@@ -26,6 +26,7 @@ target_include_directories(storyteller PRIVATE ${LUA_INCLUDE_DIR})
 
 target_link_libraries(storyteller PRIVATE sol2)
 target_include_directories(storyteller PRIVATE sol2)
+add_dependencies(sol2 lua)
 
 target_link_libraries(storyteller PRIVATE SQLiteCpp)
 

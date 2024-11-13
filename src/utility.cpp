@@ -27,13 +27,15 @@ namespace util {
     // https://stackoverflow.com/questions/1700079/howto-create-combinations-of-several-vectors-without-hardcoding-loops-in-c
     // https://stackoverflow.com/questions/5279051/how-can-i-create-the-cartesian-product-of-a-vector-of-vectors
     vector2d<double> vec_combinations(vector2d<double> vecs) {
+        std::vector<std::vector<double>> out;
         size_t n_vectors = vecs.size();
+        if (n_vectors == 0) return out;
+
         std::vector<std::vector<double>::const_iterator> its(n_vectors);
         for (size_t i = 0; i < n_vectors; ++i) {
             its[i] = vecs[i].cbegin();
         }
 
-        std::vector<std::vector<double>> out;
         while (its[0] != vecs[0].cend()) {
             std::vector<double> row;
             for (const auto& it : its) {
@@ -51,20 +53,23 @@ namespace util {
     }
 }
 
-RngHandler::RngHandler(unsigned long int seed) : rng_seed(seed) {
+RngHandler::RngHandler() {
     infection_rng   = gsl_rng_alloc(gsl_rng_mt19937);
     vaccination_rng = gsl_rng_alloc(gsl_rng_mt19937);
     behavior_rng    = gsl_rng_alloc(gsl_rng_mt19937);
-
-    gsl_rng_set(infection_rng, seed);
-    gsl_rng_set(vaccination_rng, seed);
-    gsl_rng_set(behavior_rng, seed);
 }
 
 RngHandler::~RngHandler() {
     gsl_rng_free(infection_rng);
     gsl_rng_free(vaccination_rng);
     gsl_rng_free(behavior_rng);
+}
+
+void RngHandler::set_seed(const unsigned long int seed) {
+    rng_seed = seed;
+    gsl_rng_set(infection_rng, seed);
+    gsl_rng_set(vaccination_rng, seed);
+    gsl_rng_set(behavior_rng, seed);
 }
 
 double RngHandler::draw_from_rng(RngType type) const {
