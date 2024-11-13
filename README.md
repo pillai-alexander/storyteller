@@ -18,9 +18,9 @@ TBD -->
 
 #### Other dependencies that are automatically loaded:
 
-* Lua + Sol2
-* SQLiteCPP
-* Argh!
+* [Lua](https://www.lua.org/) + [Sol3](https://github.com/ThePhD/sol2)
+* [SQLiteC++](https://github.com/SRombauts/SQLiteCpp)
+* [Argh!](https://github.com/adishavit/argh)
 
 <!-- ### Installing
 
