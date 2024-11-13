@@ -1,6 +1,6 @@
 Tome = {}
 
-Tome["experiment_name"] = "basic_config"
+Tome["experiment_name"] = "default"
 Tome["n_realizations"] = 1
 
 Tome["parameters"] = "config/parameters.lua"
