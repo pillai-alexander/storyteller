@@ -31,9 +31,8 @@ Parameter::Parameter(const std::string name, const sol::table& attributes)
       description(attributes.get<std::string>("description")),
       flag(attributes.get<std::string>("flag")),
       datatype(attributes.get<std::string>("datatype")),
-      _validate(attributes.get<sol::function>("validate")) {
-    value = (flag == "const") ? attributes.get<double>("value") : std::numeric_limits<double>::infinity();
-}
+      _validate(attributes.get<sol::function>("validate")),
+      value(std::numeric_limits<double>::infinity()) {}
 
 Parameter::~Parameter() { _validate = {}; }
 
@@ -45,7 +44,8 @@ inline bool        Parameter::validate()     const { return _validate(value); }
 Parameters::Parameters(RngHandler* rngh, DatabaseHandler* dbh, const Tome* t)
     : rng(rngh),
       db(dbh),
-      tome(t) {
+      tome(t),
+      pars_to_read({"seed"}) {
     database_path = tome->get_path("database");
 
     return_metrics.clear();
@@ -58,42 +58,31 @@ Parameters::Parameters(RngHandler* rngh, DatabaseHandler* dbh, const Tome* t)
         for (const auto& [key, obj] : pars.value()) {
             auto fullname   = key.as<std::string>();
             auto attributes = obj.as<sol::table>();
-            auto nickname   = attributes.get<std::string>("nickname");
-            auto flag       = attributes.get<std::string>("flag");
-            if (flag != "const") pars_to_read.insert({nickname, std::numeric_limits<double>::infinity()});
+            auto nickname   = attributes.get_or<std::string>("nickname", fullname);
+
+            pars_to_read.push_back(nickname);
             insert(fullname, attributes);
         }
-        calc_strain_probs();
     }
 }
 
 void Parameters::read_parameters_for_serial(size_t serial) {
     simulation_serial = serial;
-    db->read_parameters(serial, pars_to_read);
+    auto pars_from_db = db->read_parameters(serial, pars_to_read);
 
-    bool can_continue = false;
-    for (const auto& [k, v] : pars_to_read) {
-        if (std::isinf(v)) {
-            can_continue = false;
-            std::cerr << "ERROR: " << k << " not found\n";
-        } else {
-            can_continue = true;
+    if (pars_to_read.size() == pars_from_db.size()) {
+        for (const auto& nickname : pars_to_read) {
+            if (nickname == "seed") {
+                rng->set_seed(pars_from_db.at("seed"));
+                pars_from_db.erase("seed");
+            } else {
+                auto fullname = lookup.at(nickname);
+                params.at(fullname)->value = pars_from_db.at(nickname);
+            }
         }
-    }
-
-    if (can_continue) {
-        rng->set_seed(pars_to_read.at("seed"));
-        pars_to_read.erase("seed");
-
-        for (const auto& [nickname, value] : pars_to_read) {
-            auto fullname = lookup.at(nickname);
-            params.at(fullname)->value = value;
-        }
-        pars_to_read.clear();
-    }
-
-    if (pars_to_read.size() != 0) {
-        std::cerr << "ERROR: some params not found\n";
+    } else {
+        std::cerr << "ERROR: number of params read (" << pars_from_db.size()
+                  << ") does not match the number expected (" << pars_to_read.size() << ").\n";
         exit(-1);
     }
 

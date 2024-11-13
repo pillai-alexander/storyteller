@@ -66,7 +66,7 @@ class DatabaseHandler {
     bool database_exists();
     bool table_exists(std::string table);
 
-    void read_parameters(unsigned int serial, std::map<std::string, double>& pars);
+    std::map<std::string, double> read_parameters(unsigned int serial, const std::vector<std::string>& pars);
     void write_metrics(const Ledger* ledger, const Parameters* par);
 
   private:

@@ -118,7 +118,7 @@ class Parameters {
     std::map<std::string, std::unique_ptr<Parameter>> params;
     std::map<std::string, std::string> lookup;
 
-    std::map<std::string, double> pars_to_read;
+    std::vector<std::string> pars_to_read;
 
     void calc_strain_probs();
 

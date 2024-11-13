@@ -140,18 +140,19 @@ void DatabaseHandler::end_job(unsigned int serial) {
     }
 }
 
-void DatabaseHandler::read_parameters(unsigned int serial, std::map<std::string, double>& pars) {
+std::map<std::string, double> DatabaseHandler::read_parameters(unsigned int serial, const std::vector<std::string>& pars) {
+    std::map<std::string, double> ret;
     for (size_t i = 0; i < n_transaction_attempts; ++i) {
+        ret.clear();
         start_job(serial);
         try {
             SQLite::Database db(database_path);
             SQLite::Statement query(db, "SELECT * FROM par WHERE serial = ?");
             query.bind(1, serial);
             while (query.executeStep()) {
-                for (auto& [param, val] : pars) {
-                    pars[param] = query.getColumn(param.c_str());
+                for (auto& nickname : pars) {
+                    ret[nickname] = query.getColumn(nickname.c_str());
                 }
-                pars["seed"] = query.getColumn("seed");
             }
 
             if (owner->get_flag("verbose")) {
@@ -166,6 +167,7 @@ void DatabaseHandler::read_parameters(unsigned int serial, std::map<std::string,
             std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
         }
     }
+    return ret;
 }
 
 std::vector<std::string> DatabaseHandler::prepare_insert_sql(const Ledger* ledger, const Parameters* par) const {
@@ -297,7 +299,7 @@ int DatabaseHandler::init_database() {
     std::map<std::string, std::string> par_name_lookup;
     for (const auto& fullname : par_fullnames) {
         const auto p        = cfg_pars.get<sol::table>(fullname);
-        const auto nickname = p.get<std::string>("nickname");
+        const auto nickname = p.get_or<std::string>("nickname", fullname);
         const auto datatype = p.get<std::string>("datatype");
         const auto flag     = par_flags.at(fullname);
 
