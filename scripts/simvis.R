@@ -101,8 +101,8 @@ tnd_ve <- ggplot(sim_dat) +
 
 pop <- ggplot(pop_dt) +
   aes(x = value, fill = factor(vax_status)) +
-  geom_histogram(binwidth = 0.01, position = "identity", alpha = 0.5) +
-  facet_wrap(vars(name), axes = "all", axis.labels = "all") +
+  geom_histogram(bins = 50, position = "identity", alpha = 0.5) +
+  facet_wrap(vars(name), axes = "all", axis.labels = "all", scales = "free") +
   ylim(0, NA) +
   scale_fill_discrete(name = "Vax status") +
   theme_cowplot() +
