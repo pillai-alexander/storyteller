@@ -35,6 +35,8 @@ Parameter::Parameter(const std::string name, const sol::table& attributes)
     value = (flag == "const") ? attributes.get<double>("value") : std::numeric_limits<double>::infinity();
 }
 
+Parameter::~Parameter() { _validate = {}; }
+
 inline std::string Parameter::get_fullname() const { return fullname; }
 inline std::string Parameter::get_nickname() const { return nickname; }
 inline double      Parameter::get_value()    const { return value; }
@@ -64,8 +66,6 @@ Parameters::Parameters(RngHandler* rngh, DatabaseHandler* dbh, const Tome* t)
         calc_strain_probs();
     }
 }
-
-Parameter::~Parameter() { _validate = {}; }
 
 void Parameters::read_parameters_for_serial(size_t serial) {
     simulation_serial = serial;
