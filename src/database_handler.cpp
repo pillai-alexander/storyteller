@@ -269,6 +269,7 @@ int DatabaseHandler::init_database() {
     auto cfg_pars         = par_table.at("parameters").as<sol::table>();
     auto cfg_mets         = tome->get_config_metrics();
     size_t n_realizations = tome->get_element_as<size_t>("n_realizations");
+    auto tolerance        = tome->get_element_as<double>("par_value_tolerance");
 
     // parameter pre-processing
     std::map<std::string, std::vector<std::string>> par_names_by_type;
@@ -311,20 +312,21 @@ int DatabaseHandler::init_database() {
         if (flag == "const") {
             par_values[fullname] = {p.get<double>("value")};
         } else if (flag == "step") {
-            const auto start  = p.get<double>("lower");
-            const auto end    = p.get<double>("upper");
-            const auto step   = p.get<double>("step");
-            const auto n_vals = ((end - start) / step) + 1;
-
-            if (n_vals != (int) n_vals) {
-                std::cerr << "ERROR: " << fullname << " has invalid step size.\n";
-                exit(-1);
-            }
+            const auto start    = p.get<double>("lower");
+            const auto end      = p.get<double>("upper");
+            const auto step     = p.get<double>("step");
+            const size_t n_vals = std::ceil(((end - start) / step) + 1);
 
             double v = start;
-            for (double i = 0; i < n_vals; ++i) {
+            for (size_t i = 0; i < n_vals; ++i) {
                 par_values[fullname].push_back(v);
                 v += step;
+            }
+
+            if (std::abs((v - step) - end) > tolerance) {
+                std::cerr << "ERROR: non-sensible step size for " << fullname << '\n';
+                std::cerr << std::abs(v - end) << " > " << tolerance << '\n';
+                exit(-1);
             }
         } else if (flag == "copy") {
             const auto who = p.get<std::string>("who");
