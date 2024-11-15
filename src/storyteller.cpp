@@ -44,11 +44,15 @@ Storyteller::Storyteller(int argc, char* argv[])
     cmdl_args.parse(argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION);
 
     // store all necessary program-flags
-    simulation_flags["init"]     = cmdl_args["init"];
-    simulation_flags["simulate"] = cmdl_args["simulate"];
-    simulation_flags["simvis"]   = cmdl_args["simvis"];
-    simulation_flags["verbose"]  = cmdl_args[{"-v", "--verbose"}];
-    simulation_flags["synthpop"] = cmdl_args["gen-synth-pop"];
+    simulation_flags["init"]         = cmdl_args["init"];
+    simulation_flags["simulate"]     = cmdl_args["simulate"];
+    simulation_flags["simvis"]       = cmdl_args["simvis"];
+    simulation_flags["quiet"]        = cmdl_args[{"-q", "--quiet"}];
+    simulation_flags["verbose"]      = cmdl_args[{"-v", "--verbose"}];
+    simulation_flags["very_verbose"] = cmdl_args[{"-vv", "--very-verbose"}];
+    simulation_flags["synthpop"]     = cmdl_args["gen-synth-pop"];
+
+    if (simulation_flags.at("very_verbose")) simulation_flags.at("verbose") = true;
 
     // extract sim serial or keep default of -1 (ie, no specified serial)
     cmdl_args({"-s", "--serial"}, -1) >> simulation_serial;

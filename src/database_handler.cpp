@@ -157,6 +157,11 @@ std::map<std::string, double> DatabaseHandler::read_parameters(unsigned int seri
 
             if (owner->get_flag("verbose")) {
                 std::cerr << "Read attempt " << i << " succeeded." << '\n';
+                if (owner->get_flag("very_verbose")) {
+                    for (const auto& [k,v] : ret) {
+                        std::cerr << k << ": " << v << '\n';
+                    }
+                }
             } else {
                 std::cerr << "params read... ";
             }
