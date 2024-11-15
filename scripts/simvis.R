@@ -10,7 +10,7 @@ if (interactive()) {
 }
 
 .args <- if (interactive()) c(
-  here("examples", "default_sim")
+  here("examples", "default")
 ) else commandArgs(trailingOnly = TRUE)
 
 #' setup required paths
@@ -30,6 +30,12 @@ sim_dat <- fread(sim_data_path) %>%
 synthpop_path <- here(model_dir, "synthpop.out")
 pop_dt <- fread(synthpop_path) %>%
   pivot_longer(!c(pid, vax_status))
+
+means <- pop_dt %>%
+  group_by(name, vax_status) %>%
+  summarize(mean = signif(mean(value), 5))
+
+print(means)
 
 colors <- list(
   scale_color_manual(
@@ -102,9 +108,15 @@ tnd_ve <- ggplot(sim_dat) +
 pop <- ggplot(pop_dt) +
   aes(x = value, fill = factor(vax_status)) +
   geom_histogram(bins = 50, position = "identity", alpha = 0.5) +
+  geom_labelvline(
+    data = means,
+    aes(xintercept = mean, label = mean, color = factor(vax_status)),
+    alpha = 0.5
+  ) +
   facet_wrap(vars(name), axes = "all", axis.labels = "all", scales = "free") +
   ylim(0, NA) +
   scale_fill_discrete(name = "Vax status") +
+  scale_color_discrete(guide = "none") +
   theme_cowplot() +
   theme(legend.position = "top")
 
