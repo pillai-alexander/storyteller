@@ -111,8 +111,32 @@ void Parameters::calc_strain_probs() {
     strain_probs[NUM_STRAIN_TYPES] = 1.0 - (strain_probs[NON_INFLUENZA] + strain_probs[INFLUENZA]);
 }
 
-double Parameters::sample_discrete_susceptibility(const bool vaccinated, const double suscep_w_prior, const double suscep_wo_prior) const {
-    auto pr_prior_immunity = (vaccinated) ? get("pr_prior_imm_vaxd") : get("pr_prior_imm_unvaxd");
+double Parameters::sample_discrete_susceptibility(const bool vaccinated, const StrainType strain) const {
+    auto suscep_w_prior = -1.0;
+    auto suscep_wo_prior = -1.0;
+    switch (strain) {
+        case NON_INFLUENZA: {
+            suscep_w_prior  = (vaccinated) ? get("vaxd_nonflu_suscep_mean")     : get("unvaxd_nonflu_suscep_mean");
+            suscep_wo_prior = (vaccinated) ? get("vaxd_nonflu_suscep_baseline") : get("unvaxd_nonflu_suscep_baseline");
+            break;
+        }
+        case INFLUENZA: {
+            suscep_w_prior  = (vaccinated) ? get("vaxd_flu_suscep_mean")     : get("unvaxd_flu_suscep_mean");
+            suscep_wo_prior = (vaccinated) ? get("vaxd_flu_suscep_baseline") : get("unvaxd_flu_suscep_baseline");
+            break;
+        }
+        default: {
+            std::cerr << "ERROR: unknown strain " << strain << '\n';
+            exit(-1);
+        }
+    }
+
+    const auto pr_prior_immunity = (vaccinated) ? get("pr_prior_imm_vaxd") : get("pr_prior_imm_unvaxd");
+    if ((suscep_w_prior == -1.0) or (suscep_wo_prior == -1.0)) {
+        std::cerr << "ERROR: invalid suscep values\n";
+        exit(-1);
+    }
+
     if (pr_prior_immunity == 0.0) {
         return suscep_wo_prior;
     } else {
@@ -120,9 +144,34 @@ double Parameters::sample_discrete_susceptibility(const bool vaccinated, const d
     }
 }
 
-double Parameters::sample_continuous_susceptibility(const double shape, const double mean) const {
-    auto scale = util::gamma_scale_from_mean(shape, mean);
-    return gsl_ran_gamma(rng->get_rng(INFECTION), shape, scale);
+double Parameters::sample_continuous_susceptibility(const bool vaccinated, const StrainType strain) const {
+    auto mean = -1.0;
+    auto var = -1.0;
+    switch (strain) {
+        case NON_INFLUENZA: {
+            mean = (vaccinated) ? get("vaxd_nonflu_suscep_mean") : get("unvaxd_nonflu_suscep_mean");
+            var  = (vaccinated) ? get("vaxd_nonflu_suscep_var")  : get("unvaxd_nonflu_suscep_var");
+            break;
+        }
+        case INFLUENZA: {
+            mean = (vaccinated) ? get("vaxd_flu_suscep_mean") : get("unvaxd_flu_suscep_mean");
+            var  = (vaccinated) ? get("vaxd_flu_suscep_var")  : get("unvaxd_flu_suscep_var");
+            break;
+        }
+        default: {
+            std::cerr << "ERROR: unknown strain " << strain << '\n';
+            exit(-1);
+        }
+    }
+
+    if ((mean == -1.0) or (var == -1.0)) {
+        std::cerr << "ERROR: invalid values\n";
+        exit(-1);
+    }
+
+    const auto a = util::beta_a_from_mean_var(mean, var);
+    const auto b = util::beta_b_from_mean_var(mean, var);
+    return gsl_ran_beta(rng->get_rng(INFECTION), a, b);
 }
 
 std::vector<double> Parameters::sample_susceptibility(const Person* p) const {
@@ -130,20 +179,17 @@ std::vector<double> Parameters::sample_susceptibility(const Person* p) const {
 
     auto is_vaxd = p->is_vaccinated();
 
-    auto flu_shape    = (is_vaxd) ? get("vaxd_flu_suscep_shape")    : get("unvaxd_flu_suscep_shape");
-    auto flu_mean     = (is_vaxd) ? get("vaxd_flu_suscep_mean")     : get("unvaxd_flu_suscep_mean");
-    auto flu_baseline = (is_vaxd) ? get("vaxd_flu_suscep_baseline") : get("unvaxd_flu_suscep_baseline");
+    auto contin_flu_suscep = (is_vaxd) ? get("vaxd_flu_suscep_is_contin") : get("unvaxd_flu_suscep_is_contin");
 
-    auto nonflu_shape    = (is_vaxd) ? get("vaxd_nonflu_suscep_shape")    : get("unvaxd_nonflu_suscep_shape");
-    auto nonflu_mean     = (is_vaxd) ? get("vaxd_nonflu_suscep_mean")     : get("unvaxd_nonflu_suscep_mean");
-    auto nonflu_baseline = (is_vaxd) ? get("vaxd_nonflu_suscep_baseline") : get("unvaxd_nonflu_suscep_baseline");
+    susceps[INFLUENZA] = (contin_flu_suscep == 0.0)
+                             ? sample_discrete_susceptibility(is_vaxd, INFLUENZA)
+                             : sample_continuous_susceptibility(is_vaxd, INFLUENZA);
 
-    susceps[NON_INFLUENZA] = (nonflu_shape == 0.0)
-                                 ? sample_discrete_susceptibility(is_vaxd, nonflu_mean, nonflu_baseline)
-                                 : sample_continuous_susceptibility(nonflu_shape, nonflu_mean);
-    susceps[INFLUENZA]     = (flu_shape == 0.0)
-                                 ? sample_discrete_susceptibility(is_vaxd, flu_mean, flu_baseline)
-                                 : sample_continuous_susceptibility(flu_shape, flu_mean);
+    auto contin_nonflu_suscep = (is_vaxd) ? get("vaxd_nonflu_suscep_is_contin") : get("unvaxd_nonflu_suscep_is_contin");
+
+    susceps[NON_INFLUENZA] = (contin_nonflu_suscep == 0.0)
+                                 ? sample_discrete_susceptibility(is_vaxd, NON_INFLUENZA)
+                                 : sample_continuous_susceptibility(is_vaxd, NON_INFLUENZA);
     return susceps;
 }
 
