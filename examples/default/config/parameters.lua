@@ -120,9 +120,9 @@ Parameters["parameters"]["vaccinated_influenza_susceptibility_distribution_is_co
     description = "",
     flag  = "const",
     datatype = "double",
-    value = 1.0,
+    value = 0.0,
     validate = function(v)
-        local ret = (v == 1.0)
+        local ret = (v == 0.0)
         return ret
     end
 }
@@ -311,8 +311,8 @@ Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_baseline"] = 
 }
 
 -- INFLUENZA VACCINE PARAMETERS
-Parameters["parameters"]["influenza_vaccine_effect_distribution_a"] = {
-    nickname = "flu_vax_effect_a",
+Parameters["parameters"]["influenza_vaccine_effect_distribution_is_continuous"] = {
+    nickname = "flu_vax_effect_is_contin",
     description = "",
     flag  = "const",
     datatype = "double",
@@ -323,8 +323,8 @@ Parameters["parameters"]["influenza_vaccine_effect_distribution_a"] = {
     end
 }
 
-Parameters["parameters"]["influenza_vaccine_effect_distribution_b"] = {
-    nickname = "flu_vax_effect_b",
+Parameters["parameters"]["influenza_vaccine_effect_distribution_mean"] = {
+    nickname = "flu_vax_effect_mean",
     description = "",
     flag  = "step",
     datatype = "double",
@@ -337,9 +337,8 @@ Parameters["parameters"]["influenza_vaccine_effect_distribution_b"] = {
     end
 }
 
--- NONINFLUENZA VACCINE PARAMETERS
-Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_a"] = {
-    nickname = "nonflu_vax_effect_a",
+Parameters["parameters"]["influenza_vaccine_effect_distribution_variance"] = {
+    nickname = "flu_vax_effect_var",
     description = "",
     flag  = "const",
     datatype = "double",
@@ -350,8 +349,33 @@ Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_a"] = {
     end
 }
 
-Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_b"] = {
-    nickname = "nonflu_vax_effect_b",
+-- NONINFLUENZA VACCINE PARAMETERS
+Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_is_continuous"] = {
+    nickname = "nonflu_vax_effect_is_contin",
+    description = "",
+    flag  = "const",
+    datatype = "double",
+    value = 0.0,
+    validate = function(v)
+        local ret = (v == 0.0)
+        return ret
+    end
+}
+
+Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_mean"] = {
+    nickname = "nonflu_vax_effect_mean",
+    description = "",
+    flag  = "const",
+    datatype = "double",
+    value = 0.0,
+    validate = function(v)
+        local ret = (v == 0.0)
+        return ret
+    end
+}
+
+Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_variance"] = {
+    nickname = "nonflu_vax_effect_var",
     description = "",
     flag  = "const",
     datatype = "double",

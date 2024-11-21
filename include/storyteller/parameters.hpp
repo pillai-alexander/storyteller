@@ -125,8 +125,8 @@ class Parameters {
     double sample_discrete_susceptibility(const bool vaccinated, const StrainType strain) const;
     double sample_continuous_susceptibility(const bool vaccinated, const StrainType strain) const;
 
-    double sample_discrete_vaccine_effect(const double b) const;
-    double sample_continuous_vaccine_effect(const double a, const double b) const;
+    double sample_discrete_vaccine_effect(const StrainType strain) const;
+    double sample_continuous_vaccine_effect(const StrainType strain) const;
 
     RngHandler* rng;
     DatabaseHandler* db;

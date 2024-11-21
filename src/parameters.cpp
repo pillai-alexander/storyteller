@@ -131,12 +131,12 @@ double Parameters::sample_discrete_susceptibility(const bool vaccinated, const S
         }
     }
 
-    const auto pr_prior_immunity = (vaccinated) ? get("pr_prior_imm_vaxd") : get("pr_prior_imm_unvaxd");
     if ((suscep_w_prior == -1.0) or (suscep_wo_prior == -1.0)) {
         std::cerr << "ERROR: invalid suscep values\n";
         exit(-1);
     }
 
+    const auto pr_prior_immunity = (vaccinated) ? get("pr_prior_imm_vaxd") : get("pr_prior_imm_unvaxd");
     if (pr_prior_immunity == 0.0) {
         return suscep_wo_prior;
     } else {
@@ -179,42 +179,91 @@ std::vector<double> Parameters::sample_susceptibility(const Person* p) const {
 
     auto is_vaxd = p->is_vaccinated();
 
-    auto contin_flu_suscep = (is_vaxd) ? get("vaxd_flu_suscep_is_contin") : get("unvaxd_flu_suscep_is_contin");
-
+    auto contin_flu_suscep = (is_vaxd)
+                                 ? get("vaxd_flu_suscep_is_contin")
+                                 : get("unvaxd_flu_suscep_is_contin");
     susceps[INFLUENZA] = (contin_flu_suscep == 0.0)
                              ? sample_discrete_susceptibility(is_vaxd, INFLUENZA)
                              : sample_continuous_susceptibility(is_vaxd, INFLUENZA);
 
-    auto contin_nonflu_suscep = (is_vaxd) ? get("vaxd_nonflu_suscep_is_contin") : get("unvaxd_nonflu_suscep_is_contin");
-
+    auto contin_nonflu_suscep = (is_vaxd)
+                                    ? get("vaxd_nonflu_suscep_is_contin")
+                                    : get("unvaxd_nonflu_suscep_is_contin");
     susceps[NON_INFLUENZA] = (contin_nonflu_suscep == 0.0)
                                  ? sample_discrete_susceptibility(is_vaxd, NON_INFLUENZA)
                                  : sample_continuous_susceptibility(is_vaxd, NON_INFLUENZA);
+
     return susceps;
 }
 
-double Parameters::sample_discrete_vaccine_effect(const double b) const {
-    return b;
+double Parameters::sample_discrete_vaccine_effect(const StrainType strain) const {
+    auto mean = -1.0;
+    switch (strain) {
+        case NON_INFLUENZA: {
+            mean = get("nonflu_vax_effect_mean");
+            break;
+        }
+        case INFLUENZA: {
+            mean = mean = get("flu_vax_effect_mean");
+            break;
+        }
+        default: {
+            std::cerr << "ERROR: unknown strain " << strain << '\n';
+            exit(-1);
+        }
+    }
+
+    if (mean == -1.0) {
+        std::cerr << "ERROR: invalid values\n";
+        exit(-1);
+    }
+
+    return mean;
 }
 
-double Parameters::sample_continuous_vaccine_effect(const double a, const double b) const {
+double Parameters::sample_continuous_vaccine_effect(const StrainType strain) const {
+    auto mean = -1.0;
+    auto var = -1.0;
+    switch (strain) {
+        case NON_INFLUENZA: {
+            mean = get("nonflu_vax_effect_mean");
+            var  = get("nonflu_vax_effect_var");
+            break;
+        }
+        case INFLUENZA: {
+            mean = get("flu_vax_effect_mean");
+            var  = get("flu_vax_effect_var");
+            break;
+        }
+        default: {
+            std::cerr << "ERROR: unknown strain " << strain << '\n';
+            exit(-1);
+        }
+    }
+
+    if ((mean == -1.0) or (var == -1.0)) {
+        std::cerr << "ERROR: invalid values\n";
+        exit(-1);
+    }
+
+    const auto a = util::beta_a_from_mean_var(mean, var);
+    const auto b = util::beta_b_from_mean_var(mean, var);
     return gsl_ran_beta(rng->get_rng(VACCINATION), a, b);
 }
 
 std::vector<double> Parameters::sample_vaccine_effect() const {
     std::vector<double> vax_effects(NUM_STRAIN_TYPES, 0.0);
 
-    auto flu_a    = get("flu_vax_effect_a");
-    auto flu_b    = get("flu_vax_effect_b");
-    auto nonflu_a = get("nonflu_vax_effect_a");
-    auto nonflu_b = get("nonflu_vax_effect_b");
+    const auto contin_flu_vax = get("flu_vax_effect_is_contin");
+    vax_effects[INFLUENZA] = (contin_flu_vax == 0.0)
+                                 ? sample_discrete_vaccine_effect(INFLUENZA)
+                                 : sample_continuous_vaccine_effect(INFLUENZA);
 
-    vax_effects[NON_INFLUENZA] = (nonflu_a == 0.0)
-                                     ? sample_discrete_vaccine_effect(nonflu_b)
-                                     : sample_continuous_vaccine_effect(nonflu_a, nonflu_b);
-    vax_effects[INFLUENZA]     = (nonflu_a == 0.0)
-                                     ? sample_discrete_vaccine_effect(flu_b)
-                                     : sample_continuous_vaccine_effect(flu_a, flu_b);
+    const auto contin_nonflu_vax = get("nonflu_vax_effect_is_contin");
+    vax_effects[NON_INFLUENZA] = (contin_nonflu_vax == 0.0)
+                                     ? sample_discrete_vaccine_effect(NON_INFLUENZA)
+                                     : sample_continuous_vaccine_effect(NON_INFLUENZA);
+
     return vax_effects;
 }
 
