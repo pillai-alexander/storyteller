@@ -127,18 +127,6 @@ Parameters["parameters"]["vaccinated_influenza_susceptibility_distribution_is_co
     end
 }
 
-Parameters["parameters"]["vaccinated_influenza_susceptibility_distribution_variance"] = {
-    nickname = "vaxd_flu_suscep_var",
-    description = "",
-    flag  = "const",
-    datatype = "double",
-    value = 1e-4,
-    validate = function(v)
-        local ret = (v == 1e-4)
-        return ret
-    end
-}
-
 Parameters["parameters"]["vaccinated_influenza_susceptibility_distribution_mean"] = {
     nickname = "vaxd_flu_suscep_mean",
     description = "",
@@ -147,6 +135,18 @@ Parameters["parameters"]["vaccinated_influenza_susceptibility_distribution_mean"
     value = 0.5,
     validate = function(v)
         local ret = (v == 0.5)
+        return ret
+    end
+}
+
+Parameters["parameters"]["vaccinated_influenza_susceptibility_distribution_variance"] = {
+    nickname = "vaxd_flu_suscep_var",
+    description = "",
+    flag  = "const",
+    datatype = "double",
+    value = 1e-4,
+    validate = function(v)
+        local ret = (v == 1e-4)
         return ret
     end
 }
@@ -176,18 +176,6 @@ Parameters["parameters"]["unvaccinated_influenza_susceptibility_distribution_is_
     end
 }
 
-Parameters["parameters"]["unvaccinated_influenza_susceptibility_distribution_variance"] = {
-    nickname = "unvaxd_flu_suscep_var",
-    description = "",
-    flag  = "const",
-    datatype = "double",
-    value = 0.0,
-    validate = function(v)
-        local ret = (v == 0.0)
-        return ret
-    end
-}
-
 Parameters["parameters"]["unvaccinated_influenza_susceptibility_distribution_mean"] = {
     nickname = "unvaxd_flu_suscep_mean",
     description = "",
@@ -196,6 +184,18 @@ Parameters["parameters"]["unvaccinated_influenza_susceptibility_distribution_mea
     value = 1.0,
     validate = function(v)
         local ret = (v == 1.0)
+        return ret
+    end
+}
+
+Parameters["parameters"]["unvaccinated_influenza_susceptibility_distribution_variance"] = {
+    nickname = "unvaxd_flu_suscep_var",
+    description = "",
+    flag  = "const",
+    datatype = "double",
+    value = 0.0,
+    validate = function(v)
+        local ret = (v == 0.0)
         return ret
     end
 }
@@ -225,18 +225,6 @@ Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_is
     end
 }
 
-Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_variance"] = {
-    nickname = "vaxd_nonflu_suscep_var",
-    description = "",
-    flag  = "const",
-    datatype = "double",
-    value = 0.0,
-    validate = function(v)
-        local ret = (v == 0.0)
-        return ret
-    end
-}
-
 Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_mean"] = {
     nickname = "vaxd_nonflu_suscep_mean",
     description = "",
@@ -245,6 +233,18 @@ Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_me
     value = 1.0,
     validate = function(v)
         local ret = (v == 1.0)
+        return ret
+    end
+}
+
+Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_variance"] = {
+    nickname = "vaxd_nonflu_suscep_var",
+    description = "",
+    flag  = "const",
+    datatype = "double",
+    value = 0.0,
+    validate = function(v)
+        local ret = (v == 0.0)
         return ret
     end
 }
@@ -274,18 +274,6 @@ Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_distribution_
     end
 }
 
-Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_distribution_variance"] = {
-    nickname = "unvaxd_nonflu_suscep_var",
-    description = "",
-    flag  = "const",
-    datatype = "double",
-    value = 0.0,
-    validate = function(v)
-        local ret = (v == 0.0)
-        return ret
-    end
-}
-
 Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_distribution_mean"] = {
     nickname = "unvaxd_nonflu_suscep_mean",
     description = "",
@@ -294,6 +282,18 @@ Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_distribution_
     value = 1.0,
     validate = function(v)
         local ret = (v == 1.0)
+        return ret
+    end
+}
+
+Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_distribution_variance"] = {
+    nickname = "unvaxd_nonflu_suscep_var",
+    description = "",
+    flag  = "const",
+    datatype = "double",
+    value = 0.0,
+    validate = function(v)
+        local ret = (v == 0.0)
         return ret
     end
 }
