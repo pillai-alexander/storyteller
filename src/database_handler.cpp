@@ -317,21 +317,28 @@ int DatabaseHandler::init_database() {
         if (flag == "const") {
             par_values[fullname] = {p.get<double>("value")};
         } else if (flag == "step") {
-            const auto start    = p.get<double>("lower");
-            const auto end      = p.get<double>("upper");
-            const auto step     = p.get<double>("step");
-            const size_t n_vals = std::ceil(((end - start) / step) + 1);
+            auto defined_vals = p.get<sol::optional<std::vector<double>>>("values");
+            if (defined_vals) {
+                for (const double& v : defined_vals.value()) {
+                    par_values[fullname].push_back(v);
+                }
+            } else {
+                const auto start    = p.get<double>("lower");
+                const auto end      = p.get<double>("upper");
+                const auto step     = p.get<double>("step");
+                const size_t n_vals = std::ceil(((end - start) / step) + 1);
 
-            double v = start;
-            for (size_t i = 0; i < n_vals; ++i) {
-                par_values[fullname].push_back(v);
-                v += step;
-            }
+                double v = start;
+                for (size_t i = 0; i < n_vals; ++i) {
+                    par_values[fullname].push_back(v);
+                    v += step;
+                }
 
-            if (std::abs((v - step) - end) > tolerance) {
-                std::cerr << "ERROR: non-sensible step size for " << fullname << '\n';
-                std::cerr << std::abs(v - end) << " > " << tolerance << '\n';
-                exit(-1);
+                if (std::abs((v - step) - end) > tolerance) {
+                    std::cerr << "ERROR: non-sensible step size for " << fullname << '\n';
+                    std::cerr << std::abs(v - end) << " > " << tolerance << '\n';
+                    exit(-1);
+                }
             }
         } else if (flag == "copy") {
             const auto who = p.get<std::string>("who");

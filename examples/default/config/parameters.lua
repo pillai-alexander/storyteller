@@ -31,6 +31,18 @@ Parameters["parameters"] = {}
 -- Parameters["parameters"]["fullname"] = {
 --     nickname = "nickname",
 --     description = "description",
+--     flag  = "step",
+--     datatype = "integer/double",
+--     values = {list of values}
+--     validate = function(v)
+--         local ret = (boolean check)
+--         return ret
+--     end
+-- }
+
+-- Parameters["parameters"]["fullname"] = {
+--     nickname = "nickname",
+--     description = "description",
 --     flag  = "copy",
 --     datatype = "integer/double",
 --     who = "fullname/nickname of param to copy from",
@@ -353,11 +365,11 @@ Parameters["parameters"]["probability_of_care_seeking_if_unvaccinated"] = {
 Parameters["parameters"]["probability_of_daily_influenza_exposure"] = {
     nickname = "pr_flu_exposure",
     description = "",
-    flag  = "const",
+    flag  = "step",
     datatype = "double",
-    value = 0.01,
+    values = {0.001, 0.005, 0.01},
     validate = function(v)
-        local ret = (v == 0.01)
+        local ret = (v >= 0.001) and (v <= 0.01)
         return ret
     end
 }
