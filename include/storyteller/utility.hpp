@@ -55,6 +55,9 @@ namespace util {
      * @return vector2d<double> Vector of calculated combinations
      */
     extern vector2d<double> vec_combinations(vector2d<double> vecs);
+
+    extern double beta_a_from_mean_var(double mean, double var);
+    extern double beta_b_from_mean_var(double mean, double var);
 }
 
 /**

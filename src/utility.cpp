@@ -51,6 +51,16 @@ namespace util {
         }
         return out;
     }
+
+    double beta_a_from_mean_var(double mean, double var) {
+        auto max_var = mean * (1 - mean);
+        return (var < max_var) ? mean * ((max_var / var) - 1.0) : -1.0;
+    }
+
+    double beta_b_from_mean_var(double mean, double var) {
+        auto max_var = mean * (1 - mean);
+        return (var < max_var) ? (1 - mean) * ((max_var / var) - 1.0) : -1.0;
+    }
 }
 
 RngHandler::RngHandler() {
