@@ -58,6 +58,6 @@ Alexander N. Pillai ([@pillai-alexander](https://github.com/pillai-alexander))
 
 ## License
 
-TBD
+Distributed with the MIT License.
 
 <!-- ## Acknowledgments -->
