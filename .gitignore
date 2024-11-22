@@ -20,6 +20,7 @@ build
 
 # vscode ignores
 .vscode
+*.code-workspace
 
 # cmake ignores
 CMakeLists.txt.user
