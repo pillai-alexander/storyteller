@@ -54,6 +54,7 @@ Alexander N. Pillai ([@pillai-alexander](https://github.com/pillai-alexander))
 ###### [0.1.2](https://github.com/pillai-alexander/storyteller/releases/tag/v0.1.2): Fixing CMake issues for use in external projects.
 ###### [0.1.3](https://github.com/pillai-alexander/storyteller/releases/tag/v0.1.3): User configuration refactor.
 ###### [0.1.4](https://github.com/pillai-alexander/storyteller/releases/tag/v0.1.4): Expanded user parameter configurability.
+###### [0.1.5](https://github.com/pillai-alexander/storyteller/releases/tag/v0.1.5): Discrete and continuous susceptibility properly supported.
 
 ## License
 
