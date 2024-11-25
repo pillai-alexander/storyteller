@@ -175,6 +175,7 @@ int Storyteller::batch_simulation() {
             draw_simvis();
         }
 
+        db_handler->end_job(simulation_serial);
         reset();
         ++simulation_serial;
     }
@@ -189,6 +190,7 @@ int Storyteller::batch_simulation() {
  */
 void Storyteller::init_simulation() {
         db_handler = std::make_unique<DatabaseHandler>(this);
+        db_handler->start_job(simulation_serial);
         rng_handler = std::make_unique<RngHandler>();
         parameters = std::make_unique<Parameters>(rng_handler.get(), db_handler.get(), tome.get());
         parameters->read_parameters_for_serial(simulation_serial);

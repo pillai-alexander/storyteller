@@ -144,7 +144,6 @@ std::map<std::string, double> DatabaseHandler::read_parameters(unsigned int seri
     std::map<std::string, double> ret;
     for (size_t i = 0; i < n_transaction_attempts; ++i) {
         ret.clear();
-        start_job(serial);
         try {
             SQLite::Database db(database_path);
             SQLite::Statement query(db, "SELECT * FROM par WHERE serial = ?");
@@ -222,7 +221,6 @@ void DatabaseHandler::write_metrics(const Ledger* ledger, const Parameters* par)
             } else {
                 std::cerr << "mets written... ";
             }
-            end_job((unsigned int) par->simulation_serial);
             break;
         } catch (std::exception& e) {
             std::cerr << "Write attempt " << i << " failed:" << '\n';
