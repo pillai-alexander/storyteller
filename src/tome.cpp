@@ -95,6 +95,7 @@ void Tome::determine_paths() {
     paths["linelist"] = tome_root / "linelist.out";
     paths["scripts"]  = storyteller_root / "scripts";
     paths["simvis.R"] = paths.at("scripts") / "simvis.R";
+    paths["slurp.R"] = paths.at("scripts") / "slurp_metrics_into_db.R";
 
     bool user_defined_out_dir = element_lookup.count("output_dir_path");
     if (user_defined_out_dir) {

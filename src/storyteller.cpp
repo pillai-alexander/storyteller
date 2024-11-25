@@ -247,9 +247,12 @@ int Storyteller::slurp_metrics_files() {
     db_handler->drop_table_if_exists("met");
 
     fs::path out_dir = tome->get_path("out_dir");
-    for (auto& met_file : fs::directory_iterator(out_dir)) {
-        db_handler->import_metrics_from(met_file.path());
-    }
+    std::stringstream cmd;
+    cmd << "Rscript " << tome->get_path("slurp.R") << ' '
+                      << tome->get_path("database") << ' '
+                      << tome->get_path("out_dir");
+    if (simulation_flags["verbose"]) std::cerr << "Calling `" << cmd.str() << "`\n";
+    return system(cmd.str().c_str());
 
     return 0;
 }
