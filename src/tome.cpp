@@ -85,8 +85,8 @@ void Tome::determine_paths() {
 
     bool user_defined_db_path = element_lookup.count("database_path");
     fs::path db_path = user_defined_db_path
-                   ? get_element_as<std::string>("database_path")
-                   : get_element_as<std::string>("experiment_name") + ".sqlite";
+                           ? get_element_as<std::string>("database_path")
+                           : get_element_as<std::string>("experiment_name") + ".sqlite";
 
     paths["tome_rt"]  = tome_root;
     paths["database"] = tome_root / db_path;
