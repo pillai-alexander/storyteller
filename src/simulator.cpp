@@ -13,6 +13,7 @@
 #include <string>
 #include <map>
 #include <sstream>
+#include <filesystem>
 
 #include <gsl/gsl_rng.h>
 
@@ -23,6 +24,9 @@
 #include <storyteller/ledger.hpp>
 #include <storyteller/utility.hpp>
 #include <storyteller/database_handler.hpp>
+#include <storyteller/tome.hpp>
+
+namespace fs = std::filesystem;
 
 Simulator::Simulator(const Parameters* parameters, DatabaseHandler* dbh, const RngHandler* rngh)
     : sim_time(0),
@@ -106,10 +110,54 @@ void Simulator::results() {
     // generate the simulation dashboard if requested by the user
     if (sim_flags["simvis"]) ledger->generate_simvis_csv();
 
-    // write desired metrics to the experiment database
-    if (sim_flags["simulate"]) db_handler->write_metrics(ledger, par);
+    // output metrics
+    if (sim_flags["simulate"]) {
+        if (sim_flags["hpc_mode"]) {
+            // write desired metrics to a csv file
+            write_metrics_csv();
+        } else {
+            // write desired metrics to the experiment database
+            db_handler->write_metrics(ledger, par);
+        }
+    }
 }
 
 std::vector<Person*> Simulator::get_population() const {
     return community->get_population();
+}
+
+void Simulator::write_metrics_csv() {
+    auto file_name = "metrics_" + std::to_string(par->simulation_serial) + ".csv";
+    auto file_path = fs::path(par->tome->get_path("out_dir")) / file_name;
+
+    size_t n_rows = par->get("sim_duration");
+    std::vector<std::string> csv_rows_to_write(n_rows + 1);
+    csv_rows_to_write[0] = "serial,time,c_vax_flu_inf,c_vax_nonflu_inf,c_unvax_flu_inf,c_unvax_nonflu_inf,c_vax_flu_mai,c_vax_nonflu_mai,c_unvax_flu_mai,c_unvax_nonflu_mai,tnd_ve_est\n";
+
+    auto ledger = community->ledger.get();
+    std::stringstream row;
+    for (size_t t = 0; t < n_rows; ++t) {
+        row << par->simulation_serial << ","
+            << t << ","
+            << ledger->get_cumul_infs(VACCINATED, INFLUENZA, t) << ","
+            << ledger->get_cumul_infs(VACCINATED, NON_INFLUENZA, t) << ","
+            << ledger->get_cumul_infs(UNVACCINATED, INFLUENZA, t) << ","
+            << ledger->get_cumul_infs(UNVACCINATED, NON_INFLUENZA, t) << ","
+            << ledger->get_cumul_mais(VACCINATED, INFLUENZA, t) << ","
+            << ledger->get_cumul_mais(VACCINATED, NON_INFLUENZA, t) << ","
+            << ledger->get_cumul_mais(UNVACCINATED, INFLUENZA, t) << ","
+            << ledger->get_cumul_mais(UNVACCINATED, NON_INFLUENZA, t) << ","
+            << ledger->get_tnd_ve_est(t) << "\n";
+
+        csv_rows_to_write[t + 1] = row.str();
+        row.str(std::string());
+    }
+
+    std::ofstream file(file_path);
+    for (auto& row : csv_rows_to_write) {
+        file << row;
+    }
+    file.close();
+
+    std::cerr << "csv written... ";
 }

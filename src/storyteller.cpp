@@ -51,6 +51,7 @@ Storyteller::Storyteller(int argc, char* argv[])
     simulation_flags["verbose"]      = cmdl_args[{"-v", "--verbose"}];
     simulation_flags["very_verbose"] = cmdl_args[{"-vv", "--very-verbose"}];
     simulation_flags["synthpop"]     = cmdl_args["gen-synth-pop"];
+    simulation_flags["hpc_mode"]     = cmdl_args["hpc"];
 
     if (simulation_flags.at("very_verbose")) simulation_flags.at("verbose") = true;
 

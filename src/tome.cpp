@@ -95,6 +95,14 @@ void Tome::determine_paths() {
     paths["linelist"] = tome_root / "linelist.out";
     paths["scripts"]  = storyteller_root / "scripts";
     paths["simvis.R"] = paths.at("scripts") / "simvis.R";
+
+    bool user_defined_out_dir = element_lookup.count("output_dir_path");
+    if (user_defined_out_dir) {
+        fs::path out_dir = get_element_as<std::string>("output_dir_path");
+        out_dir = (out_dir.is_absolute()) ? out_dir : tome_root / out_dir;
+        fs::create_directories(out_dir);
+        paths["out_dir"] = out_dir;
+    }
 }
 
 bool Tome::check_for_req_items(sol::table core_tome_table) {
