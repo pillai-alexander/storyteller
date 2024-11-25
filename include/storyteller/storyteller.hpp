@@ -30,6 +30,7 @@ enum OperationType {
     INITIALIZE,
     GENERATE_SYNTHETIC_POPULATION,
     BATCH_SIM,
+    SLURP_CSVS_INTO_DATABASE,
     NUM_OPERATION_TYPES
 };
 
@@ -148,6 +149,8 @@ class Storyteller {
     void reset();
 
     int generate_synthpop();
+
+    int slurp_metrics_files();
 
     std::unique_ptr<Tome> tome;
     std::unique_ptr<Simulator> simulator;           ///< Created for each simulation to be run
