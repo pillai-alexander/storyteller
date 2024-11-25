@@ -135,7 +135,7 @@ void DatabaseHandler::end_job(unsigned int serial) {
             std::cerr << "job end\n";
         }
     } catch (std::exception& e) {
-        std::cerr << "Start job " << serial << " failed:" << '\n';
+        std::cerr << "End job " << serial << " failed:" << '\n';
         std::cerr << "\tSQLite exception: " << e.what() << '\n';
     }
 }
@@ -145,7 +145,7 @@ std::map<std::string, double> DatabaseHandler::read_parameters(unsigned int seri
     for (size_t i = 0; i < n_transaction_attempts; ++i) {
         ret.clear();
         try {
-            SQLite::Database db(database_path);
+            SQLite::Database db(database_path, SQLite::OPEN_READONLY);
             SQLite::Statement query(db, "SELECT * FROM par WHERE serial = ?");
             query.bind(1, serial);
             while (query.executeStep()) {
