@@ -72,6 +72,9 @@ class DatabaseHandler {
     void start_job(unsigned int serial);
     void end_job(unsigned int serial);
 
+    void drop_table_if_exists(std::string table);
+    void import_metrics_from(std::string file_path);
+
   private:
     void create_table();
     void clear_table();

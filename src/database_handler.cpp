@@ -267,6 +267,39 @@ bool DatabaseHandler::table_exists(std::string table) {
     return db.tableExists(table);
 }
 
+void DatabaseHandler::drop_table_if_exists(std::string table) {
+    try {
+        SQLite::Database db(database_path, SQLite::OPEN_READWRITE);
+        auto sql = "DROP TABLE IF EXISTS " + table;
+        SQLite::Transaction transaction(db);
+        db.exec(sql);
+        transaction.commit();
+
+        if (owner->get_flag("verbose")) {
+            std::cerr << "Drop attempt for " << table << " succeeded." << '\n';
+        }
+    } catch (std::exception& e) {
+        std::cerr << "Drop attempt for " << table << " failed:" << '\n';
+        std::cerr << "\tSQLite exception: " << e.what() << '\n';
+        std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
+    }
+}
+
+void DatabaseHandler::import_metrics_from(std::string file_path) {
+    auto import_str = table_exists("met") ? ".import --csv --skip 1 " : ".import --csv ";
+    try {
+        std::ostringstream cmd("sqlite3 ", std::ios_base::ate);
+        cmd << database_path << R"( ")" << import_str << file_path << R"( met")";
+        auto ret = system(cmd.str().c_str());
+
+        if (ret == 0) std::cerr << "Import attempt for " << file_path << " succeeded." << '\n';
+    } catch (std::exception& e) {
+        std::cerr << "Import attempt for " << file_path << " failed:" << '\n';
+        std::cerr << "\t" << e.what() << '\n';
+        std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
+    }
+}
+
 int DatabaseHandler::init_database() {
     auto par_table        = tome->get_config_params();
     auto cfg_pars         = par_table.at("parameters").as<sol::table>();
