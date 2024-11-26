@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.19)
 
 file(GLOB HEADER_LIST CONFIGURE_DEPENDS "${Storyteller_SOURCE_DIR}/include/simulator/*.hpp")
 
