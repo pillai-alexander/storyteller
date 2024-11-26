@@ -85,8 +85,8 @@ void Tome::determine_paths() {
 
     bool user_defined_db_path = element_lookup.count("database_path");
     fs::path db_path = user_defined_db_path
-                   ? get_element_as<std::string>("database_path")
-                   : get_element_as<std::string>("experiment_name") + ".sqlite";
+                           ? get_element_as<std::string>("database_path")
+                           : get_element_as<std::string>("experiment_name") + ".sqlite";
 
     paths["tome_rt"]  = tome_root;
     paths["database"] = tome_root / db_path;
@@ -95,6 +95,15 @@ void Tome::determine_paths() {
     paths["linelist"] = tome_root / "linelist.out";
     paths["scripts"]  = storyteller_root / "scripts";
     paths["simvis.R"] = paths.at("scripts") / "simvis.R";
+    paths["slurp.R"] = paths.at("scripts") / "slurp_metrics_into_db.R";
+
+    bool user_defined_out_dir = element_lookup.count("output_dir_path");
+    if (user_defined_out_dir) {
+        fs::path out_dir = get_element_as<std::string>("output_dir_path");
+        out_dir = (out_dir.is_absolute()) ? out_dir : tome_root / out_dir;
+        fs::create_directories(out_dir);
+        paths["out_dir"] = out_dir;
+    }
 }
 
 bool Tome::check_for_req_items(sol::table core_tome_table) {

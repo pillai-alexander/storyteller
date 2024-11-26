@@ -77,6 +77,8 @@ class Simulator {
      */
     void tick();
 
+    void write_metrics_csv();
+
     size_t sim_time;                        ///< Current simulation time step
     std::map<std::string, bool> sim_flags;  ///< Program flags provided by the Storyteller
 

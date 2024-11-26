@@ -13,6 +13,7 @@
 #include <sstream>
 #include <memory>
 #include <fstream>
+#include <filesystem>
 
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
@@ -25,6 +26,8 @@
 #include <storyteller/utility.hpp>
 #include <storyteller/database_handler.hpp>
 #include <storyteller/person.hpp>
+
+namespace fs = std::filesystem;
 
 /**
  * @details Parses command-line arguments and extracts all necessary program flags into
@@ -51,6 +54,8 @@ Storyteller::Storyteller(int argc, char* argv[])
     simulation_flags["verbose"]      = cmdl_args[{"-v", "--verbose"}];
     simulation_flags["very_verbose"] = cmdl_args[{"-vv", "--very-verbose"}];
     simulation_flags["synthpop"]     = cmdl_args["gen-synth-pop"];
+    simulation_flags["hpc_mode"]     = cmdl_args["hpc"];
+    simulation_flags["hpc_slurp"]    = cmdl_args["slurp"];
 
     if (simulation_flags.at("very_verbose")) simulation_flags.at("verbose") = true;
 
@@ -73,6 +78,8 @@ Storyteller::Storyteller(int argc, char* argv[])
             operation_to_perform = BATCH_SIM;
         } else if (simulation_flags["synthpop"]) {
             operation_to_perform = GENERATE_SYNTHETIC_POPULATION;
+        } else if (simulation_flags["hpc_slurp"]) {
+            operation_to_perform = SLURP_CSVS_INTO_DATABASE;
         } else {
             operation_to_perform = NUM_OPERATION_TYPES;
         }
@@ -102,6 +109,8 @@ bool Storyteller::sensible_inputs() const {
     bool sim         = simulation_flags.at("simulate");
     bool serial      = (simulation_serial != -1) and (simulation_serial >= 0);
     bool synthpop    = simulation_flags.at("synthpop");
+    bool hpc         = simulation_flags.at("hpc_mode");
+    bool slurp       = simulation_flags.at("hpc_slurp");
 
     // exec --tome tomefile --init
     // ret += init and tome_is_set and not sim and not example;
@@ -112,8 +121,11 @@ bool Storyteller::sensible_inputs() const {
     // ret += sim and tome_is_set and not init and not example;
     ret += sim and tome_is_set and serial and not init;
 
-    //exec --tome tomefile --gen-synth-pop --serial 0
+    // exec --tome tomefile --gen-synth-pop --serial 0
     ret += synthpop and tome_is_set and serial and not sim;
+
+    // exec --tome tomefile --hpc --slurp
+    ret += hpc and slurp and tome_is_set and not sim;
 
     return (ret == 1);
 }
@@ -132,9 +144,12 @@ int Storyteller::run() {
             reset();
             return ret;
         }
+        case SLURP_CSVS_INTO_DATABASE: {
+            return slurp_metrics_files();
+        }
         default: {
             std::cerr << "No operation performed.";
-            return 0;   
+            return 0;
         }
     }
 }
@@ -175,6 +190,7 @@ int Storyteller::batch_simulation() {
             draw_simvis();
         }
 
+        db_handler->end_job(simulation_serial);
         reset();
         ++simulation_serial;
     }
@@ -189,6 +205,7 @@ int Storyteller::batch_simulation() {
  */
 void Storyteller::init_simulation() {
         db_handler = std::make_unique<DatabaseHandler>(this);
+        db_handler->start_job(simulation_serial);
         rng_handler = std::make_unique<RngHandler>();
         parameters = std::make_unique<Parameters>(rng_handler.get(), db_handler.get(), tome.get());
         parameters->read_parameters_for_serial(simulation_serial);
@@ -223,6 +240,21 @@ int Storyteller::draw_simvis() {
     cmd << "Rscript " << tome->get_path("simvis.R") << ' ' << tome->get_path("tome_rt");
     if (simulation_flags["verbose"]) std::cerr << "Calling `" << cmd.str() << "`\n";
     return system(cmd.str().c_str());
+}
+
+int Storyteller::slurp_metrics_files() {
+    db_handler = std::make_unique<DatabaseHandler>(this);
+    db_handler->drop_table_if_exists("met");
+
+    fs::path out_dir = tome->get_path("out_dir");
+    std::stringstream cmd;
+    cmd << "Rscript " << tome->get_path("slurp.R") << ' '
+                      << tome->get_path("database") << ' '
+                      << tome->get_path("out_dir");
+    if (simulation_flags["verbose"]) std::cerr << "Calling `" << cmd.str() << "`\n";
+    return system(cmd.str().c_str());
+
+    return 0;
 }
 
 /**

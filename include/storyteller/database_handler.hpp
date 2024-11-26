@@ -69,13 +69,17 @@ class DatabaseHandler {
     std::map<std::string, double> read_parameters(unsigned int serial, const std::vector<std::string>& pars);
     void write_metrics(const Ledger* ledger, const Parameters* par);
 
+    void start_job(unsigned int serial);
+    void end_job(unsigned int serial);
+
+    void drop_table_if_exists(std::string table);
+    void import_metrics_from(std::string file_path);
+
   private:
     void create_table();
     void clear_table();
 
     void read_job(unsigned int serial);
-    void start_job(unsigned int serial);
-    void end_job(unsigned int serial);
 
     void clear_metrics(unsigned int serial);
 

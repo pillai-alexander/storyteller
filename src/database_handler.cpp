@@ -135,7 +135,7 @@ void DatabaseHandler::end_job(unsigned int serial) {
             std::cerr << "job end\n";
         }
     } catch (std::exception& e) {
-        std::cerr << "Start job " << serial << " failed:" << '\n';
+        std::cerr << "End job " << serial << " failed:" << '\n';
         std::cerr << "\tSQLite exception: " << e.what() << '\n';
     }
 }
@@ -144,9 +144,8 @@ std::map<std::string, double> DatabaseHandler::read_parameters(unsigned int seri
     std::map<std::string, double> ret;
     for (size_t i = 0; i < n_transaction_attempts; ++i) {
         ret.clear();
-        start_job(serial);
         try {
-            SQLite::Database db(database_path);
+            SQLite::Database db(database_path, SQLite::OPEN_READONLY);
             SQLite::Statement query(db, "SELECT * FROM par WHERE serial = ?");
             query.bind(1, serial);
             while (query.executeStep()) {
@@ -222,7 +221,6 @@ void DatabaseHandler::write_metrics(const Ledger* ledger, const Parameters* par)
             } else {
                 std::cerr << "mets written... ";
             }
-            end_job((unsigned int) par->simulation_serial);
             break;
         } catch (std::exception& e) {
             std::cerr << "Write attempt " << i << " failed:" << '\n';
@@ -267,6 +265,39 @@ bool DatabaseHandler::database_exists() {
 bool DatabaseHandler::table_exists(std::string table) {
     SQLite::Database db(database_path, SQLite::OPEN_READONLY);
     return db.tableExists(table);
+}
+
+void DatabaseHandler::drop_table_if_exists(std::string table) {
+    try {
+        SQLite::Database db(database_path, SQLite::OPEN_READWRITE);
+        auto sql = "DROP TABLE IF EXISTS " + table;
+        SQLite::Transaction transaction(db);
+        db.exec(sql);
+        transaction.commit();
+
+        if (owner->get_flag("verbose")) {
+            std::cerr << "Drop attempt for " << table << " succeeded." << '\n';
+        }
+    } catch (std::exception& e) {
+        std::cerr << "Drop attempt for " << table << " failed:" << '\n';
+        std::cerr << "\tSQLite exception: " << e.what() << '\n';
+        std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
+    }
+}
+
+void DatabaseHandler::import_metrics_from(std::string file_path) {
+    auto import_str = table_exists("met") ? ".import --csv --skip 1 " : ".import --csv ";
+    try {
+        std::ostringstream cmd("sqlite3 ", std::ios_base::ate);
+        cmd << database_path << R"( ")" << import_str << file_path << R"( met")";
+        auto ret = system(cmd.str().c_str());
+
+        if (ret == 0) std::cerr << "Import attempt for " << file_path << " succeeded." << '\n';
+    } catch (std::exception& e) {
+        std::cerr << "Import attempt for " << file_path << " failed:" << '\n';
+        std::cerr << "\t" << e.what() << '\n';
+        std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
+    }
 }
 
 int DatabaseHandler::init_database() {
