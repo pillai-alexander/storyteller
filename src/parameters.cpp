@@ -146,16 +146,16 @@ double Parameters::sample_discrete_susceptibility(const bool vaccinated, const S
 
 double Parameters::sample_continuous_susceptibility(const bool vaccinated, const StrainType strain) const {
     auto mean = -1.0;
-    auto var = -1.0;
+    auto sd = -1.0;
     switch (strain) {
         case NON_INFLUENZA: {
             mean = (vaccinated) ? get("vaxd_nonflu_suscep_mean") : get("unvaxd_nonflu_suscep_mean");
-            var  = (vaccinated) ? get("vaxd_nonflu_suscep_var")  : get("unvaxd_nonflu_suscep_var");
+            sd  = (vaccinated) ? get("vaxd_nonflu_suscep_sd")  : get("unvaxd_nonflu_suscep_sd");
             break;
         }
         case INFLUENZA: {
             mean = (vaccinated) ? get("vaxd_flu_suscep_mean") : get("unvaxd_flu_suscep_mean");
-            var  = (vaccinated) ? get("vaxd_flu_suscep_var")  : get("unvaxd_flu_suscep_var");
+            sd  = (vaccinated) ? get("vaxd_flu_suscep_sd")  : get("unvaxd_flu_suscep_sd");
             break;
         }
         default: {
@@ -164,14 +164,15 @@ double Parameters::sample_continuous_susceptibility(const bool vaccinated, const
         }
     }
 
-    if ((mean == -1.0) or (var == -1.0)) {
+    if ((mean == -1.0) or (sd == -1.0)) {
         std::cerr << "ERROR: invalid values\n";
         exit(-1);
     }
 
-    const auto a = util::beta_a_from_mean_var(mean, var);
-    const auto b = util::beta_b_from_mean_var(mean, var);
-    return gsl_ran_beta(rng->get_rng(INFECTION), a, b);
+    // gsl gaussian is always centered at 0 and must be shifted to the specified mean
+    // https://www.gnu.org/software/gsl/doc/html/randist.html#the-gaussian-distribution
+    auto log_odds = util::logit(mean) + gsl_ran_gaussian(rng->get_rng(INFECTION), sd);
+    return util::logistic(log_odds);
 }
 
 std::vector<double> Parameters::sample_susceptibility(const Person* p) const {
