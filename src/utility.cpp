@@ -7,6 +7,7 @@
  * @copyright TBD
  */
 #include <algorithm>
+#include <cmath>
 
 
 #include <storyteller/utility.hpp>
@@ -60,6 +61,14 @@ namespace util {
     double beta_b_from_mean_var(double mean, double var) {
         auto max_var = mean * (1 - mean);
         return (var < max_var) ? (1 - mean) * ((max_var / var) - 1.0) : -1.0;
+    }
+
+    double logistic(const double log_odds) {
+      return 1 / (1 + std::exp(-1.0 * log_odds));
+    }
+
+    double logit(const double prob) {
+      return std::log(prob / (1 - prob));
     }
 }
 

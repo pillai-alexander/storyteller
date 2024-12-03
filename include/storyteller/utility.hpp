@@ -58,6 +58,9 @@ namespace util {
 
     extern double beta_a_from_mean_var(double mean, double var);
     extern double beta_b_from_mean_var(double mean, double var);
+
+    extern double logistic(const double log_odds);
+    extern double logit(const double prob);
 }
 
 /**
