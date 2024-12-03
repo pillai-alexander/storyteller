@@ -139,14 +139,14 @@ Parameters["parameters"]["vaccinated_influenza_susceptibility_distribution_mean"
     end
 }
 
-Parameters["parameters"]["vaccinated_influenza_susceptibility_distribution_variance"] = {
-    nickname = "vaxd_flu_suscep_var",
+Parameters["parameters"]["vaccinated_influenza_susceptibility_distribution_standard_deviation"] = {
+    nickname = "vaxd_flu_suscep_sd",
     description = "",
     flag  = "const",
     datatype = "double",
-    value = 1e-4,
+    value = 1e-1,
     validate = function(v)
-        local ret = (v == 1e-4)
+        local ret = (v == 1e-1)
         return ret
     end
 }
@@ -188,14 +188,14 @@ Parameters["parameters"]["unvaccinated_influenza_susceptibility_distribution_mea
     end
 }
 
-Parameters["parameters"]["unvaccinated_influenza_susceptibility_distribution_variance"] = {
-    nickname = "unvaxd_flu_suscep_var",
+Parameters["parameters"]["unvaccinated_influenza_susceptibility_distribution_standard_deviation"] = {
+    nickname = "unvaxd_flu_suscep_sd",
     description = "",
     flag  = "const",
     datatype = "double",
-    value = 0.0,
+    value = 1e-1,
     validate = function(v)
-        local ret = (v == 0.0)
+        local ret = (v == 1e-1)
         return ret
     end
 }
@@ -237,8 +237,8 @@ Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_me
     end
 }
 
-Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_variance"] = {
-    nickname = "vaxd_nonflu_suscep_var",
+Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_standard_deviation"] = {
+    nickname = "vaxd_nonflu_suscep_sd",
     description = "",
     flag  = "const",
     datatype = "double",
@@ -286,8 +286,8 @@ Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_distribution_
     end
 }
 
-Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_distribution_variance"] = {
-    nickname = "unvaxd_nonflu_suscep_var",
+Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_distribution_standard_deviation"] = {
+    nickname = "unvaxd_nonflu_suscep_sd",
     description = "",
     flag  = "const",
     datatype = "double",
