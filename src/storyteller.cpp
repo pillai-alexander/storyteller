@@ -246,7 +246,6 @@ int Storyteller::slurp_metrics_files() {
     db_handler = std::make_unique<DatabaseHandler>(this);
     db_handler->drop_table_if_exists("met");
 
-    fs::path out_dir = tome->get_path("out_dir");
     std::stringstream cmd;
     cmd << "Rscript " << tome->get_path("slurp.R") << ' '
                       << tome->get_path("database") << ' '
