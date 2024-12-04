@@ -56,6 +56,7 @@ Storyteller::Storyteller(int argc, char* argv[])
     simulation_flags["synthpop"]     = cmdl_args["gen-synth-pop"];
     simulation_flags["hpc_mode"]     = cmdl_args["hpc"];
     simulation_flags["hpc_slurp"]    = cmdl_args["slurp"];
+    simulation_flags["hpc_clean"]    = cmdl_args["clean"];
 
     if (simulation_flags.at("very_verbose")) simulation_flags.at("verbose") = true;
 
@@ -80,6 +81,8 @@ Storyteller::Storyteller(int argc, char* argv[])
             operation_to_perform = GENERATE_SYNTHETIC_POPULATION;
         } else if (simulation_flags["hpc_slurp"]) {
             operation_to_perform = SLURP_CSVS_INTO_DATABASE;
+        } else if (simulation_flags["hpc_clean"]) {
+            operation_to_perform = CLEANUP_HPC_CSVS;
         } else {
             operation_to_perform = NUM_OPERATION_TYPES;
         }
@@ -111,6 +114,7 @@ bool Storyteller::sensible_inputs() const {
     bool synthpop    = simulation_flags.at("synthpop");
     bool hpc         = simulation_flags.at("hpc_mode");
     bool slurp       = simulation_flags.at("hpc_slurp");
+    bool clean       = simulation_flags.at("hpc_clean");
 
     // exec --tome tomefile --init
     // ret += init and tome_is_set and not sim and not example;
@@ -125,7 +129,10 @@ bool Storyteller::sensible_inputs() const {
     ret += synthpop and tome_is_set and serial and not sim;
 
     // exec --tome tomefile --hpc --slurp
-    ret += hpc and slurp and tome_is_set and not sim;
+    ret += hpc and slurp and tome_is_set and not sim and not clean;
+
+    // exec --tome tomefile --hpc --clean
+    ret += hpc and clean and tome_is_set and not sim and not slurp;
 
     return (ret == 1);
 }
@@ -146,6 +153,9 @@ int Storyteller::run() {
         }
         case SLURP_CSVS_INTO_DATABASE: {
             return slurp_metrics_files();
+        }
+        case CLEANUP_HPC_CSVS: {
+            return cleanup_metrics_files();
         }
         default: {
             std::cerr << "No operation performed.";
@@ -252,6 +262,20 @@ int Storyteller::slurp_metrics_files() {
                       << tome->get_path("out_dir");
     if (simulation_flags["verbose"]) std::cerr << "Calling `" << cmd.str() << "`\n";
     return system(cmd.str().c_str());
+
+    return 0;
+}
+
+int Storyteller::cleanup_metrics_files() {
+    for (auto& f : fs::directory_iterator(tome->get_path("out_dir"))) {
+        std::ostringstream cmd("rm ", std::ios_base::ate);
+        cmd << f.path().string();
+
+        std::cerr << cmd.str() << '\n';
+        system(cmd.str().c_str());
+
+        cmd.str(std::string());
+    }
 
     return 0;
 }
