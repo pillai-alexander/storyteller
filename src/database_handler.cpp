@@ -78,65 +78,78 @@ DatabaseHandler::~DatabaseHandler() {}
 
 void DatabaseHandler::read_job(unsigned int serial) {
     simulation_job = ParticleJob(serial);
-    try {
-        SQLite::Database db(database_path, SQLite::OPEN_READONLY);
-        SQLite::Statement query(db, "SELECT * FROM job WHERE serial = ?");
-        query.bind(1, serial);
-        while (query.executeStep()) {
-            simulation_job.attempts = (unsigned int) query.getColumn("attempts");
-            simulation_job.completions = (unsigned int) query.getColumn("completions");
-            simulation_job.status = (std::string) query.getColumn("status");
-        }
+    for (size_t i = 0; i < n_transaction_attempts; ++i) {
+        try {
+            SQLite::Database db(database_path, SQLite::OPEN_READONLY);
+            SQLite::Statement query(db, "SELECT * FROM job WHERE serial = ?");
+            query.bind(1, serial);
+            while (query.executeStep()) {
+                simulation_job.attempts = (unsigned int) query.getColumn("attempts");
+                simulation_job.completions = (unsigned int) query.getColumn("completions");
+                simulation_job.status = (std::string) query.getColumn("status");
+            }
 
-        if (owner->get_flag("verbose")) {
-            std::cerr << "Read job " << serial << " succeeded." << '\n';
-        } else {
-            std::cerr << serial << ": job ";
+            if (owner->get_flag("verbose")) {
+                std::cerr << "Read job " << serial << " succeeded." << '\n';
+            } else {
+                std::cerr << serial << ": job ";
+            }
+            break;
+        } catch (std::exception& e) {
+            std::cerr << "Read job " << serial << " failed:" << '\n';
+            std::cerr << "\tSQLite exception: " << e.what() << '\n';
+            std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
         }
-    } catch (std::exception& e) {
-        std::cerr << "Read job " << serial << " failed:" << '\n';
-        std::cerr << "\tSQLite exception: " << e.what() << '\n';
     }
+
 }
 
 void DatabaseHandler::start_job(unsigned int serial) {
     read_job(serial);
     simulation_job.start();
 
-    try {
-        SQLite::Database db(database_path, SQLite::OPEN_READWRITE);
-        SQLite::Transaction transaction(db);
-        db.exec(simulation_job.update());
-        transaction.commit();
+    for (size_t i = 0; i < n_transaction_attempts; ++i) {
+        try {
+            SQLite::Database db(database_path, SQLite::OPEN_READWRITE);
+            SQLite::Transaction transaction(db);
+            db.exec(simulation_job.update());
+            transaction.commit();
 
-        if (owner->get_flag("verbose")) {
-            std::cerr << "Start job " << serial << " succeeded." << '\n';
-        } else {
-            std::cerr << "started... ";
+            if (owner->get_flag("verbose")) {
+                std::cerr << "Start job " << serial << " succeeded." << '\n';
+            } else {
+                std::cerr << "started... ";
+            }
+            break;
+        } catch (std::exception& e) {
+            std::cerr << "Start job " << serial << " failed:" << '\n';
+            std::cerr << "\tSQLite exception: " << e.what() << '\n';
+            std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
         }
-    } catch (std::exception& e) {
-        std::cerr << "Start job " << serial << " failed:" << '\n';
-        std::cerr << "\tSQLite exception: " << e.what() << '\n';
     }
 }
 
 void DatabaseHandler::end_job(unsigned int serial) {
     simulation_job.end();
 
-    try {
-        SQLite::Database db(database_path, SQLite::OPEN_READWRITE);
-        SQLite::Transaction transaction(db);
-        db.exec(simulation_job.update());
-        transaction.commit();
+    for (size_t i = 0; i < n_transaction_attempts; ++i) {
+        try {
+            SQLite::Database db(database_path, SQLite::OPEN_READWRITE);
+            SQLite::Transaction transaction(db);
+            db.exec(simulation_job.update());
+            transaction.commit();
 
-        if (owner->get_flag("verbose")) {
-            std::cerr << "End job " << serial << " succeeded." << '\n';
-        } else {
-            std::cerr << "job end\n";
+            if (owner->get_flag("verbose")) {
+                std::cerr << "End job " << serial << " succeeded." << '\n';
+            } else {
+                std::cerr << "job end\n";
+            }
+            break;
+        } catch (std::exception& e) {
+            std::cerr << "End job " << serial << " failed:" << '\n';
+            std::cerr << "\tSQLite exception: " << e.what() << '\n';
+            std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
         }
-    } catch (std::exception& e) {
-        std::cerr << "End job " << serial << " failed:" << '\n';
-        std::cerr << "\tSQLite exception: " << e.what() << '\n';
     }
 }
 
@@ -258,6 +271,7 @@ bool DatabaseHandler::database_exists() {
         SQLite::Database db(database_path, SQLite::OPEN_READONLY);
         return db.tableExists("par") and db.tableExists("met") and db.tableExists("job");
     } catch (std::exception& e) {
+        std::cerr << "SQLite exception: " << e.what() << '\n';
         return false;
     }
 }
@@ -268,20 +282,23 @@ bool DatabaseHandler::table_exists(std::string table) {
 }
 
 void DatabaseHandler::drop_table_if_exists(std::string table) {
-    try {
-        SQLite::Database db(database_path, SQLite::OPEN_READWRITE);
-        auto sql = "DROP TABLE IF EXISTS " + table;
-        SQLite::Transaction transaction(db);
-        db.exec(sql);
-        transaction.commit();
+    for (size_t i = 0; i < n_transaction_attempts; ++i) {
+        try {
+            SQLite::Database db(database_path, SQLite::OPEN_READWRITE);
+            auto sql = "DROP TABLE IF EXISTS " + table;
+            SQLite::Transaction transaction(db);
+            db.exec(sql);
+            transaction.commit();
 
-        if (owner->get_flag("verbose")) {
-            std::cerr << "Drop attempt for " << table << " succeeded." << '\n';
+            if (owner->get_flag("verbose")) {
+                std::cerr << "Drop attempt for " << table << " succeeded." << '\n';
+            }
+            break;
+        } catch (std::exception& e) {
+            std::cerr << "Drop attempt for " << table << " failed:" << '\n';
+            std::cerr << "\tSQLite exception: " << e.what() << '\n';
+            std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
         }
-    } catch (std::exception& e) {
-        std::cerr << "Drop attempt for " << table << " failed:" << '\n';
-        std::cerr << "\tSQLite exception: " << e.what() << '\n';
-        std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
     }
 }
 
