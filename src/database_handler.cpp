@@ -25,11 +25,11 @@
 
 using namespace std::chrono;
 
-std::map<std::string, ConfigParFlag> cfg_par_flag_lookup = {
-    {"const", CONST},
-    // {"copy",  COPY},
-    {"step",  STEP}
-};
+// std::map<std::string, ConfigParFlag> cfg_par_flag_lookup = {
+//     {"const", CONST},
+//     // {"copy",  COPY},
+//     {"step",  STEP}
+// };
 
 ParticleJob::ParticleJob() {}
 
