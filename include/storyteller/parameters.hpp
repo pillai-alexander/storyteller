@@ -98,6 +98,7 @@ class Parameters {
     std::vector<double> sample_susceptibility(const Person* p) const;
     std::vector<double> sample_vaccine_effect() const;
     StrainType sample_strain() const;
+    std::vector<StrainType> daily_strain_sample() const;
 
     bool are_valid() const;
 
