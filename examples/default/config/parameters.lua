@@ -70,7 +70,7 @@ Parameters["parameters"]["population_size"] = {
     description = "",
     flag  = "const",
     datatype = "integer",
-    value = 1e3,
+    value = 1e5,
     validate = function(v)
         local ret = (v > 0)
         return ret
