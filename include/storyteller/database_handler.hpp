@@ -23,12 +23,12 @@ enum TableName {
     NUM_TABLE_NAMES
 };
 
-enum ConfigParFlag {
-    CONST,
-    // COPY,
-    STEP,
-    NUM_CONFIG_PAR_FLAGS
-};
+// enum ConfigParFlag {
+//     CONST,
+//     // COPY,
+//     STEP,
+//     NUM_CONFIG_PAR_FLAGS
+// };
 
 class ParticleJob {
   public:
