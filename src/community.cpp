@@ -40,14 +40,25 @@ void Community::init_population() {
 }
 
 void Community::transmission(size_t time) {
+    auto strain_sample = par->daily_strain_sample();
     for (auto& p : people) {
-        // determine if exposure with occurs
-        auto strain = par->sample_strain();
+        auto strain = strain_sample.back();
+        strain_sample.pop_back();
+
         if (strain == NUM_STRAIN_TYPES) continue;
         // determine if infection occurs
         auto infection_occurs = p->attempt_infection(strain, time);
         if (infection_occurs) ledger->log_infection(infection_occurs);
     }
+
+    // for (auto& p : people) {
+    //     // determine if exposure with occurs
+    //     auto strain = par->sample_strain();
+    //     if (strain == NUM_STRAIN_TYPES) continue;
+    //     // determine if infection occurs
+    //     auto infection_occurs = p->attempt_infection(strain, time);
+    //     if (infection_occurs) ledger->log_infection(infection_occurs);
+    // }
 }
 
 void Community::vaccinate_population(size_t time) {
