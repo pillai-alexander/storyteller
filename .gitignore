@@ -17,6 +17,7 @@ build
 *.delme
 *.sqlite
 *.vis
+examples/**/*.md
 
 # vscode ignores
 .vscode
