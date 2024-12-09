@@ -29,6 +29,7 @@ namespace sol { class state; }
 enum OperationType {
     INITIALIZE,
     GENERATE_SYNTHETIC_POPULATION,
+    GENERATE_EXPERIMENT_REPORT,
     BATCH_SIM,
     SLURP_CSVS_INTO_DATABASE,
     CLEANUP_HPC_CSVS,
@@ -150,6 +151,8 @@ class Storyteller {
     void reset();
 
     int generate_synthpop();
+
+    int generate_exp_report();
 
     int slurp_metrics_files();
 

@@ -57,6 +57,7 @@ Storyteller::Storyteller(int argc, char* argv[])
     simulation_flags["hpc_mode"]     = cmdl_args["hpc"];
     simulation_flags["hpc_slurp"]    = cmdl_args["slurp"];
     simulation_flags["hpc_clean"]    = cmdl_args["clean"];
+    simulation_flags["exp_report"]   = cmdl_args["report"];
 
     if (simulation_flags.at("very_verbose")) simulation_flags.at("verbose") = true;
 
@@ -79,6 +80,8 @@ Storyteller::Storyteller(int argc, char* argv[])
             operation_to_perform = BATCH_SIM;
         } else if (simulation_flags["synthpop"]) {
             operation_to_perform = GENERATE_SYNTHETIC_POPULATION;
+        } else if (simulation_flags["exp_report"]) {
+            operation_to_perform = GENERATE_EXPERIMENT_REPORT;
         } else if (simulation_flags["hpc_slurp"]) {
             operation_to_perform = SLURP_CSVS_INTO_DATABASE;
         } else if (simulation_flags["hpc_clean"]) {
@@ -115,6 +118,7 @@ bool Storyteller::sensible_inputs() const {
     bool hpc         = simulation_flags.at("hpc_mode");
     bool slurp       = simulation_flags.at("hpc_slurp");
     bool clean       = simulation_flags.at("hpc_clean");
+    bool report      = simulation_flags.at("exp_report");
 
     // exec --tome tomefile --init
     // ret += init and tome_is_set and not sim and not example;
@@ -134,6 +138,9 @@ bool Storyteller::sensible_inputs() const {
     // exec --tome tomefile --hpc --clean
     ret += hpc and clean and tome_is_set and not sim and not slurp;
 
+    // exec --tome tomefile --report
+    ret += report and tome_is_set and not init and not sim;
+
     return (ret == 1);
 }
 
@@ -150,6 +157,9 @@ int Storyteller::run() {
             auto ret = generate_synthpop();
             reset();
             return ret;
+        }
+        case GENERATE_EXPERIMENT_REPORT: {
+            return generate_exp_report();
         }
         case SLURP_CSVS_INTO_DATABASE: {
             return slurp_metrics_files();
@@ -180,6 +190,31 @@ int Storyteller::generate_synthpop() {
     popfile.close();
 
     return 0;
+}
+
+
+int Storyteller::generate_exp_report() {
+/*
+    create report file name (expname_version.md)
+      - need to replace whitespace with underscores
+      - need to replace periods with dashes
+
+    create path to report file
+      - default to tome root
+
+    write tome.lua information
+      - title: experiment name
+      - description: experiment description
+      - database file: db path
+      - global params: n reals, par val tol
+
+    write parameters.lua information
+      - step params
+      - copy params
+      - const params
+
+    write metrics.lua information
+*/
 }
 
 /**
