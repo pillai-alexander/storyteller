@@ -51,6 +51,7 @@ void Community::transmission(size_t time) {
         if (infection_occurs) ledger->log_infection(infection_occurs);
     }
 
+    // old method that samples a single strain per person (keeping for reference)
     // for (auto& p : people) {
     //     // determine if exposure with occurs
     //     auto strain = par->sample_strain();
