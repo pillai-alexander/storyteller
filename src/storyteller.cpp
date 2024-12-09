@@ -14,6 +14,7 @@
 #include <memory>
 #include <fstream>
 #include <filesystem>
+#include <algorithm>
 
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
@@ -194,27 +195,95 @@ int Storyteller::generate_synthpop() {
 
 
 int Storyteller::generate_exp_report() {
-/*
-    create report file name (expname_version.md)
-      - need to replace whitespace with underscores
-      - need to replace periods with dashes
+    // create report file name (expname_version.md)
+    //   - need to replace whitespace with underscores
+    //   - need to replace periods with dashes
+    std::string exp_name = tome->get_element_as<std::string>("experiment_name");
+    std::replace(exp_name.begin(), exp_name.end(), ' ', '_');
 
-    create path to report file
-      - default to tome root
 
-    write tome.lua information
-      - title: experiment name
-      - description: experiment description
-      - database file: db path
-      - global params: n reals, par val tol
+    std::string exp_ver = tome->get_element_as<std::string>("experiment_version");
+    std::replace(exp_ver.begin(), exp_ver.end(), '.', '-');
 
-    write parameters.lua information
-      - step params
-      - copy params
-      - const params
+    std::string report_filename = exp_name + "_v" + exp_ver + ".md";
+    fs::path report_path = tome->get_path("tome_rt") / fs::path(report_filename);
 
-    write metrics.lua information
-*/
+    std::ofstream report(report_path);
+
+    // write tome.lua information
+    //   - title: experiment name
+    //   - description: experiment description
+    //   - database file: db path
+    //   - global params: n reals, par val tol
+    report << "# " << tome->get_element_as<std::string>("experiment_name") << '\n'
+           << "### Version: " << tome->get_element_as<std::string>("experiment_version") << '\n'
+           << "## Description:\n" << tome->get_element_as<std::string>("experiment_description") << '\n'
+           << '\n'
+           << "## Global parameters:\n"
+           << '\n'
+           << "- Number of realizations per particle: " << tome->get_element_as<double>("n_realizations") << '\n'
+           << "- Parameter value tolerance: " << tome->get_element_as<double>("par_value_tolerance") << '\n'
+           << '\n';
+
+    // write parameters.lua information
+    //   - step params
+    //   - copy params
+    //   - const params
+    std::map<std::string, std::vector<std::string>> par_names;
+    const auto& par_table = tome->get_config_params().at("parameters").as<sol::table>();
+    for (const auto& [key, p] : par_table) {
+        const auto fullname = key.as<std::string>();
+        const auto flag     = p.as<sol::table>().get<std::string>("flag");
+        par_names[flag].push_back(fullname);
+    }
+
+    report << "## Step parameters:\n"
+           << '\n'
+           << "Name | Values\n"
+           << "--- | ---\n";
+    for (const auto& name : par_names.at("step")) {
+        const auto p = par_table.get<sol::table>(name);
+        auto defined_vals = p.get<sol::optional<std::vector<double>>>("values");
+        std::stringstream val_text;
+        if (defined_vals) {
+            for (const double& v : defined_vals.value()) {
+                  val_text << v << ",";
+            }
+        } else {
+            const auto start = p.get<double>("lower");
+            const auto end   = p.get<double>("upper");
+            const auto step  = p.get<double>("step");
+
+            val_text << start << " to " << end << ", (step: " << step << ")";
+        }
+        report << name << " | " << val_text.str() << '\n';
+    }
+    report << '\n';
+
+    report << "## Const parameters:\n"
+           << '\n'
+           << "Name | Value\n"
+           << "--- | ---\n";
+    for (const auto& name : par_names.at("const")) {
+        const auto p = par_table.get<sol::table>(name);
+        const auto val = p.get<double>("value");
+        report << name << " | " << val << '\n';
+    }
+    report << '\n';
+
+    report << "## Copy parameters:\n"
+           << '\n'
+           << "Name | Copies\n"
+           << "--- | ---\n";
+    for (const auto& name : par_names.at("copy")) {
+        const auto p = par_table.get<sol::table>(name);
+        const auto who = p.get<std::string>("who");
+        report << name << " | " << who << '\n';
+    }
+    report << '\n';
+    report.close();
+
+    // write metrics.lua information
 }
 
 /**
