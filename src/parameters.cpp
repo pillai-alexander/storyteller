@@ -283,6 +283,37 @@ StrainType Parameters::sample_strain() const {
     return (StrainType) idx;
 }
 
+std::vector<StrainType> Parameters::daily_strain_sample() const {
+    // multinomial sample of strains weighted by their exposure probability
+    std::vector<StrainType> categories = {NON_INFLUENZA, INFLUENZA, NUM_STRAIN_TYPES};
+    std::vector<unsigned int> sample(categories.size(), 0);
+    gsl_ran_multinomial(
+        rng->get_rng(INFECTION),
+        categories.size(),
+        get("pop_size"),
+        strain_probs.data(),
+        sample.data()
+    );
+
+    // convert multinomial sample into a randomly shuffled vector of strains
+    std::vector<StrainType> sampled_strains;
+    sampled_strains.reserve(get("pop_size"));
+    for (size_t i = 0; i < categories.size(); ++i) {
+        const auto strain = categories[i];
+        const auto count  = sample[i];
+        sampled_strains.insert(sampled_strains.begin(), count, strain);
+    }
+
+    gsl_ran_shuffle(
+        rng->get_rng(INFECTION),
+        sampled_strains.data(),
+        sampled_strains.size(),
+        sizeof(StrainType)
+    );
+
+    return sampled_strains;
+}
+
 bool Parameters::are_valid() const {
     std::vector<bool> rets;
     for (const auto& [fullname, p] : params) {
