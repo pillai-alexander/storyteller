@@ -159,5 +159,5 @@ void Simulator::write_metrics_csv() {
     }
     file.close();
 
-    std::cerr << "csv written... ";
+    std::cerr << "csv written...\n";
 }
