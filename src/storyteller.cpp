@@ -306,7 +306,7 @@ int Storyteller::batch_simulation() {
         }
 
         if (simulation_flags.at("hpc_mode")) {
-            batch_dbs[i] = std::move(db_handler);
+            jobs[i].end();
         } else {
             db_handler->end_job(simulation_serial);
         }
@@ -315,46 +315,37 @@ int Storyteller::batch_simulation() {
     }
 
     if (simulation_flags.at("hpc_mode")) {
-        for (size_t i = 0; i < batch_size; ++i) {
-            batch_dbs[i]->end_job(simulation_serial--);
-        }
+        db_handler = std::make_unique<DatabaseHandler>(this);
+        db_handler->end_jobs(jobs);
     }
 
     return 0;
 }
 
-/*
-void Storyteller::init_hpc_batch() {
-    // vector<db handlers>
-    // vector<rng handlers>
-    // vector<params> = read all param sets in batch
-)
-
-void Storyteller::init_hpc_simulation() {
-    // get rng handler and param set for this serial
-    // init simulator
-}
-*/
 
 void Storyteller::init_hpc_batch() {
-    batch_dbs.resize(batch_size);
-    batch_rngs.resize(batch_size);
-    batch_pars.resize(batch_size);
-    for (unsigned int i = 0; i < batch_size; ++i) {
-        batch_dbs[i] = std::make_unique<DatabaseHandler>(this);
-        batch_dbs[i]->start_job(simulation_serial + i);
+    db_handler = std::make_unique<DatabaseHandler>(this);
+    const auto serial_start = simulation_serial;
+    const auto serial_end = serial_start + (batch_size - 1);
 
-        batch_rngs[i] = std::make_unique<RngHandler>();
-
-        batch_pars[i] = std::make_unique<Parameters>(batch_rngs[i].get(), batch_dbs[i].get(), tome.get());
-        batch_pars[i]->read_parameters_for_serial(simulation_serial + i);
+    jobs.clear();;
+    for (size_t serial = serial_start; serial <= serial_end; ++serial) {
+        jobs.emplace_back(serial);
     }
-}
 
-void Storyteller::init_hpc_simulation(const size_t index) {
-    db_handler = std::move(batch_dbs[index]);
-    rng_handler = std::move(batch_rngs[index]);
-    parameters = std::move(batch_pars[index]);
+    std::vector<std::string> par_names({"seed"});
+    sol::optional<sol::table> pars = tome->get_config_params().at("parameters").as<sol::table>();
+    if (pars) {
+        for (const auto& [key, obj] : pars.value()) {
+            auto fullname   = key.as<std::string>();
+            auto attributes = obj.as<sol::table>();
+            auto nickname   = attributes.get_or<std::string>("nickname", fullname);
+
+            par_names.push_back(nickname);
+        }
+    }
+
+    batch_parsets = db_handler->read_batch_parameters(serial_start, serial_end, par_names);
 }
 
 /**
@@ -364,12 +355,15 @@ void Storyteller::init_hpc_simulation(const size_t index) {
  *          and #rng_handler objects.
  */
 void Storyteller::init_simulation(const size_t index) {
+    rng_handler = std::make_unique<RngHandler>();
     if (simulation_flags.at("hpc_mode")) {
-        init_hpc_simulation(index);
+        jobs[index].start();
+        parameters = std::make_unique<Parameters>(rng_handler.get(), db_handler.get(), tome.get());
+        parameters->read_parameters_from_batch(simulation_serial, batch_parsets[index]);
+        std::cerr << simulation_serial << " init ... ";
     } else {
         db_handler = std::make_unique<DatabaseHandler>(this);
         db_handler->start_job(simulation_serial);
-        rng_handler = std::make_unique<RngHandler>();
         parameters = std::make_unique<Parameters>(rng_handler.get(), db_handler.get(), tome.get());
         parameters->read_parameters_for_serial(simulation_serial);
     }
