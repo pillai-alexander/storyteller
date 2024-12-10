@@ -154,7 +154,7 @@ int Storyteller::run() {
             return batch_simulation();
         }
         case GENERATE_SYNTHETIC_POPULATION: {
-            init_simulation();
+            init_simulation(0);
             auto ret = generate_synthpop();
             reset();
             return ret;
@@ -294,8 +294,9 @@ int Storyteller::generate_exp_report() {
  *          each simulation in the batch).
  */
 int Storyteller::batch_simulation() {
-    for (size_t i = 1; i <= batch_size; ++i) {
-        init_simulation();
+    if (simulation_flags.at("hpc_mode")) { init_hpc_batch(); }
+    for (size_t i = 0; i < batch_size; ++i) {
+        init_simulation(i);
         simulator->simulate();
         simulator->results();
 
@@ -304,11 +305,56 @@ int Storyteller::batch_simulation() {
             draw_simvis();
         }
 
-        db_handler->end_job(simulation_serial);
+        if (simulation_flags.at("hpc_mode")) {
+            batch_dbs[i] = std::move(db_handler);
+        } else {
+            db_handler->end_job(simulation_serial);
+        }
         reset();
         ++simulation_serial;
     }
+
+    if (simulation_flags.at("hpc_mode")) {
+        for (size_t i = 0; i < batch_size; ++i) {
+            batch_dbs[i]->end_job(simulation_serial--);
+        }
+    }
+
     return 0;
+}
+
+/*
+void Storyteller::init_hpc_batch() {
+    // vector<db handlers>
+    // vector<rng handlers>
+    // vector<params> = read all param sets in batch
+)
+
+void Storyteller::init_hpc_simulation() {
+    // get rng handler and param set for this serial
+    // init simulator
+}
+*/
+
+void Storyteller::init_hpc_batch() {
+    batch_dbs.resize(batch_size);
+    batch_rngs.resize(batch_size);
+    batch_pars.resize(batch_size);
+    for (unsigned int i = 0; i < batch_size; ++i) {
+        batch_dbs[i] = std::make_unique<DatabaseHandler>(this);
+        batch_dbs[i]->start_job(simulation_serial + i);
+
+        batch_rngs[i] = std::make_unique<RngHandler>();
+
+        batch_pars[i] = std::make_unique<Parameters>(batch_rngs[i].get(), batch_dbs[i].get(), tome.get());
+        batch_pars[i]->read_parameters_for_serial(simulation_serial + i);
+    }
+}
+
+void Storyteller::init_hpc_simulation(const size_t index) {
+    db_handler = std::move(batch_dbs[index]);
+    rng_handler = std::move(batch_rngs[index]);
+    parameters = std::move(batch_pars[index]);
 }
 
 /**
@@ -317,21 +363,25 @@ int Storyteller::batch_simulation() {
  *          experiment database and used to construct the #db_handler, #parameters
  *          and #rng_handler objects.
  */
-void Storyteller::init_simulation() {
+void Storyteller::init_simulation(const size_t index) {
+    if (simulation_flags.at("hpc_mode")) {
+        init_hpc_simulation(index);
+    } else {
         db_handler = std::make_unique<DatabaseHandler>(this);
         db_handler->start_job(simulation_serial);
         rng_handler = std::make_unique<RngHandler>();
         parameters = std::make_unique<Parameters>(rng_handler.get(), db_handler.get(), tome.get());
         parameters->read_parameters_for_serial(simulation_serial);
+    }
 
-        if (parameters->are_valid()) {
-            simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
-            simulator->set_flags(simulation_flags);
-            simulator->init();
-        } else {
-            std::cerr << "ERROR: invalid parameters\n";
-            exit(-1);
-        }
+    if (parameters->are_valid()) {
+        simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
+        simulator->set_flags(simulation_flags);
+        simulator->init();
+    } else {
+        std::cerr << "ERROR: invalid parameters\n";
+        exit(-1);
+    }
 }
 
 int Storyteller::construct_database() {

@@ -118,10 +118,14 @@ class Storyteller {
      */
     void init_batch();
 
+    void init_hpc_batch();
+
     /**
      * @brief Initialize Storteller for running a single simulation job.
      */
-    void init_simulation();
+    void init_simulation(const size_t index);
+
+    void init_hpc_simulation(const size_t index);
 
     /**
      * @brief Constructs a new experiment database given the user-provided
@@ -164,6 +168,10 @@ class Storyteller {
     std::unique_ptr<RngHandler> rng_handler;        ///< Handles all pseudo-random number generation
     std::unique_ptr<Parameters> parameters;         ///< Stores all necessary simulation parameters
     std::unique_ptr<sol::state> lua_vm;
+
+    std::vector<std::unique_ptr<DatabaseHandler>> batch_dbs;
+    std::vector<std::unique_ptr<RngHandler>> batch_rngs;
+    std::vector<std::unique_ptr<Parameters>> batch_pars;
 
     OperationType operation_to_perform;
 
