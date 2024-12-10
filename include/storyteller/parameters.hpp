@@ -122,6 +122,7 @@ class Parameters {
     std::vector<std::string> pars_to_read;
 
     void calc_strain_probs();
+    void slurp_params(std::map<std::string, double> pars_from_db);
 
     double sample_discrete_susceptibility(const bool vaccinated, const StrainType strain) const;
     double sample_continuous_susceptibility(const bool vaccinated, const StrainType strain) const;
