@@ -67,10 +67,12 @@ class DatabaseHandler {
     bool table_exists(std::string table);
 
     std::map<std::string, double> read_parameters(unsigned int serial, const std::vector<std::string>& pars);
+    std::vector<std::map<std::string, double>> read_batch_parameters(unsigned int serial_start, unsigned int serial_end, const std::vector<std::string>& pars);
     void write_metrics(const Ledger* ledger, const Parameters* par);
 
     void start_job(unsigned int serial);
     void end_job(unsigned int serial);
+    void end_jobs(std::vector<ParticleJob>& jobs);
 
     void drop_table_if_exists(std::string table);
     void import_metrics_from(std::string file_path);

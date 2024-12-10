@@ -153,6 +153,30 @@ void DatabaseHandler::end_job(unsigned int serial) {
     }
 }
 
+void DatabaseHandler::end_jobs(std::vector<ParticleJob>& jobs) {
+    for (size_t i = 0; i < n_transaction_attempts; ++i) {
+        try {
+            SQLite::Database db(database_path, SQLite::OPEN_READWRITE);
+            SQLite::Transaction transaction(db);
+            for (auto& job : jobs) {
+                db.exec(job.update());
+            }
+            transaction.commit();
+
+            if (owner->get_flag("verbose")) {
+                std::cerr << "End " << jobs.size() << " jobs succeeded." << '\n';
+            } else {
+                std::cerr << jobs.size() << " jobs ended\n";
+            }
+            break;
+        } catch (std::exception& e) {
+            std::cerr << "End jobs failed:" << '\n';
+            std::cerr << "\tSQLite exception: " << e.what() << '\n';
+            std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
+        }
+    }
+}
+
 std::map<std::string, double> DatabaseHandler::read_parameters(unsigned int serial, const std::vector<std::string>& pars) {
     std::map<std::string, double> ret;
     for (size_t i = 0; i < n_transaction_attempts; ++i) {
@@ -176,6 +200,46 @@ std::map<std::string, double> DatabaseHandler::read_parameters(unsigned int seri
                 }
             } else {
                 std::cerr << "params read... ";
+            }
+            break;
+        } catch (std::exception& e) {
+            std::cerr << "Read attempt " << i << " failed:" << '\n';
+            std::cerr << "\tSQLite exception: " << e.what() << '\n';
+            std::this_thread::sleep_for(milliseconds(ms_delay_between_attempts));
+        }
+    }
+    return ret;
+}
+
+
+
+std::vector<std::map<std::string, double>> DatabaseHandler::read_batch_parameters(unsigned int serial_start, unsigned int serial_end, const std::vector<std::string>& pars) {
+    std::vector<std::map<std::string, double>> ret((serial_end - serial_start) + 1);
+    size_t index = 0;
+    for (size_t i = 0; i < n_transaction_attempts; ++i) {
+        ret = std::vector<std::map<std::string, double>>((serial_end - serial_start) + 1);
+        index = 0;
+        try {
+            SQLite::Database db(database_path, SQLite::OPEN_READONLY);
+            SQLite::Transaction transaction(db);
+            SQLite::Statement query(db, "SELECT * FROM par WHERE serial >= ? AND serial <= ?");
+            query.bind(1, serial_start);
+            query.bind(2, serial_end);
+            while (query.executeStep()) {
+                for (auto& nickname : pars) {
+                    ret[index][nickname] = query.getColumn(nickname.c_str());
+                }
+                index++;
+            }
+            transaction.commit();
+
+            if (owner->get_flag("verbose")) {
+                std::cerr << "Read attempt " << i << " succeeded." << '\n';
+                if (owner->get_flag("very_verbose")) {
+                    std::cerr << ret.size() << " rows read\n";
+                }
+            } else {
+                std::cerr << ret.size() << " param sets read...\n";
             }
             break;
         } catch (std::exception& e) {
