@@ -91,6 +91,7 @@ class Parameters {
     ~Parameters() = default;
 
     void read_parameters_for_serial(size_t serial);
+    void read_parameters_from_batch(size_t serial, std::map<std::string, double> pars_from_db);
 
     bool insert(const std::string key, const sol::table& attributes);
     double get(std::string key) const;

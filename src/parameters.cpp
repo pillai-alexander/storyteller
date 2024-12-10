@@ -84,6 +84,20 @@ void Parameters::slurp_params(std::map<std::string, double> pars_from_db) {
     }
 }
 
+void Parameters::read_parameters_for_serial(size_t serial) {
+    simulation_serial = serial;
+    auto pars_from_db = db->read_parameters(serial, pars_to_read);
+
+    slurp_params(pars_from_db);
+
+    calc_strain_probs();
+}
+
+void Parameters::read_parameters_from_batch(size_t serial, std::map<std::string, double> pars_from_db) {
+    simulation_serial = serial;
+
+    slurp_params(pars_from_db);
+
     calc_strain_probs();
 }
 
