@@ -7,7 +7,7 @@ Tome["experiment_description"] = "This is the default example for the Storytelle
 
 -- USER-DEFINED PATHS
 -- if paths are relative, they wil be treated as relative to the tome file
--- Tome["database_path"] = "default.sqlite"
+Tome["database_path"] = "default.sqlite"
 Tome["output_dir_path"] = "out"
 
 -- GLOBAL PARAMETERS

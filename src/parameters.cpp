@@ -66,10 +66,7 @@ Parameters::Parameters(RngHandler* rngh, DatabaseHandler* dbh, const Tome* t)
     }
 }
 
-void Parameters::read_parameters_for_serial(size_t serial) {
-    simulation_serial = serial;
-    auto pars_from_db = db->read_parameters(serial, pars_to_read);
-
+void Parameters::slurp_params(std::map<std::string, double> pars_from_db) {
     if (pars_to_read.size() == pars_from_db.size()) {
         for (const auto& nickname : pars_to_read) {
             if (nickname == "seed") {
@@ -85,6 +82,21 @@ void Parameters::read_parameters_for_serial(size_t serial) {
                   << ") does not match the number expected (" << pars_to_read.size() << ").\n";
         exit(-1);
     }
+}
+
+void Parameters::read_parameters_for_serial(size_t serial) {
+    simulation_serial = serial;
+    auto pars_from_db = db->read_parameters(serial, pars_to_read);
+
+    slurp_params(pars_from_db);
+
+    calc_strain_probs();
+}
+
+void Parameters::read_parameters_from_batch(size_t serial, std::map<std::string, double> pars_from_db) {
+    simulation_serial = serial;
+
+    slurp_params(pars_from_db);
 
     calc_strain_probs();
 }

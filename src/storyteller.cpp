@@ -154,7 +154,7 @@ int Storyteller::run() {
             return batch_simulation();
         }
         case GENERATE_SYNTHETIC_POPULATION: {
-            init_simulation();
+            init_simulation(0);
             auto ret = generate_synthpop();
             reset();
             return ret;
@@ -294,8 +294,9 @@ int Storyteller::generate_exp_report() {
  *          each simulation in the batch).
  */
 int Storyteller::batch_simulation() {
-    for (size_t i = 1; i <= batch_size; ++i) {
-        init_simulation();
+    if (simulation_flags.at("hpc_mode")) { init_hpc_batch(); }
+    for (size_t i = 0; i < batch_size; ++i) {
+        init_simulation(i);
         simulator->simulate();
         simulator->results();
 
@@ -304,11 +305,47 @@ int Storyteller::batch_simulation() {
             draw_simvis();
         }
 
-        db_handler->end_job(simulation_serial);
+        if (simulation_flags.at("hpc_mode")) {
+            jobs[i].end();
+        } else {
+            db_handler->end_job(simulation_serial);
+        }
         reset();
         ++simulation_serial;
     }
+
+    if (simulation_flags.at("hpc_mode")) {
+        db_handler = std::make_unique<DatabaseHandler>(this);
+        db_handler->end_jobs(jobs);
+    }
+
     return 0;
+}
+
+
+void Storyteller::init_hpc_batch() {
+    db_handler = std::make_unique<DatabaseHandler>(this);
+    const auto serial_start = simulation_serial;
+    const auto serial_end = serial_start + (batch_size - 1);
+
+    jobs.clear();;
+    for (size_t serial = serial_start; serial <= serial_end; ++serial) {
+        jobs.emplace_back(serial);
+    }
+
+    std::vector<std::string> par_names({"seed"});
+    sol::optional<sol::table> pars = tome->get_config_params().at("parameters").as<sol::table>();
+    if (pars) {
+        for (const auto& [key, obj] : pars.value()) {
+            auto fullname   = key.as<std::string>();
+            auto attributes = obj.as<sol::table>();
+            auto nickname   = attributes.get_or<std::string>("nickname", fullname);
+
+            par_names.push_back(nickname);
+        }
+    }
+
+    batch_parsets = db_handler->read_batch_parameters(serial_start, serial_end, par_names);
 }
 
 /**
@@ -317,21 +354,28 @@ int Storyteller::batch_simulation() {
  *          experiment database and used to construct the #db_handler, #parameters
  *          and #rng_handler objects.
  */
-void Storyteller::init_simulation() {
+void Storyteller::init_simulation(const size_t index) {
+    rng_handler = std::make_unique<RngHandler>();
+    if (simulation_flags.at("hpc_mode")) {
+        jobs[index].start();
+        parameters = std::make_unique<Parameters>(rng_handler.get(), db_handler.get(), tome.get());
+        parameters->read_parameters_from_batch(simulation_serial, batch_parsets[index]);
+        std::cerr << simulation_serial << " init ... ";
+    } else {
         db_handler = std::make_unique<DatabaseHandler>(this);
         db_handler->start_job(simulation_serial);
-        rng_handler = std::make_unique<RngHandler>();
         parameters = std::make_unique<Parameters>(rng_handler.get(), db_handler.get(), tome.get());
         parameters->read_parameters_for_serial(simulation_serial);
+    }
 
-        if (parameters->are_valid()) {
-            simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
-            simulator->set_flags(simulation_flags);
-            simulator->init();
-        } else {
-            std::cerr << "ERROR: invalid parameters\n";
-            exit(-1);
-        }
+    if (parameters->are_valid()) {
+        simulator = std::make_unique<Simulator>(parameters.get(), db_handler.get(), rng_handler.get());
+        simulator->set_flags(simulation_flags);
+        simulator->init();
+    } else {
+        std::cerr << "ERROR: invalid parameters\n";
+        exit(-1);
+    }
 }
 
 int Storyteller::construct_database() {

@@ -91,6 +91,7 @@ class Parameters {
     ~Parameters() = default;
 
     void read_parameters_for_serial(size_t serial);
+    void read_parameters_from_batch(size_t serial, std::map<std::string, double> pars_from_db);
 
     bool insert(const std::string key, const sol::table& attributes);
     double get(std::string key) const;
@@ -122,6 +123,7 @@ class Parameters {
     std::vector<std::string> pars_to_read;
 
     void calc_strain_probs();
+    void slurp_params(std::map<std::string, double> pars_from_db);
 
     double sample_discrete_susceptibility(const bool vaccinated, const StrainType strain) const;
     double sample_continuous_susceptibility(const bool vaccinated, const StrainType strain) const;
