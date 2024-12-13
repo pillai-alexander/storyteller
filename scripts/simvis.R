@@ -101,7 +101,7 @@ tnd_ve <- ggplot(sim_dat) +
   aes(x = time) +
   geom_line(aes(y = tnd_ve_est, color = "ve")) +
   labs(x = "time", y = "TND VE est.") +
-  ylim(0, 1) +
+  ylim(NA, 1) +
   shared_attrs +
   theme(legend.position = "none")
 
