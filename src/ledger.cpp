@@ -31,7 +31,7 @@ Ledger::Ledger(const Parameters* parameters) {
     vax_incidence = std::vector<size_t>(sim_duration, 0);
 
     linelist_header = "inf_id,inf_time,inf_strain,inf_sympts,inf_care,p_id,vax_status,baseline_suscep,vax_effect";
-    simvis_header = "time,vaxd_flu_infs,vaxd_flu_mais,vaxd_nonflu_infs,vaxd_nonflu_mais,unvaxd_flu_infs,unvaxd_flu_mais,unvaxd_nonflu_infs,unvaxd_nonflu_mais,tnd_ve_est";
+    simvis_header = "time,pr_flu_exposure,pr_nonflu_exposure,vaxd_flu_infs,vaxd_flu_mais,vaxd_nonflu_infs,vaxd_nonflu_mais,unvaxd_flu_infs,unvaxd_flu_mais,unvaxd_nonflu_infs,unvaxd_nonflu_mais,tnd_ve_est";
 }
 
 Ledger::~Ledger() {}
@@ -142,6 +142,8 @@ void Ledger::generate_simvis_csv(std::string filepath) {
     file << simvis_header << '\n';
     for (size_t t = 0; t < par->get("sim_duration"); ++t) {
         file << t << ','
+             << par->strain_probs[t][INFLUENZA] << ','
+             << par->strain_probs[t][NON_INFLUENZA] << ','
              << inf_incidence[VACCINATED][INFLUENZA][t] << ','
              << mai_incidence[VACCINATED][INFLUENZA][t] << ','
              << inf_incidence[VACCINATED][NON_INFLUENZA][t] << ','
