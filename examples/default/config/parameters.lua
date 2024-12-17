@@ -349,6 +349,30 @@ Parameters["parameters"]["influenza_vaccine_effect_distribution_variance"] = {
     end
 }
 
+Parameters["parameters"]["influenza_vaccine_waning_protection"] = {
+  nickname = "flu_vax_effect_wanes",
+  description = "",
+  flag  = "const",
+  datatype = "double",
+  value = 0.0,
+  validate = function(v)
+      local ret = (v == 0.0)
+      return ret
+  end
+}
+
+Parameters["parameters"]["influenza_vaccine_waning_rate"] = {
+  nickname = "flu_vax_effect_wane_rate",
+  description = "",
+  flag  = "const",
+  datatype = "double",
+  value = (0.09/28),
+  validate = function(v)
+      local ret = (v >= 0)
+      return ret
+  end
+}
+
 -- NONINFLUENZA VACCINE PARAMETERS
 Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_is_continuous"] = {
     nickname = "nonflu_vax_effect_is_contin",
