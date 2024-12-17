@@ -17,6 +17,7 @@
 namespace constants {
     unsigned int ZERO = 0;
     unsigned int ONE = 1;
+    double PI = 3.14159265358979323846;
 }
 
 namespace util {

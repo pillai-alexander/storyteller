@@ -459,3 +459,40 @@ Parameters["parameters"]["probability_of_daily_noninfluenza_exposure"] = {
         return ret
     end
 }
+
+-- SEASONAL FORCING PARAMETERS
+Parameters["parameters"]["seasonal_forcing_amplitude_multiplier"] = {
+  nickname = "seasonal_amplitude_mult",
+  description = "",
+  flag  = "const",
+  datatype = "double",
+  value = 0.0,
+  validate = function(v)
+      local ret = (v == 0.0)
+      return ret
+  end
+}
+
+Parameters["parameters"]["seasonal_forcing_period"] = {
+  nickname = "seasonal_period",
+  description = "",
+  flag  = "const",
+  datatype = "integer",
+  value = 200,
+  validate = function(v)
+      local ret = (v == 200)
+      return ret
+  end
+}
+
+Parameters["parameters"]["seasonal_forcing_phase_shift"] = {
+  nickname = "seasonal_shift",
+  description = "",
+  flag  = "const",
+  datatype = "integer",
+  value = 100,
+  validate = function(v)
+      local ret = (v == 100)
+      return ret
+  end
+}

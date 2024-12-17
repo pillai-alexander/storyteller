@@ -18,6 +18,7 @@
 namespace constants {
     extern unsigned int ZERO;
     extern unsigned int ONE;
+    extern double PI;
 }
 
 /**

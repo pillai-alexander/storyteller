@@ -98,14 +98,14 @@ class Parameters {
 
     std::vector<double> sample_susceptibility(const Person* p) const;
     std::vector<double> sample_vaccine_effect() const;
-    StrainType sample_strain() const;
-    std::vector<StrainType> daily_strain_sample() const;
+    StrainType sample_strain(const size_t time) const;
+    std::vector<StrainType> daily_strain_sample(const size_t time) const;
 
     bool are_valid() const;
 
     // void update_time_varying_parameters();
 
-    std::vector<double> strain_probs;
+    std::vector<std::vector<double>> strain_probs; //[time][strain]
 
     std::string linelist_file_path;
     std::string simvis_file_path;
