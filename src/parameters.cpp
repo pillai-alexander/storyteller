@@ -116,11 +116,25 @@ double Parameters::get(std::string key) const {
 }
 
 void Parameters::calc_strain_probs() {
-    strain_probs = std::vector<double>(NUM_STRAIN_TYPES + 1, 0.0);
+    const auto sim_length = get("sim_duration");
+    strain_probs = std::vector<std::vector<double>>(sim_length, std::vector<double>(NUM_STRAIN_TYPES + 1, 0.0));
 
-    strain_probs[NON_INFLUENZA] = get("pr_nonflu_exposure");
-    strain_probs[INFLUENZA]     = get("pr_flu_exposure");
-    strain_probs[NUM_STRAIN_TYPES] = 1.0 - (strain_probs[NON_INFLUENZA] + strain_probs[INFLUENZA]);
+    const auto mean_pr_nonflu_exposure = get("pr_nonflu_exposure");
+    const auto mean_pr_flu_exposure    = get("pr_flu_exposure");
+
+    const auto amplitude_mult = get("seasonal_amplitude_mult");
+    const auto period         = (2 * constants::PI) / get("seasonal_period");
+    const auto shift          = get("seasonal_shift");
+
+    for (size_t i = 0; i < sim_length; ++i) {
+        const auto seasonal_forcing   = 1 + (amplitude_mult * std::cos(period * (i + shift)));
+        const auto pr_nonflu_exposure = mean_pr_nonflu_exposure * seasonal_forcing;
+        const auto pr_flu_exposure    = mean_pr_flu_exposure * seasonal_forcing;
+
+        strain_probs[i][NON_INFLUENZA]    = pr_nonflu_exposure;
+        strain_probs[i][INFLUENZA]        = pr_flu_exposure;
+        strain_probs[i][NUM_STRAIN_TYPES] = 1 - (pr_nonflu_exposure + pr_flu_exposure);
+    }
 }
 
 double Parameters::sample_discrete_susceptibility(const bool vaccinated, const StrainType strain) const {
@@ -280,14 +294,14 @@ std::vector<double> Parameters::sample_vaccine_effect() const {
     return vax_effects;
 }
 
-StrainType Parameters::sample_strain() const {
+StrainType Parameters::sample_strain(const size_t time) const {
     const size_t num_categories = NUM_STRAIN_TYPES + 1;
     std::vector<unsigned int> sample(num_categories, 0);
     gsl_ran_multinomial(
         rng->get_rng(INFECTION),
         num_categories,
         constants::ONE,
-        strain_probs.data(),
+        strain_probs[time].data(),
         sample.data()
     );
 
@@ -295,7 +309,7 @@ StrainType Parameters::sample_strain() const {
     return (StrainType) idx;
 }
 
-std::vector<StrainType> Parameters::daily_strain_sample() const {
+std::vector<StrainType> Parameters::daily_strain_sample(const size_t time) const {
     // multinomial sample of strains weighted by their exposure probability
     std::vector<StrainType> categories = {NON_INFLUENZA, INFLUENZA, NUM_STRAIN_TYPES};
     std::vector<unsigned int> sample(categories.size(), 0);
@@ -303,7 +317,7 @@ std::vector<StrainType> Parameters::daily_strain_sample() const {
         rng->get_rng(INFECTION),
         categories.size(),
         get("pop_size"),
-        strain_probs.data(),
+        strain_probs[time].data(),
         sample.data()
     );
 
