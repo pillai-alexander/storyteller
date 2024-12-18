@@ -212,6 +212,56 @@ Parameters["parameters"]["unvaccinated_influenza_susceptibility_baseline"] = {
     end
 }
 
+-- INFLUENZA INFECTION PARAMETERS
+Parameters["parameters"]["influenza_infection_refactory_period_length"] = {
+  nickname = "flu_inf_refact_len",
+  description = "",
+  flag  = "const",
+  datatype = "integer",
+  value = 0,
+  validate = function(v)
+      local ret = (v >= 0)
+      return ret
+  end
+}
+
+Parameters["parameters"]["influenza_infection_generates_immunity"] = {
+  nickname = "flu_inf_gen_immunity",
+  description = "",
+  flag  = "const",
+  datatype = "integer",
+  value = 1,
+  validate = function(v)
+      local ret = (v == 0) or (v == 1)
+      return ret
+  end
+}
+
+Parameters["parameters"]["influenza_infection_immunity_wanes"] = {
+  nickname = "flu_inf_immunity_wanes",
+  description = "",
+  flag  = "const",
+  datatype = "integer",
+  value = 0,
+  validate = function(v)
+      local ret = (v == 0) or (v == 1)
+      return ret
+  end
+}
+
+Parameters["parameters"]["influenza_infection_immunity_half_life"] = {
+  nickname = "flu_inf_immunity_half_life",
+  description = "",
+  flag  = "const",
+  datatype = "integer",
+  value = 1500,
+  values = {15, 1500},
+  validate = function(v)
+      local ret = (v > 0)
+      return ret
+  end
+}
+
 -- VACCINATED NONINFLUENZA SUSCEPTIBILITY PARAMETERS
 Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_is_continuous"] = {
     nickname = "vaxd_nonflu_suscep_is_contin",
@@ -308,6 +358,55 @@ Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_baseline"] = 
         local ret = (v == 1.0)
         return ret
     end
+}
+
+-- NONINFLUENZA INFECTION PARAMETERS
+Parameters["parameters"]["influenza_noninfection_refactory_period_length"] = {
+  nickname = "nonflu_inf_refact_len",
+  description = "",
+  flag  = "copy",
+  datatype = "integer",
+  who = "flu_inf_refact_len",
+  validate = function(v)
+      local ret = (v >= 0)
+      return ret
+  end
+}
+
+Parameters["parameters"]["noninfluenza_infection_generates_immunity"] = {
+  nickname = "nonflu_inf_gen_immunity",
+  description = "",
+  flag  = "const",
+  datatype = "integer",
+  value = 0,
+  validate = function(v)
+      local ret = (v == 0) or (v == 1)
+      return ret
+  end
+}
+
+Parameters["parameters"]["noninfluenza_infection_immunity_wanes"] = {
+  nickname = "nonflu_inf_immunity_wanes",
+  description = "",
+  flag  = "const",
+  datatype = "integer",
+  value = 0,
+  validate = function(v)
+      local ret = (v == 0) or (v == 1)
+      return ret
+  end
+}
+
+Parameters["parameters"]["noninfluenza_infection_immunity_half_life"] = {
+  nickname = "nonflu_inf_immunity_half_life",
+  description = "",
+  flag  = "const",
+  datatype = "integer",
+  value = 14,
+  validate = function(v)
+      local ret = (v > 0)
+      return ret
+  end
 }
 
 -- INFLUENZA VACCINE PARAMETERS

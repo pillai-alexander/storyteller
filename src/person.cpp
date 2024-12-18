@@ -50,6 +50,45 @@ size_t Person::get_id() const { return id; }
 double Person::get_susceptibility(StrainType strain) const { return susceptibility[strain]; }
 void Person::set_susceptibility(StrainType strain, double s) { susceptibility[strain] = s; }
 
+double Person::get_current_susceptibility(StrainType strain, size_t time) const {
+    bool immunity_generated = (strain == INFLUENZA)
+                                  ? par->get("flu_inf_gen_immunity")
+                                  : par->get("nonflu_inf_gen_immunity");
+
+    bool immunity_wanes = (strain == INFLUENZA)
+                              ? par->get("flu_inf_immunity_wanes")
+                              : par->get("nonflu_inf_immunity_wanes");
+
+    if (has_been_infected_with(strain)) {
+        if (immunity_generated and immunity_wanes) {
+            const auto half_life = (strain == INFLUENZA)
+                                       ? par->get("flu_inf_immunity_half_life")
+                                       : par->get("nonflu_inf_immunity_half_life");
+
+            const auto waning_rate = util::exp_decay_rate_from_half_life(half_life);
+
+            const auto refactory_period = (strain == INFLUENZA)
+                                              ? par->get("flu_inf_refact_len")
+                                              : par->get("nonflu_inf_refact_len");
+
+            // this starts waning only after the refactory period length
+            // during the refactory period, suscep will be negative though this
+            // wont matter because is_susceptible_to() is false during the refactory period
+            const auto time_since_last_inf = time - (most_recent_infection(strain)->get_infection_time() + refactory_period);
+
+            // 1 - exp flips the decay and will allow suscep to rise from zero to its original value
+            return susceptibility[strain] * (1 - util::exp_decay(waning_rate, time_since_last_inf));
+        } else {
+            // if immunity is generated and doesnt wane, the individual is perfectly protected forever (suscep = 0)
+            // otherwise, when no immunity is generated, they have constant susceptibility
+            return (immunity_generated) ? 0 : susceptibility[strain];
+        }
+    } else {
+        // when no immunity is generated, the individual has constant susceptibility
+        return susceptibility[strain];
+    }
+}
+
 double Person::get_vaccine_protection(StrainType strain) const { return vaccine_protection[strain]; }
 void Person::set_vaccine_protection(StrainType strain, double vp) { vaccine_protection[strain] = vp; }
 
@@ -66,8 +105,8 @@ const std::vector<std::unique_ptr<Infection>>& Person::get_infection_history() c
 
 Infection* Person::attempt_infection(StrainType strain, size_t time) {
     Infection* inf = nullptr;
-    if (is_susceptible_to(strain)) {
-        auto current_suscep = susceptibility[strain];
+    if (is_susceptible_to(strain, time)) {
+        auto current_suscep = get_current_susceptibility(strain, time);
         current_suscep *= is_vaccinated() ? 1 - get_remaining_vaccine_protection(strain, time) : 1;
 
         if (rng->draw_from_rng(INFECTION) < current_suscep) {
@@ -108,16 +147,27 @@ bool Person::has_been_infected_with(StrainType strain) const {
 
 bool Person::is_vaccinated() const { return vaccination_status == VACCINATED; }
 
-bool Person::is_susceptible_to(StrainType strain) const {
-    switch (strain) {
-        case INFLUENZA: {
-            return not has_been_infected_with(INFLUENZA);
+bool Person::is_susceptible_to(StrainType strain, size_t time) const {
+    // if within any infection refactory period, return false
+    const auto last_inf = most_recent_infection();
+    if (last_inf != nullptr) {
+        const auto time_since_last_inf = time - last_inf->get_infection_time();
+
+        double refactory_period = 0;
+        switch (last_inf->get_strain()) {
+            case INFLUENZA: { refactory_period = par->get("flu_inf_refact_len"); break; }
+            case NON_INFLUENZA: { refactory_period = par->get("nonflu_inf_refact_len"); break; }
+            default: { break; }
         }
-        case NON_INFLUENZA:
-            [[fallthrough]];
-        default:
-            return true;
+
+        if (time_since_last_inf < refactory_period) { return false; }
     }
+
+    // if current suscep <= 0, return false
+    if (get_current_susceptibility(strain, time) <= 0) { return false; }
+
+    // otherwise, return true
+    return true;
 }
 
 Infection* Person::most_recent_infection() const {

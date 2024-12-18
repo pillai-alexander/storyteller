@@ -50,6 +50,7 @@ class Person {
     size_t get_id() const;
 
     double get_susceptibility(StrainType strain) const;
+    double get_current_susceptibility(StrainType strain, size_t time) const;
     void set_susceptibility(StrainType strain, double s);
 
     double get_vaccine_protection(StrainType strain) const;
@@ -64,7 +65,7 @@ class Person {
     bool has_been_infected() const;
     bool has_been_infected_with(StrainType strain) const;
     bool is_vaccinated() const;
-    bool is_susceptible_to(StrainType strain) const;
+    bool is_susceptible_to(StrainType strain, size_t time) const;
 
     Infection* most_recent_infection() const;
     Infection* most_recent_infection(StrainType strain) const;
