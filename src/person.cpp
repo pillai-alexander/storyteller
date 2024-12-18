@@ -125,6 +125,17 @@ Infection* Person::most_recent_infection() const {
     return inf;
 }
 
+Infection* Person::most_recent_infection(StrainType strain) const {
+    auto itr = std::find_if(infection_history.crbegin(),
+                            infection_history.crend(),
+                            [strain](const std::unique_ptr<Infection>& i) { return i->get_strain() == strain; });
+
+    return (itr != infection_history.crend()) ? itr->get() : nullptr;
+}
+
+size_t Person::last_infection_time() const { return most_recent_infection()->get_infection_time(); }
+size_t Person::last_infection_strain() const { return most_recent_infection()->get_strain(); }
+
 std::ostream& operator<<(std::ostream& o, const Person& p) {
     return o << "Person ID: " << p.id << '\n'
       << "\tsusceptibility (flu, nonflu): " << p.susceptibility[INFLUENZA] << ' ' << p.susceptibility[NON_INFLUENZA] << '\n'

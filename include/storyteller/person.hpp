@@ -67,6 +67,9 @@ class Person {
     bool is_susceptible_to(StrainType strain) const;
 
     Infection* most_recent_infection() const;
+    Infection* most_recent_infection(StrainType strain) const;
+    size_t last_infection_time() const;
+    size_t last_infection_strain() const;
 
     friend std::ostream& operator<<(std::ostream& o , const Person& p);
 
