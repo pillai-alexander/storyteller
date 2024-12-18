@@ -10,6 +10,7 @@
 #include <memory>
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 
 #include <storyteller/person.hpp>
 #include <storyteller/simulator.hpp>
@@ -52,13 +53,22 @@ void Person::set_susceptibility(StrainType strain, double s) { susceptibility[st
 double Person::get_vaccine_protection(StrainType strain) const { return vaccine_protection[strain]; }
 void Person::set_vaccine_protection(StrainType strain, double vp) { vaccine_protection[strain] = vp; }
 
+double Person::get_remaining_vaccine_protection(StrainType strain, size_t time) const {
+    if (par->get("flu_vax_effect_wanes")) {
+        const auto waning_rate = util::exp_decay_rate_from_half_life(par->get("flu_vax_effect_half_life"));
+        return vaccine_protection[strain] * util::exp_decay(waning_rate, time);
+    } else {
+        return vaccine_protection[strain];
+    }
+}
+
 const std::vector<std::unique_ptr<Infection>>& Person::get_infection_history() const { return infection_history; }
 
 Infection* Person::attempt_infection(StrainType strain, size_t time) {
     Infection* inf = nullptr;
     if (is_susceptible_to(strain)) {
         auto current_suscep = susceptibility[strain];
-        current_suscep *= is_vaccinated() ? 1 - vaccine_protection[strain] : 1;
+        current_suscep *= is_vaccinated() ? 1 - get_remaining_vaccine_protection(strain, time) : 1;
 
         if (rng->draw_from_rng(INFECTION) < current_suscep) {
             auto pr_symptoms    = (strain == INFLUENZA)

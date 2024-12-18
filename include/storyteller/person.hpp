@@ -53,6 +53,7 @@ class Person {
     void set_susceptibility(StrainType strain, double s);
 
     double get_vaccine_protection(StrainType strain) const;
+    double get_remaining_vaccine_protection(StrainType strain, size_t time) const;
     void set_vaccine_protection(StrainType strain, double vp);
 
     const std::vector<std::unique_ptr<Infection>>& get_infection_history() const;
