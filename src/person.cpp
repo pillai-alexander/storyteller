@@ -55,8 +55,8 @@ void Person::set_vaccine_protection(StrainType strain, double vp) { vaccine_prot
 
 double Person::get_remaining_vaccine_protection(StrainType strain, size_t time) const {
     if (par->get("flu_vax_effect_wanes")) {
-        const auto waning_multiplier = std::exp(-1 * par->get("flu_vax_effect_wane_rate") * time);
-        return vaccine_protection[strain] * waning_multiplier;
+        const auto waning_rate = util::exp_decay_rate_from_half_life(par->get("flu_vax_effect_half_life"));
+        return vaccine_protection[strain] * util::exp_decay(waning_rate, time);
     } else {
         return vaccine_protection[strain];
     }

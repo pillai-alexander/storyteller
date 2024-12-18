@@ -361,14 +361,14 @@ Parameters["parameters"]["influenza_vaccine_waning_protection"] = {
   end
 }
 
-Parameters["parameters"]["influenza_vaccine_waning_rate"] = {
-  nickname = "flu_vax_effect_wane_rate",
+Parameters["parameters"]["influenza_vaccine_half_life"] = {
+  nickname = "flu_vax_effect_half_life",
   description = "",
   flag  = "const",
   datatype = "double",
-  value = (0.09/28),
+  value = 200,
   validate = function(v)
-      local ret = (v >= 0)
+      local ret = (v > 0)
       return ret
   end
 }
