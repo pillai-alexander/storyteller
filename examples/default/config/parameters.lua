@@ -356,7 +356,7 @@ Parameters["parameters"]["influenza_vaccine_waning_protection"] = {
   datatype = "double",
   value = 0.0,
   validate = function(v)
-      local ret = (v == 0.0)
+      local ret = (v == 0.0) or (v == 1.0)
       return ret
   end
 }
