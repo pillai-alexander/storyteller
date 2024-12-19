@@ -76,7 +76,7 @@ Storyteller::Storyteller(int argc, char* argv[])
         tome = (tome_path.empty()) ? nullptr : std::make_unique<Tome>(lua_vm.get(), tome_path);
 
         if (simulation_flags["init"]) {
-            operation_to_perform = INITIALIZE;
+            operation_to_perform = INITIALIZE_DATABASE;
         } else if (simulation_flags["simulate"]) {
             operation_to_perform = BATCH_SIM;
         } else if (simulation_flags["synthpop"]) {
@@ -147,7 +147,7 @@ bool Storyteller::sensible_inputs() const {
 
 int Storyteller::run() {
     switch (operation_to_perform) {
-        case INITIALIZE: {
+        case INITIALIZE_DATABASE: {
             return construct_database();
         }
         case BATCH_SIM: {

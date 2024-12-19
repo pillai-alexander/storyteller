@@ -28,7 +28,7 @@ namespace sol { class state; }
  *        performing.
  */
 enum OperationType {
-    INITIALIZE,
+    INITIALIZE_DATABASE,
     GENERATE_SYNTHETIC_POPULATION,
     GENERATE_EXPERIMENT_REPORT,
     BATCH_SIM,
