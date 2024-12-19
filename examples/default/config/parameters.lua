@@ -91,7 +91,7 @@ Parameters["parameters"]["probability_of_vaccination"] = {
     datatype = "double",
     value = 0.5,
     validate = function(v)
-        local ret = (v == 0.5)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -104,7 +104,7 @@ Parameters["parameters"]["probability_of_prior_immunity_if_vaccinated"] = {
     datatype = "double",
     value = 0.0,
     validate = function(v)
-        local ret = (v == 0.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -117,7 +117,7 @@ Parameters["parameters"]["probability_of_prior_immunity_if_unvaccinated"] = {
     datatype = "double",
     who = "pr_prior_imm_vaxd",
     validate = function(v)
-        local ret = (v == 0.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -132,7 +132,7 @@ Parameters["parameters"]["vaccinated_influenza_susceptibility_distribution_is_co
     datatype = "double",
     value = 0.0,
     validate = function(v)
-        local ret = (v == 0.0)
+        local ret = (v == 0) or (v == 1)
         return ret
     end
 }
@@ -147,7 +147,7 @@ Parameters["parameters"]["vaccinated_influenza_susceptibility_distribution_mean"
     datatype = "double",
     value = 0.5,
     validate = function(v)
-        local ret = (v == 0.5)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -161,7 +161,7 @@ Parameters["parameters"]["vaccinated_influenza_susceptibility_distribution_stand
     datatype = "double",
     value = 1e-1,
     validate = function(v)
-        local ret = (v == 1e-1)
+        local ret = (v > 0)
         return ret
     end
 }
@@ -175,7 +175,7 @@ Parameters["parameters"]["vaccinated_influenza_susceptibility_baseline"] = {
     datatype = "double",
     value = 1.0,
     validate = function(v)
-        local ret = (v == 1.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -190,7 +190,7 @@ Parameters["parameters"]["unvaccinated_influenza_susceptibility_distribution_is_
     datatype = "double",
     value = 0.0,
     validate = function(v)
-        local ret = (v == 0.0)
+        local ret = (v == 0) or (v == 1)
         return ret
     end
 }
@@ -205,7 +205,7 @@ Parameters["parameters"]["unvaccinated_influenza_susceptibility_distribution_mea
     datatype = "double",
     value = 1.0,
     validate = function(v)
-        local ret = (v == 1.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -219,7 +219,7 @@ Parameters["parameters"]["unvaccinated_influenza_susceptibility_distribution_sta
     datatype = "double",
     value = 1e-1,
     validate = function(v)
-        local ret = (v == 1e-1)
+        local ret = (v > 0)
         return ret
     end
 }
@@ -233,7 +233,7 @@ Parameters["parameters"]["unvaccinated_influenza_susceptibility_baseline"] = {
     datatype = "double",
     value = 1.0,
     validate = function(v)
-        local ret = (v == 1.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -248,7 +248,7 @@ Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_is
     datatype = "double",
     value = 0.0,
     validate = function(v)
-        local ret = (v == 0.0)
+        local ret = (v == 0) or (v == 1)
         return ret
     end
 }
@@ -263,7 +263,7 @@ Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_me
     datatype = "double",
     value = 1.0,
     validate = function(v)
-        local ret = (v == 1.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -275,9 +275,9 @@ Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_distribution_st
     log-odds of susceptibility.]],
     flag  = "const",
     datatype = "double",
-    value = 0.0,
+    value = 1e-1,
     validate = function(v)
-        local ret = (v == 0.0)
+        local ret = (v > 0)
         return ret
     end
 }
@@ -291,7 +291,7 @@ Parameters["parameters"]["vaccinated_noninfluenza_susceptibility_baseline"] = {
     datatype = "double",
     value = 1.0,
     validate = function(v)
-        local ret = (v == 1.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -306,7 +306,7 @@ Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_distribution_
     datatype = "double",
     value = 0.0,
     validate = function(v)
-        local ret = (v == 0.0)
+        local ret = (v == 0) or (v == 1)
         return ret
     end
 }
@@ -321,7 +321,7 @@ Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_distribution_
     datatype = "double",
     value = 1.0,
     validate = function(v)
-        local ret = (v == 1.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -333,9 +333,9 @@ Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_distribution_
     log-odds of susceptibility.]],
     flag  = "const",
     datatype = "double",
-    value = 0.0,
+    value = 1e-1,
     validate = function(v)
-        local ret = (v == 0.0)
+        local ret = (v > 0)
         return ret
     end
 }
@@ -349,7 +349,7 @@ Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_baseline"] = 
     datatype = "double",
     value = 1.0,
     validate = function(v)
-        local ret = (v == 1.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -364,7 +364,7 @@ Parameters["parameters"]["influenza_vaccine_effect_distribution_is_continuous"] 
     datatype = "double",
     value = 0.0,
     validate = function(v)
-        local ret = (v == 0.0)
+        local ret = (v == 0) or (v == 1)
         return ret
     end
 }
@@ -381,7 +381,7 @@ Parameters["parameters"]["influenza_vaccine_effect_distribution_mean"] = {
     upper = 1.0,
     step = 0.1,
     validate = function(v)
-        local ret = (v >= 0.0) and (v <= 1.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -392,9 +392,9 @@ Parameters["parameters"]["influenza_vaccine_effect_distribution_variance"] = {
     variance for a beta distribution of vaccine efficacy for a vaccinated individual.]],
     flag  = "const",
     datatype = "double",
-    value = 0.0,
+    value = 1e-1,
     validate = function(v)
-        local ret = (v == 0.0)
+        local ret = (v > 0)
         return ret
     end
 }
@@ -409,7 +409,7 @@ Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_is_continuous
     datatype = "double",
     value = 0.0,
     validate = function(v)
-        local ret = (v == 0.0)
+        local ret = (v == 0) or (v == 1)
         return ret
     end
 }
@@ -424,7 +424,7 @@ Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_mean"] = {
     datatype = "double",
     value = 0.0,
     validate = function(v)
-        local ret = (v == 0.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -435,9 +435,9 @@ Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_variance"] = 
     variance for a beta distribution of vaccine efficacy for a vaccinated individual.]],
     flag  = "const",
     datatype = "double",
-    value = 0.0,
+    value = 1e-1,
     validate = function(v)
-        local ret = (v == 0.0)
+        local ret = (v > 0)
         return ret
     end
 }
@@ -450,7 +450,7 @@ Parameters["parameters"]["probability_of_symptoms_if_influenza"] = {
     datatype = "double",
     value = 1.0,
     validate = function(v)
-        local ret = (v == 1.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -462,7 +462,7 @@ Parameters["parameters"]["probability_of_symptoms_if_noninfluenza"] = {
     datatype = "double",
     value = 1.0,
     validate = function(v)
-        local ret = (v == 1.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -475,7 +475,7 @@ Parameters["parameters"]["probability_of_care_seeking_if_vaccinated"] = {
     datatype = "double",
     value = 1.0,
     validate = function(v)
-        local ret = (v == 1.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -488,7 +488,7 @@ Parameters["parameters"]["probability_of_care_seeking_if_unvaccinated"] = {
     datatype = "double",
     value = 1.0,
     validate = function(v)
-        local ret = (v == 1.0)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -502,7 +502,7 @@ Parameters["parameters"]["probability_of_daily_influenza_exposure"] = {
     datatype = "double",
     values = {0.001, 0.005, 0.01},
     validate = function(v)
-        local ret = (v >= 0.001) and (v <= 0.01)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
@@ -515,7 +515,7 @@ Parameters["parameters"]["probability_of_daily_noninfluenza_exposure"] = {
     datatype = "double",
     value = 0.001,
     validate = function(v)
-        local ret = (v == 0.001)
+        local ret = (v >= 0) and (v <= 1)
         return ret
     end
 }
