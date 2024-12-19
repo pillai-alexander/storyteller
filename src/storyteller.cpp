@@ -300,7 +300,7 @@ int Storyteller::generate_exp_report() {
     }
     report << '\n';
 
-    report << "## Const parameters:\n"
+    report << "## Constant parameters:\n"
            << '\n'
            << "Name | Value\n"
            << "--- | ---\n";
