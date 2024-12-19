@@ -2,6 +2,7 @@ Parameters = {}
 
 Parameters["parameters"] = {}
 
+-- CONSTANT PARAMETER TEMPLATE
 -- Parameters["parameters"]["fullname"] = {
 --     nickname = "nickname",
 --     description = [[description]],
@@ -14,6 +15,8 @@ Parameters["parameters"] = {}
 --     end
 -- }
 
+-- STEP PARAMETER TEMPLATE
+--   DEFINE LOWER AND UPPER ENDPOINTS AND A STEP SIZE
 -- Parameters["parameters"]["fullname"] = {
 --     nickname = "nickname",
 --     description = [[description]],
@@ -28,6 +31,8 @@ Parameters["parameters"] = {}
 --     end
 -- }
 
+-- STEP PARAMETER TEMPLATE
+--   DEFINE LIST OF VALUES TO USE
 -- Parameters["parameters"]["fullname"] = {
 --     nickname = "nickname",
 --     description = [[description]],
@@ -40,6 +45,7 @@ Parameters["parameters"] = {}
 --     end
 -- }
 
+-- COPY PARAMETER TEMPLATE
 -- Parameters["parameters"]["fullname"] = {
 --     nickname = "nickname",
 --     description = [[description]],
