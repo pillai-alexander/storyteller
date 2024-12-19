@@ -48,6 +48,7 @@ Storyteller::Storyteller(int argc, char* argv[])
     cmdl_args.parse(argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION);
 
     // store all necessary program-flags
+    simulation_flags["setup"]        = cmdl_args["setup"];
     simulation_flags["init"]         = cmdl_args["init"];
     simulation_flags["simulate"]     = cmdl_args["simulate"];
     simulation_flags["simvis"]       = cmdl_args["simvis"];
@@ -73,22 +74,26 @@ Storyteller::Storyteller(int argc, char* argv[])
 
     // determine what operation the user called for
     if (sensible_inputs()) {
-        tome = (tome_path.empty()) ? nullptr : std::make_unique<Tome>(lua_vm.get(), tome_path);
-
-        if (simulation_flags["init"]) {
-            operation_to_perform = INITIALIZE_DATABASE;
-        } else if (simulation_flags["simulate"]) {
-            operation_to_perform = BATCH_SIM;
-        } else if (simulation_flags["synthpop"]) {
-            operation_to_perform = GENERATE_SYNTHETIC_POPULATION;
-        } else if (simulation_flags["exp_report"]) {
-            operation_to_perform = GENERATE_EXPERIMENT_REPORT;
-        } else if (simulation_flags["hpc_slurp"]) {
-            operation_to_perform = SLURP_CSVS_INTO_DATABASE;
-        } else if (simulation_flags["hpc_clean"]) {
-            operation_to_perform = CLEANUP_HPC_CSVS;
+        if (simulation_flags["setup"]) {
+            operation_to_perform = INITIALIZE_CONFIGS;
         } else {
-            operation_to_perform = NUM_OPERATION_TYPES;
+            tome = (tome_path.empty()) ? nullptr : std::make_unique<Tome>(lua_vm.get(), tome_path);
+
+            if (simulation_flags["init"]) {
+                operation_to_perform = INITIALIZE_DATABASE;
+            } else if (simulation_flags["simulate"]) {
+                operation_to_perform = BATCH_SIM;
+            } else if (simulation_flags["synthpop"]) {
+                operation_to_perform = GENERATE_SYNTHETIC_POPULATION;
+            } else if (simulation_flags["exp_report"]) {
+                operation_to_perform = GENERATE_EXPERIMENT_REPORT;
+            } else if (simulation_flags["hpc_slurp"]) {
+                operation_to_perform = SLURP_CSVS_INTO_DATABASE;
+            } else if (simulation_flags["hpc_clean"]) {
+                operation_to_perform = CLEANUP_HPC_CSVS;
+            } else {
+                operation_to_perform = NUM_OPERATION_TYPES;
+            }
         }
     } else {
         std::cerr << "ERROR: CLI arguments are not correct.\n";
@@ -113,6 +118,7 @@ bool Storyteller::sensible_inputs() const {
     int ret = 0;
     bool tome_is_set = not tome_path.empty();
     bool init        = simulation_flags.at("init");
+    bool setup       = simulation_flags.at("setup");
     bool sim         = simulation_flags.at("simulate");
     bool serial      = (simulation_serial != -1) and (simulation_serial >= 0);
     bool synthpop    = simulation_flags.at("synthpop");
@@ -142,11 +148,17 @@ bool Storyteller::sensible_inputs() const {
     // exec --tome tomefile --report
     ret += report and tome_is_set and not init and not sim;
 
+    // exec --tome tomefile --setup
+    ret += setup and tome_is_set and not init and not sim;
+
     return (ret == 1);
 }
 
 int Storyteller::run() {
     switch (operation_to_perform) {
+        case INITIALIZE_CONFIGS : {
+            return setup_default_configs();
+        }
         case INITIALIZE_DATABASE: {
             return construct_database();
         }
@@ -173,6 +185,34 @@ int Storyteller::run() {
             return 0;
         }
     }
+}
+
+int Storyteller::setup_default_configs() {
+    fs::path storyteller_root = fs::path(__FILE__).parent_path().parent_path();
+    fs::path default_tome = storyteller_root / "examples" / "default" / "tome.lua";
+    fs::path default_config = storyteller_root / "examples" / "default" / "config";
+
+    fs::path new_tome = fs::path(tome_path).is_absolute()
+                            ? fs::path(tome_path)
+                            : fs::current_path() / fs::path(tome_path);
+
+
+    fs::path tome_dir = new_tome.parent_path();
+    fs::path config_dir = tome_dir / "config";
+
+    std::cerr << "creating dir @ " << tome_dir << " ... ";
+    fs::create_directories(tome_dir);
+    std::cerr << "done\n";
+
+    std::cerr << "copying default tome @ " << new_tome << " ... ";
+    fs::copy(default_tome, new_tome);
+    std::cerr << "done\n";
+
+    std::cerr << "copying default configs @ " << config_dir << " ... ";
+    fs::copy(default_config, config_dir, fs::copy_options::recursive);
+    std::cerr << "done\n";
+
+    return 0;
 }
 
 int Storyteller::generate_synthpop() {
@@ -284,6 +324,7 @@ int Storyteller::generate_exp_report() {
     report.close();
 
     // write metrics.lua information
+    return 0;
 }
 
 /**
