@@ -321,6 +321,23 @@ int Storyteller::generate_exp_report() {
         report << name << " | " << who << '\n';
     }
     report << '\n';
+
+    report << "## Parameter dictionary:\n\n";
+    for (const auto& [flag, pars] : par_names) {
+        for (const auto& name : pars) {
+            const auto p = par_table.get<sol::table>(name);
+
+            auto fullname = name;
+            std::replace(fullname.begin(), fullname.end(), '_', ' ');
+            const auto nickname = p.get<std::string>("nickname");
+            const auto desc = p.get<std::string>("description");
+
+            report << "**" << fullname << " (" << nickname << ")**\n"
+                   << "> " << desc << '\n'
+                   << '\n';
+        }
+    }
+    report << '\n';
     report.close();
 
     // write metrics.lua information
