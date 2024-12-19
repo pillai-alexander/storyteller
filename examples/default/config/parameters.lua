@@ -241,7 +241,8 @@ Parameters["parameters"]["unvaccinated_influenza_susceptibility_baseline"] = {
 -- INFLUENZA INFECTION PARAMETERS
 Parameters["parameters"]["influenza_infection_refactory_period_length"] = {
   nickname = "flu_inf_refact_len",
-  description = "",
+  description = [[The number of days after an influenza infection during which
+  the individual cannot be infected by any other pathogen.]],
   flag  = "const",
   datatype = "integer",
   value = 0,
@@ -253,7 +254,11 @@ Parameters["parameters"]["influenza_infection_refactory_period_length"] = {
 
 Parameters["parameters"]["influenza_infection_generates_immunity"] = {
   nickname = "flu_inf_gen_immunity",
-  description = "",
+  description = [[This boolean flag controls whether influenza infections generate
+  immunity. If immunity is generated (1), after the refactory period, immune
+  protection is set to 1 (or susceptibility = 0) conferring complete protection.
+  If immunity is not generated (0), after the refactory period, susceptibility
+  remains equal to its prior value for that individual.]],
   flag  = "const",
   datatype = "integer",
   value = 1,
@@ -265,7 +270,9 @@ Parameters["parameters"]["influenza_infection_generates_immunity"] = {
 
 Parameters["parameters"]["influenza_infection_immunity_wanes"] = {
   nickname = "flu_inf_immunity_wanes",
-  description = "",
+  description = [[This boolean flag controls whether influenza-infection-derived
+  immunity wanes over time after the refactory period (1) or is constant over time
+  (0).]],
   flag  = "const",
   datatype = "integer",
   value = 0,
@@ -277,7 +284,8 @@ Parameters["parameters"]["influenza_infection_immunity_wanes"] = {
 
 Parameters["parameters"]["influenza_infection_immunity_half_life"] = {
   nickname = "flu_inf_immunity_half_life",
-  description = "",
+  description = [[If influenza-infection-derived immunity wanes over time, the waning
+  rate will be derived to produce this specified half-life.]],
   flag  = "const",
   datatype = "integer",
   value = 1500,
@@ -405,9 +413,10 @@ Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_baseline"] = 
 }
 
 -- NONINFLUENZA INFECTION PARAMETERS
-Parameters["parameters"]["influenza_noninfection_refactory_period_length"] = {
+Parameters["parameters"]["noninfluenza_infection_refactory_period_length"] = {
   nickname = "nonflu_inf_refact_len",
-  description = "",
+  description = [[The number of days after a noninfluenza infection during which
+  the individual cannot be infected by any other pathogen.]],
   flag  = "copy",
   datatype = "integer",
   who = "flu_inf_refact_len",
@@ -419,7 +428,11 @@ Parameters["parameters"]["influenza_noninfection_refactory_period_length"] = {
 
 Parameters["parameters"]["noninfluenza_infection_generates_immunity"] = {
   nickname = "nonflu_inf_gen_immunity",
-  description = "",
+  description = [[This boolean flag controls whether noninfluenza infections generate
+  immunity. If immunity is generated (1), after the refactory period, immune
+  protection is set to 1 (or susceptibility = 0) conferring complete protection.
+  If immunity is not generated (0), after the refactory period, susceptibility
+  remains equal to its prior value for that individual.]],
   flag  = "const",
   datatype = "integer",
   value = 0,
@@ -431,7 +444,9 @@ Parameters["parameters"]["noninfluenza_infection_generates_immunity"] = {
 
 Parameters["parameters"]["noninfluenza_infection_immunity_wanes"] = {
   nickname = "nonflu_inf_immunity_wanes",
-  description = "",
+  description = [[This boolean flag controls whether noninfluenza-infection-derived
+  immunity wanes over time after the refactory period (1) or is constant over time
+  (0).]],
   flag  = "const",
   datatype = "integer",
   value = 0,
@@ -443,7 +458,8 @@ Parameters["parameters"]["noninfluenza_infection_immunity_wanes"] = {
 
 Parameters["parameters"]["noninfluenza_infection_immunity_half_life"] = {
   nickname = "nonflu_inf_immunity_half_life",
-  description = "",
+  description = [[If noninfluenza-infection-derived immunity wanes over time, the
+  waning rate will be derived to produce this specified half-life.]],
   flag  = "const",
   datatype = "integer",
   value = 14,
@@ -500,19 +516,22 @@ Parameters["parameters"]["influenza_vaccine_effect_distribution_variance"] = {
 
 Parameters["parameters"]["influenza_vaccine_waning_protection"] = {
   nickname = "flu_vax_effect_wanes",
-  description = "",
+  description = [[This boolean flag controls whether vaccine efficacy against
+  influenza infection wanes over time after the refactory period (1) or is constant
+  over time (0).]],
   flag  = "const",
   datatype = "double",
   value = 0.0,
   validate = function(v)
-      local ret = (v == 0.0) or (v == 1.0)
+      local ret = (v == 0) or (v == 1)
       return ret
   end
 }
 
 Parameters["parameters"]["influenza_vaccine_half_life"] = {
   nickname = "flu_vax_effect_half_life",
-  description = "",
+  description = [[If vaccine efficacy against influenza infection wanes over time,
+  the waning rate will be derived to produce this specified half-life.]],
   flag  = "const",
   datatype = "double",
   value = 200,
@@ -646,36 +665,40 @@ Parameters["parameters"]["probability_of_daily_noninfluenza_exposure"] = {
 -- SEASONAL FORCING PARAMETERS
 Parameters["parameters"]["seasonal_forcing_amplitude_multiplier"] = {
   nickname = "seasonal_amplitude_mult",
-  description = "",
+  description = [[This controls how much seasonal forcing is applied to the daily
+  exposure probabilities. If it is set to 0, no seasonal forcing is applied and
+  daily exposure probabilities are constant over time.]],
   flag  = "const",
   datatype = "double",
   value = 0.0,
   validate = function(v)
-      local ret = (v == 0.0)
+      local ret = (v >= 0)
       return ret
   end
 }
 
 Parameters["parameters"]["seasonal_forcing_period"] = {
   nickname = "seasonal_period",
-  description = "",
+  description = [[If daily exposure probabilities seasonally vary over time, this
+  controls the period of the seasonal cycling.]],
   flag  = "const",
   datatype = "integer",
   value = 200,
   validate = function(v)
-      local ret = (v == 200)
+      local ret = (v > 0)
       return ret
   end
 }
 
 Parameters["parameters"]["seasonal_forcing_phase_shift"] = {
   nickname = "seasonal_shift",
-  description = "",
+  description = [[If daily exposure probabilities seasonally vary over time, this
+  controls the phase shift of the seasonal cycling.]],
   flag  = "const",
   datatype = "integer",
   value = 100,
   validate = function(v)
-      local ret = (v == 100)
+      local ret = (v >= 0)
       return ret
   end
 }
