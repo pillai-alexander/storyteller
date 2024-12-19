@@ -28,7 +28,8 @@ namespace sol { class state; }
  *        performing.
  */
 enum OperationType {
-    INITIALIZE,
+    INITIALIZE_DATABASE,
+    INITIALIZE_CONFIGS,
     GENERATE_SYNTHETIC_POPULATION,
     GENERATE_EXPERIMENT_REPORT,
     BATCH_SIM,
@@ -160,6 +161,8 @@ class Storyteller {
     int slurp_metrics_files();
 
     int cleanup_metrics_files();
+
+    int setup_default_configs();
 
     std::unique_ptr<Tome> tome;
     std::unique_ptr<Simulator> simulator;           ///< Created for each simulation to be run
