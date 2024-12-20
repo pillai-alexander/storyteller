@@ -102,7 +102,8 @@ double Person::get_remaining_vaccine_protection(StrainType strain, size_t time) 
         const auto half_life = (strain == INFLUENZA)
                                    ? par->get("flu_vax_effect_half_life")
                                    : par->get("nonflu_vax_effect_half_life");
-        const auto waning_rate = util::exp_decay_rate_from_half_life(half_life);
+        const auto waning_rate    = util::exp_decay_rate_from_half_life(half_life);
+        const auto time_since_vax = time - vaccination_time;
         return vaccine_protection[strain] * util::exp_decay(waning_rate, time);
     } else {
         return vaccine_protection[strain];
