@@ -38,6 +38,7 @@ Person::Person(size_t assigned_id, const Parameters* parameters, const RngHandle
     rng = rng_handler;
 
     vaccination_status = UNVACCINATED;
+    vaccination_time   = par->get("sim_duration") + 1;
     vaccine_protection = std::vector<double>(NUM_STRAIN_TYPES, 0.0);
 
     susceptibility = par->sample_susceptibility(this);
@@ -134,11 +135,12 @@ Infection* Person::attempt_infection(StrainType strain, size_t time) {
     return inf;
 }
 
-bool Person::vaccinate() {
+bool Person::vaccinate(size_t time) {
     if (vaccination_status == VACCINATED) { return false; }
     vaccination_status = VACCINATED;
+    vaccination_time   = time;
     vaccine_protection = par->sample_vaccine_effect();
-    susceptibility = par->sample_susceptibility(this);
+    susceptibility     = par->sample_susceptibility(this);
     return true;
 }
 

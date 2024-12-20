@@ -67,7 +67,7 @@ void Community::vaccinate_population(size_t time) {
     if (pr_vaccination == 0) { return; }
     for (auto& p : people) {
         if (rng->draw_from_rng(VACCINATION) < pr_vaccination) {
-            p->vaccinate();
+            p->vaccinate(time);
             ledger->vax_incidence[time]++;
         }
     }

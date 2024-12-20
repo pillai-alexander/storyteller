@@ -60,7 +60,7 @@ class Person {
     const std::vector<std::unique_ptr<Infection>>& get_infection_history() const;
 
     Infection* attempt_infection(StrainType strain, size_t time);
-    bool vaccinate();
+    bool vaccinate(size_t time);
 
     bool has_been_infected() const;
     bool has_been_infected_with(StrainType strain) const;
@@ -82,6 +82,7 @@ class Person {
     std::vector<double> vaccine_protection;
     std::vector<std::unique_ptr<Infection>> infection_history;
     VaccinationStatus vaccination_status;
+    size_t vaccination_time;
     const Parameters* par;
     const RngHandler* rng;
 };
