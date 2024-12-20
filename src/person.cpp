@@ -93,8 +93,15 @@ double Person::get_vaccine_protection(StrainType strain) const { return vaccine_
 void Person::set_vaccine_protection(StrainType strain, double vp) { vaccine_protection[strain] = vp; }
 
 double Person::get_remaining_vaccine_protection(StrainType strain, size_t time) const {
-    if (par->get("flu_vax_effect_wanes")) {
-        const auto waning_rate = util::exp_decay_rate_from_half_life(par->get("flu_vax_effect_half_life"));
+    const bool efficacy_wanes = (strain == INFLUENZA)
+                                    ? par->get("flu_vax_effect_wanes")
+                                    : par->get("nonflu_vax_effect_wanes");
+
+    if (efficacy_wanes) {
+        const auto half_life = (strain == INFLUENZA)
+                                   ? par->get("flu_vax_effect_half_life")
+                                   : par->get("nonflu_vax_effect_half_life");
+        const auto waning_rate = util::exp_decay_rate_from_half_life(half_life);
         return vaccine_protection[strain] * util::exp_decay(waning_rate, time);
     } else {
         return vaccine_protection[strain];

@@ -584,6 +584,33 @@ Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_variance"] = 
     end
 }
 
+Parameters["parameters"]["noninfluenza_vaccine_waning_protection"] = {
+  nickname = "nonflu_vax_effect_wanes",
+  description = [[This boolean flag controls whether vaccine efficacy against
+  noninfluenza infection wanes over time after the refactory period (1) or is constant
+  over time (0).]],
+  flag  = "const",
+  datatype = "double",
+  value = 0.0,
+  validate = function(v)
+      local ret = (v == 0) or (v == 1)
+      return ret
+  end
+}
+
+Parameters["parameters"]["noninfluenza_vaccine_half_life"] = {
+  nickname = "nonflu_vax_effect_half_life",
+  description = [[If vaccine efficacy against noninfluenza infection wanes over time,
+  the waning rate will be derived to produce this specified half-life.]],
+  flag  = "const",
+  datatype = "double",
+  value = 14,
+  validate = function(v)
+      local ret = (v > 0)
+      return ret
+  end
+}
+
 -- INFECTION OUTCOME PARAMETERS
 Parameters["parameters"]["probability_of_symptoms_if_influenza"] = {
     nickname = "pr_sympt_flu",
