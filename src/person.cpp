@@ -68,14 +68,14 @@ double Person::get_current_susceptibility(StrainType strain, size_t time) const 
 
             const auto waning_rate = util::exp_decay_rate_from_half_life(half_life);
 
-            const auto refactory_period = (strain == INFLUENZA)
-                                              ? par->get("flu_inf_refact_len")
-                                              : par->get("nonflu_inf_refact_len");
+            const auto refractory_period = (strain == INFLUENZA)
+                                              ? par->get("flu_inf_refract_len")
+                                              : par->get("nonflu_inf_refract_len");
 
-            // this starts waning only after the refactory period length
-            // during the refactory period, suscep will be negative though this
-            // wont matter because is_susceptible_to() is false during the refactory period
-            const auto time_since_last_inf = time - (most_recent_infection(strain)->get_infection_time() + refactory_period);
+            // this starts waning only after the refractory period length
+            // during the refractory period, suscep will be negative though this
+            // wont matter because is_susceptible_to() is false during the refractory period
+            const auto time_since_last_inf = time - (most_recent_infection(strain)->get_infection_time() + refractory_period);
 
             // 1 - exp flips the decay and will allow suscep to rise from zero to its original value
             return susceptibility[strain] * (1 - util::exp_decay(waning_rate, time_since_last_inf));
@@ -158,19 +158,19 @@ bool Person::has_been_infected_with(StrainType strain) const {
 bool Person::is_vaccinated() const { return vaccination_status == VACCINATED; }
 
 bool Person::is_susceptible_to(StrainType strain, size_t time) const {
-    // if within any infection refactory period, return false
+    // if within any infection refractory period, return false
     const auto last_inf = most_recent_infection();
     if (last_inf != nullptr) {
         const auto time_since_last_inf = time - last_inf->get_infection_time();
 
-        double refactory_period = 0;
+        double refractory_period = 0;
         switch (last_inf->get_strain()) {
-            case INFLUENZA: { refactory_period = par->get("flu_inf_refact_len"); break; }
-            case NON_INFLUENZA: { refactory_period = par->get("nonflu_inf_refact_len"); break; }
+            case INFLUENZA: { refractory_period = par->get("flu_inf_refract_len"); break; }
+            case NON_INFLUENZA: { refractory_period = par->get("nonflu_inf_refract_len"); break; }
             default: { break; }
         }
 
-        if (time_since_last_inf < refactory_period) { return false; }
+        if (time_since_last_inf < refractory_period) { return false; }
     }
 
     // if current suscep <= 0, return false

@@ -239,8 +239,8 @@ Parameters["parameters"]["unvaccinated_influenza_susceptibility_baseline"] = {
 }
 
 -- INFLUENZA INFECTION PARAMETERS
-Parameters["parameters"]["influenza_infection_refactory_period_length"] = {
-  nickname = "flu_inf_refact_len",
+Parameters["parameters"]["influenza_infection_refractory_period_length"] = {
+  nickname = "flu_inf_refract_len",
   description = [[The number of days after an influenza infection during which
   the individual cannot be infected by any other pathogen.]],
   flag  = "const",
@@ -255,9 +255,9 @@ Parameters["parameters"]["influenza_infection_refactory_period_length"] = {
 Parameters["parameters"]["influenza_infection_generates_immunity"] = {
   nickname = "flu_inf_gen_immunity",
   description = [[This boolean flag controls whether influenza infections generate
-  immunity. If immunity is generated (1), after the refactory period, immune
+  immunity. If immunity is generated (1), after the refractory period, immune
   protection is set to 1 (or susceptibility = 0) conferring complete protection.
-  If immunity is not generated (0), after the refactory period, susceptibility
+  If immunity is not generated (0), after the refractory period, susceptibility
   remains equal to its prior value for that individual.]],
   flag  = "const",
   datatype = "integer",
@@ -271,7 +271,7 @@ Parameters["parameters"]["influenza_infection_generates_immunity"] = {
 Parameters["parameters"]["influenza_infection_immunity_wanes"] = {
   nickname = "flu_inf_immunity_wanes",
   description = [[This boolean flag controls whether influenza-infection-derived
-  immunity wanes over time after the refactory period (1) or is constant over time
+  immunity wanes over time after the refractory period (1) or is constant over time
   (0).]],
   flag  = "const",
   datatype = "integer",
@@ -413,13 +413,13 @@ Parameters["parameters"]["unvaccinated_noninfluenza_susceptibility_baseline"] = 
 }
 
 -- NONINFLUENZA INFECTION PARAMETERS
-Parameters["parameters"]["noninfluenza_infection_refactory_period_length"] = {
-  nickname = "nonflu_inf_refact_len",
+Parameters["parameters"]["noninfluenza_infection_refractory_period_length"] = {
+  nickname = "nonflu_inf_refract_len",
   description = [[The number of days after a noninfluenza infection during which
   the individual cannot be infected by any other pathogen.]],
   flag  = "copy",
   datatype = "integer",
-  who = "flu_inf_refact_len",
+  who = "flu_inf_refract_len",
   validate = function(v)
       local ret = (v >= 0)
       return ret
@@ -429,9 +429,9 @@ Parameters["parameters"]["noninfluenza_infection_refactory_period_length"] = {
 Parameters["parameters"]["noninfluenza_infection_generates_immunity"] = {
   nickname = "nonflu_inf_gen_immunity",
   description = [[This boolean flag controls whether noninfluenza infections generate
-  immunity. If immunity is generated (1), after the refactory period, immune
+  immunity. If immunity is generated (1), after the refractory period, immune
   protection is set to 1 (or susceptibility = 0) conferring complete protection.
-  If immunity is not generated (0), after the refactory period, susceptibility
+  If immunity is not generated (0), after the refractory period, susceptibility
   remains equal to its prior value for that individual.]],
   flag  = "const",
   datatype = "integer",
@@ -445,7 +445,7 @@ Parameters["parameters"]["noninfluenza_infection_generates_immunity"] = {
 Parameters["parameters"]["noninfluenza_infection_immunity_wanes"] = {
   nickname = "nonflu_inf_immunity_wanes",
   description = [[This boolean flag controls whether noninfluenza-infection-derived
-  immunity wanes over time after the refactory period (1) or is constant over time
+  immunity wanes over time after the refractory period (1) or is constant over time
   (0).]],
   flag  = "const",
   datatype = "integer",
@@ -517,7 +517,7 @@ Parameters["parameters"]["influenza_vaccine_effect_distribution_variance"] = {
 Parameters["parameters"]["influenza_vaccine_waning_protection"] = {
   nickname = "flu_vax_effect_wanes",
   description = [[This boolean flag controls whether vaccine efficacy against
-  influenza infection wanes over time after the refactory period (1) or is constant
+  influenza infection wanes over time after the refractory period (1) or is constant
   over time (0).]],
   flag  = "const",
   datatype = "double",
@@ -587,7 +587,7 @@ Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_variance"] = 
 Parameters["parameters"]["noninfluenza_vaccine_waning_protection"] = {
   nickname = "nonflu_vax_effect_wanes",
   description = [[This boolean flag controls whether vaccine efficacy against
-  noninfluenza infection wanes over time after the refactory period (1) or is constant
+  noninfluenza infection wanes over time after the refractory period (1) or is constant
   over time (0).]],
   flag  = "const",
   datatype = "double",
