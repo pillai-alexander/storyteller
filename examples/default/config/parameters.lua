@@ -541,6 +541,20 @@ Parameters["parameters"]["influenza_vaccine_half_life"] = {
   end
 }
 
+Parameters["parameters"]["influenza_vaccine_lag_time_until_waning"] = {
+  nickname = "flu_vax_effect_lag_til_waning",
+  description = [[If vaccine efficacy against influenza infection wanes over time,
+  this controls the lag time between when vaccination occurs and when efficacy
+  waning begins.]],
+  flag  = "const",
+  datatype = "double",
+  value = 0,
+  validate = function(v)
+      local ret = (v >= 0)
+      return ret
+  end
+}
+
 -- NONINFLUENZA VACCINE PARAMETERS
 Parameters["parameters"]["noninfluenza_vaccine_effect_distribution_is_continuous"] = {
     nickname = "nonflu_vax_effect_is_contin",
@@ -607,6 +621,20 @@ Parameters["parameters"]["noninfluenza_vaccine_half_life"] = {
   value = 14,
   validate = function(v)
       local ret = (v > 0)
+      return ret
+  end
+}
+
+Parameters["parameters"]["noninfluenza_vaccine_lag_time_until_waning"] = {
+  nickname = "nonflu_vax_effect_lag_til_waning",
+  description = [[If vaccine efficacy against noninfluenza infection wanes over time,
+  this controls the lag time between when vaccination occurs and when efficacy
+  waning begins.]],
+  flag  = "const",
+  datatype = "double",
+  value = 0,
+  validate = function(v)
+      local ret = (v >= 0)
       return ret
   end
 }
