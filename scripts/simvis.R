@@ -105,6 +105,15 @@ tnd_ve <- ggplot(sim_dat) +
   shared_attrs +
   theme(legend.position = "none")
 
+pr_exposure <- ggplot(sim_dat) +
+  aes(x = time) +
+  geom_line(aes(y = pr_flu_exposure, linetype = "flu")) +
+  geom_line(aes(y = pr_nonflu_exposure, linetype = "nonflu")) +
+  labs(x = "time", y = "Pr(exposure)") +
+  ylim(0, NA) +
+  shared_attrs +
+  theme(legend.position = "none")
+
 pop <- ggplot(pop_dt) +
   aes(x = value, fill = factor(vax_status)) +
   geom_histogram(bins = 50, position = "identity", alpha = 0.5) +
@@ -124,13 +133,15 @@ dash_left <- plot_grid(
   inf_by_strain,
   flu_inf_by_vax,
   mai_by_strain_vax,
-  tnd_ve
+  tnd_ve,
+  pr_exposure
 )
 
 dash <- plot_grid(
   dash_left,
   pop,
-  nrow = 1
+  nrow = 1,
+  rel_widths = c(2, 1)
 )
 
 dir.create(fig_path, showWarnings = FALSE)
@@ -139,8 +150,8 @@ ggsave(
   here(fig_path, "simvis.png"),
   dash,
   bg = "white",
-  height = 1200,
-  width = 2400,
-  units = "px",
-  dpi = 200
+  height = 9,
+  width = 16,
+  units = "in",
+  dpi = 150
 )

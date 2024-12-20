@@ -71,9 +71,10 @@ void Simulator::results() {
     // retrieve desired metrics
     if (sim_flags["verbose"]) {
         if (sim_flags.at("very_verbose")) {
-            std::cerr << "t\tc_vaxflu_mais\tc_unvaxflu_mais\tc_vaxnflu_mais\tc_unvaxnflu_mais\ttnd_ve\n";
+            std::cerr << "t\tpr_exposure(flu|nflu)\tc_vaxflu_mais\tc_unvaxflu_mais\tc_vaxnflu_mais\tc_unvaxnflu_mais\ttnd_ve\n";
             for (size_t t = 0; t < par->get("sim_duration"); ++t) {
                 std::cerr << t << '\t'
+                          << par->strain_probs[t][INFLUENZA] << " | " << par->strain_probs[t][NON_INFLUENZA] << "\t\t"
                           << ledger->get_cumul_mais(VACCINATED, INFLUENZA, t) << "\t\t"
                           << ledger->get_cumul_mais(UNVACCINATED, INFLUENZA, t) << "\t\t"
                           << ledger->get_cumul_mais(VACCINATED, NON_INFLUENZA, t) << "\t\t"

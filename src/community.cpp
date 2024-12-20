@@ -40,7 +40,7 @@ void Community::init_population() {
 }
 
 void Community::transmission(size_t time) {
-    auto strain_sample = par->daily_strain_sample();
+    auto strain_sample = par->daily_strain_sample(time);
     for (auto& p : people) {
         auto strain = strain_sample.back();
         strain_sample.pop_back();
@@ -54,7 +54,7 @@ void Community::transmission(size_t time) {
     // old method that samples a single strain per person (keeping for reference)
     // for (auto& p : people) {
     //     // determine if exposure with occurs
-    //     auto strain = par->sample_strain();
+    //     auto strain = par->sample_strain(time);
     //     if (strain == NUM_STRAIN_TYPES) continue;
     //     // determine if infection occurs
     //     auto infection_occurs = p->attempt_infection(strain, time);
@@ -67,7 +67,7 @@ void Community::vaccinate_population(size_t time) {
     if (pr_vaccination == 0) { return; }
     for (auto& p : people) {
         if (rng->draw_from_rng(VACCINATION) < pr_vaccination) {
-            p->vaccinate();
+            p->vaccinate(time);
             ledger->vax_incidence[time]++;
         }
     }

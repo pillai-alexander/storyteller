@@ -17,6 +17,7 @@
 namespace constants {
     unsigned int ZERO = 0;
     unsigned int ONE = 1;
+    double PI = 3.14159265358979323846;
 }
 
 namespace util {
@@ -64,11 +65,19 @@ namespace util {
     }
 
     double logistic(const double log_odds) {
-      return 1 / (1 + std::exp(-1.0 * log_odds));
+        return 1 / (1 + std::exp(-1.0 * log_odds));
     }
 
     double logit(const double prob) {
-      return std::log(prob / (1 - prob));
+        return std::log(prob / (1 - prob));
+    }
+
+    double exp_decay_rate_from_half_life(const double half_life) {
+        return std::log(2) / half_life;
+    }
+
+    double exp_decay(const double rate, const double time) {
+        return std::exp(-1 * rate * time);
     }
 }
 

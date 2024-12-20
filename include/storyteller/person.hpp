@@ -50,22 +50,27 @@ class Person {
     size_t get_id() const;
 
     double get_susceptibility(StrainType strain) const;
+    double get_current_susceptibility(StrainType strain, size_t time) const;
     void set_susceptibility(StrainType strain, double s);
 
     double get_vaccine_protection(StrainType strain) const;
+    double get_remaining_vaccine_protection(StrainType strain, size_t time) const;
     void set_vaccine_protection(StrainType strain, double vp);
 
     const std::vector<std::unique_ptr<Infection>>& get_infection_history() const;
 
     Infection* attempt_infection(StrainType strain, size_t time);
-    bool vaccinate();
+    bool vaccinate(size_t time);
 
     bool has_been_infected() const;
     bool has_been_infected_with(StrainType strain) const;
     bool is_vaccinated() const;
-    bool is_susceptible_to(StrainType strain) const;
+    bool is_susceptible_to(StrainType strain, size_t time) const;
 
     Infection* most_recent_infection() const;
+    Infection* most_recent_infection(StrainType strain) const;
+    size_t last_infection_time() const;
+    size_t last_infection_strain() const;
 
     friend std::ostream& operator<<(std::ostream& o , const Person& p);
 
@@ -77,6 +82,7 @@ class Person {
     std::vector<double> vaccine_protection;
     std::vector<std::unique_ptr<Infection>> infection_history;
     VaccinationStatus vaccination_status;
+    size_t vaccination_time;
     const Parameters* par;
     const RngHandler* rng;
 };
