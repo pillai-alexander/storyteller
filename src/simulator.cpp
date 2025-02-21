@@ -67,6 +67,7 @@ void Simulator::results() {
     // perform necessary simulation data processing
     ledger->calculate_cumulatives();
     ledger->calculate_tnd_ve_est();
+    ledger->calculate_averages();
 
     // retrieve desired metrics
     if (sim_flags["verbose"]) {

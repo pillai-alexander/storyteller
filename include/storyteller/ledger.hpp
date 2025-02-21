@@ -41,6 +41,8 @@ class Ledger {
     size_t get_cumul_sympt_infs(VaccinationStatus vaxd, StrainType strain, size_t time) const;
     size_t get_cumul_mais(VaccinationStatus vaxd, StrainType strain, size_t time) const;
     double get_tnd_ve_est(size_t time) const;
+    double get_avg_suscep_infected(VaccinationStatus vaxd, size_t time) const;
+    double get_avg_suscep_remaining(VaccinationStatus vaxd, size_t time) const;
 
     void log_infection(const Infection* i);
 
@@ -51,6 +53,7 @@ class Ledger {
 
     void calculate_cumulatives();
     void calculate_tnd_ve_est();
+    void calculate_averages();
 
     void generate_linelist_csv(std::string filepath = "");
     void generate_simvis_csv(std::string filepath = "");
@@ -69,7 +72,11 @@ class Ledger {
     std::vector<double> tnd_ve_estimate; // [time]
 
     // POPULATION DATA
-    std::vector<size_t> vax_incidence; // [time]
+    std::vector<size_t> vax_incidence;      // [time]
+    vector3d<double> flu_suscep_infd;       // [vax status][time][i]
+    vector3d<double> flu_suscep_remain;     // [vax status][time][i]
+    vector2d<double> avg_flu_suscep_infd;   // [vax status][time]
+    vector2d<double> avg_flu_suscep_remain; // [vax status][time]
 
     std::string linelist_header;
     std::string simvis_header;

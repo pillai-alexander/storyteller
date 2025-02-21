@@ -254,7 +254,7 @@ std::vector<std::map<std::string, double>> DatabaseHandler::read_batch_parameter
 std::vector<std::string> DatabaseHandler::prepare_insert_sql(const Ledger* ledger, const Parameters* par) const {
     size_t n_rows = par->get("sim_duration");
     std::vector<std::string> inserts(n_rows);
-    std::string tmp_col_order = "(serial,time,c_vax_flu_inf,c_vax_nonflu_inf,c_unvax_flu_inf,c_unvax_nonflu_inf,c_vax_flu_mai,c_vax_nonflu_mai,c_unvax_flu_mai,c_unvax_nonflu_mai,tnd_ve_est)";
+    std::string tmp_col_order = "(serial,time,c_vax_flu_inf,c_vax_nonflu_inf,c_unvax_flu_inf,c_unvax_nonflu_inf,c_vax_flu_mai,c_vax_nonflu_mai,c_unvax_flu_mai,c_unvax_nonflu_mai,tnd_ve_est,avg_vax_flu_suscep_infd,avg_vax_flu_suscep_remain,avg_unvax_flu_suscep_infd,avg_unvax_flu_suscep_remain)";
     std::stringstream sql;
     for (size_t t = 0; t < n_rows; ++t) {
         sql << "INSERT INTO met "
@@ -270,7 +270,11 @@ std::vector<std::string> DatabaseHandler::prepare_insert_sql(const Ledger* ledge
             << ledger->get_cumul_mais(VACCINATED, NON_INFLUENZA, t) << ","
             << ledger->get_cumul_mais(UNVACCINATED, INFLUENZA, t) << ","
             << ledger->get_cumul_mais(UNVACCINATED, NON_INFLUENZA, t) << ","
-            << ledger->get_tnd_ve_est(t) << ");";
+            << ledger->get_tnd_ve_est(t) << ","
+            << ledger->get_avg_suscep_infected(VACCINATED, t) << ","
+            << ledger->get_avg_suscep_remaining(VACCINATED, t) << ","
+            << ledger->get_avg_suscep_infected(UNVACCINATED, t) << ","
+            << ledger->get_avg_suscep_remaining(UNVACCINATED, t) << ");";
 
         inserts[t] = sql.str();
         sql.str(std::string());

@@ -39,3 +39,19 @@ Metrics["c_unvax_nonflu_mai"] = {
 Metrics["tnd_ve_est"] = {
     datatype = "REAL"
 }
+
+Metrics["avg_vax_flu_suscep_infd"] = {
+    datatype = "REAL"
+}
+
+Metrics["avg_vax_flu_suscep_remain"] = {
+    datatype = "REAL"
+}
+
+Metrics["avg_unvax_flu_suscep_infd"] = {
+    datatype = "REAL"
+}
+
+Metrics["avg_unvax_flu_suscep_remain"] = {
+    datatype = "REAL"
+}

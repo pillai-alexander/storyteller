@@ -14,6 +14,7 @@
 #include <storyteller/ledger.hpp>
 #include <storyteller/person.hpp>
 #include <storyteller/tome.hpp>
+#include <storyteller/utility.hpp>
 
 Ledger::Ledger(const Parameters* parameters) {
     par = parameters;
@@ -29,6 +30,11 @@ Ledger::Ledger(const Parameters* parameters) {
     tnd_ve_estimate = std::vector<double>(sim_duration, 0.0);
 
     vax_incidence = std::vector<size_t>(sim_duration, 0);
+
+    flu_suscep_infd   = vector3d<double>(NUM_VACCINATION_STATUSES, vector2d<double>(sim_duration, std::vector<double>()));
+    flu_suscep_remain = vector3d<double>(NUM_VACCINATION_STATUSES, vector2d<double>(sim_duration, std::vector<double>()));
+    avg_flu_suscep_infd   = vector2d<double>(NUM_VACCINATION_STATUSES, std::vector<double>(sim_duration, 0.0));
+    avg_flu_suscep_remain = vector2d<double>(NUM_VACCINATION_STATUSES, std::vector<double>(sim_duration, 0.0));
 
     linelist_header = "inf_id,inf_time,inf_strain,inf_sympts,inf_care,p_id,vax_status,baseline_suscep,vax_effect";
     simvis_header = "time,pr_flu_exposure,pr_nonflu_exposure,vaxd_flu_infs,vaxd_flu_mais,vaxd_nonflu_infs,vaxd_nonflu_mais,unvaxd_flu_infs,unvaxd_flu_mais,unvaxd_nonflu_infs,unvaxd_nonflu_mais,tnd_ve_est";
@@ -51,19 +57,24 @@ size_t Ledger::get_cumul_infs(VaccinationStatus vaxd, StrainType strain, size_t 
 size_t Ledger::get_cumul_sympt_infs(VaccinationStatus vaxd, StrainType strain, size_t time) const { return cumul_sympt_infs[vaxd][strain][time]; }
 size_t Ledger::get_cumul_mais(VaccinationStatus vaxd, StrainType strain, size_t time) const { return cumul_mais[vaxd][strain][time]; }
 double Ledger::get_tnd_ve_est(size_t time) const { return tnd_ve_estimate[time]; }
+double Ledger::get_avg_suscep_infected(VaccinationStatus vaxd, size_t time) const { return avg_flu_suscep_infd[vaxd][time]; }
+double Ledger::get_avg_suscep_remaining(VaccinationStatus vaxd, size_t time) const { return avg_flu_suscep_remain[vaxd][time]; }
 
 void Ledger::log_infection(const Infection* i) {
-    auto vaxd   = i->get_infectee()->is_vaccinated();
+    auto vaxd   = i->get_infectee()->is_vaccinated() ? VACCINATED : UNVACCINATED;
     auto time   = i->get_infection_time();
     auto strain = i->get_strain();
     auto sympts = i->get_symptoms();
     auto mai    = i->get_sought_care();
+    auto suscep = i->get_infectee()->get_current_susceptibility(strain, time);
 
     infections.push_back(i);
 
     inf_incidence[vaxd][strain][time]++;
     if (sympts == SYMPTOMATIC) sympt_inf_incidence[vaxd][strain][time]++;
     if (mai) mai_incidence[vaxd][strain][time]++;
+
+    if (strain == INFLUENZA) flu_suscep_infd[vaxd][time].push_back(suscep);
 }
 
 size_t Ledger::total_infections(VaccinationStatus vaxd, StrainType strain) const {
@@ -112,6 +123,18 @@ void Ledger::calculate_tnd_ve_est() {
         double ve_est        = 1 - (flu_vax_odds / nonflu_vax_odds);
 
         tnd_ve_estimate[t] = isfinite(ve_est) ? ve_est : 0.0;
+    }
+}
+
+void Ledger::calculate_averages() {
+    for (size_t v = 0; v < NUM_VACCINATION_STATUSES; ++v) {
+        for (size_t t = 0; t < par->get("sim_duration"); ++t) {
+            auto suscep_infd   = flu_suscep_infd[v][t];
+            auto suscep_remain = flu_suscep_remain[v][t];
+
+            avg_flu_suscep_infd[v][t]   = util::vec_mean(suscep_infd);
+            avg_flu_suscep_remain[v][t] = util::vec_mean(suscep_remain);
+        }
     }
 }
 

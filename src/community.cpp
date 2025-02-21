@@ -45,7 +45,12 @@ void Community::transmission(size_t time) {
         auto strain = strain_sample.back();
         strain_sample.pop_back();
 
-        if (strain == NUM_STRAIN_TYPES) continue;
+        if (strain == NUM_STRAIN_TYPES) {
+            auto vaxd = (p->is_vaccinated()) ? VACCINATED : UNVACCINATED;
+            auto suscep = p->get_current_susceptibility(INFLUENZA, time);
+            ledger->flu_suscep_remain[vaxd][time].push_back(suscep);
+            continue;
+        }
         // determine if infection occurs
         auto infection_occurs = p->attempt_infection(strain, time);
         if (infection_occurs) ledger->log_infection(infection_occurs);

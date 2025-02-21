@@ -9,6 +9,7 @@
 #pragma once
 
 #include <vector>
+#include <numeric>
 
 #include <gsl/gsl_rng.h>
 
@@ -65,6 +66,14 @@ namespace util {
 
     extern double exp_decay_rate_from_half_life(const double half_life);
     extern double exp_decay(const double rate, const double time);
+
+    template<typename T>
+    double vec_mean(const std::vector<T> vec) {
+        if (vec.empty()) return 0.0;
+
+        const double sum = std::accumulate(vec.cbegin(), vec.cend(), 0.0);
+        return sum / vec.size();
+    }
 }
 
 /**
